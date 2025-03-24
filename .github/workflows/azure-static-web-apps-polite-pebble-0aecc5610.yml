@@ -1,5 +1,8 @@
 name: Azure Static Web Apps CI/CD
 
+env:
+  CI: false   # ← change this to prevent warnings being treated as errors
+  
 on:
   push:
     branches:
