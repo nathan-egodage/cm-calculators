@@ -10,14 +10,14 @@ const Home = () => {
         <Link to="/bdm-calculator-v1" className="calculator-link">
           <div className="calculator-card">
             <h2>BDM Commission Calculator V1</h2>
-            <p>Calculate BDM commissions based on revenue and GP thresholds</p>
+            <p>Calculate BDM commissions based on revenue and GP thresholds V1</p>
           </div>
         </Link>
         
         <Link to="/bdm-calculator-v2" className="calculator-link">
           <div className="calculator-card">
             <h2>BDM Commission Calculator V2</h2>
-            <p>Enhanced version of the BDM commission calculator</p>
+            <p>Calculate BDM commissions based on revenue and GP thresholds V2</p>
           </div>
         </Link>
         

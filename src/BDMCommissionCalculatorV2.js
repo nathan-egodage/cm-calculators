@@ -20,8 +20,8 @@ const BDMCommissionCalculatorV2 = () => {
   const revenueTiers = [
     { tier: 'Tier 0', minRevenue: 0, maxRevenue: 1000000, baseGP: null, baseCommissionRate: 0 },
     { tier: 'Tier 1', minRevenue: 1000000, maxRevenue: 1500000, baseGP: 0.35, baseCommissionRate: 0.045 },
-    { tier: 'Tier 2', minRevenue: 1500000, maxRevenue: 4000000, baseGP: 0.33, baseCommissionRate: 0.0375 },
-    { tier: 'Tier 3', minRevenue: 4000000, maxRevenue: 6000000, baseGP: 0.30, baseCommissionRate: 0.03 },
+    { tier: 'Tier 2', minRevenue: 1500000, maxRevenue: 4000000, baseGP: 0.33, baseCommissionRate: 0.035 },
+    { tier: 'Tier 3', minRevenue: 4000000, maxRevenue: 6000000, baseGP: 0.30, baseCommissionRate: 0.0275 },
     { tier: 'Tier 4', minRevenue: 6000000, maxRevenue: Infinity, baseGP: 0.28, baseCommissionRate: 0.02 }
   ];
 
@@ -46,48 +46,48 @@ const BDMCommissionCalculatorV2 = () => {
   ];
 
   const tier2GPRates = [
-    { gp: 0.33, commissionRate: 0.0375 }, // 3.75%
-    { gp: 0.34, commissionRate: 0.0375 }, // 3.75%
-    { gp: 0.35, commissionRate: 0.0375 }, // 3.75%
-    { gp: 0.36, commissionRate: 0.0385 }, // 3.85%
-    { gp: 0.37, commissionRate: 0.0395 }, // 3.95%
-    { gp: 0.38, commissionRate: 0.0405 }, // 4.05%
-    { gp: 0.39, commissionRate: 0.0415 }, // 4.15%
-    { gp: 0.40, commissionRate: 0.0435 }, // 4.35%
-    { gp: 0.41, commissionRate: 0.0455 }, // 4.55%
-    { gp: 0.42, commissionRate: 0.0475 }, // 4.75%
-    { gp: 0.43, commissionRate: 0.0495 }, // 4.95%
-    { gp: 0.44, commissionRate: 0.0515 }, // 5.15%
-    { gp: 0.45, commissionRate: 0.0535 }, // 5.35%
-    { gp: 0.46, commissionRate: 0.0555 }, // 5.55%
-    { gp: 0.47, commissionRate: 0.0575 }, // 5.75%
-    { gp: 0.48, commissionRate: 0.0595 }, // 5.95%
-    { gp: 0.49, commissionRate: 0.0615 }, // 6.15%
-    { gp: 0.50, commissionRate: 0.0635 }  // 6.35%
+    { gp: 0.33, commissionRate: 0.0350 }, // 3.75%
+    { gp: 0.34, commissionRate: 0.0350 }, // 3.75%
+    { gp: 0.35, commissionRate: 0.0350 }, // 3.75%
+    { gp: 0.36, commissionRate: 0.0360 }, // 3.85%
+    { gp: 0.37, commissionRate: 0.0370 }, // 3.95%
+    { gp: 0.38, commissionRate: 0.0380 }, // 4.05%
+    { gp: 0.39, commissionRate: 0.0390 }, // 4.15%
+    { gp: 0.40, commissionRate: 0.0400 }, // 4.35%
+    { gp: 0.41, commissionRate: 0.0420 }, // 4.55%
+    { gp: 0.42, commissionRate: 0.0440 }, // 4.75%
+    { gp: 0.43, commissionRate: 0.0460 }, // 4.95%
+    { gp: 0.44, commissionRate: 0.0480 }, // 5.15%
+    { gp: 0.45, commissionRate: 0.0500 }, // 5.35%
+    { gp: 0.46, commissionRate: 0.0520 }, // 5.55%
+    { gp: 0.47, commissionRate: 0.0540 }, // 5.75%
+    { gp: 0.48, commissionRate: 0.0560 }, // 5.95%
+    { gp: 0.49, commissionRate: 0.0580 }, // 6.15%
+    { gp: 0.50, commissionRate: 0.0600 }  // 6.35%
   ];
 
   const tier3GPRates = [
-    { gp: 0.30, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.31, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.32, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.33, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.34, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.35, commissionRate: 0.0300 }, // 3.00%
-    { gp: 0.36, commissionRate: 0.0310 }, // 3.10%
-    { gp: 0.37, commissionRate: 0.0320 }, // 3.20%
-    { gp: 0.38, commissionRate: 0.0330 }, // 3.30%
-    { gp: 0.39, commissionRate: 0.0340 }, // 3.40%
-    { gp: 0.40, commissionRate: 0.0350 }, // 3.50%
-    { gp: 0.41, commissionRate: 0.0370 }, // 3.70%
-    { gp: 0.42, commissionRate: 0.0390 }, // 3.90%
-    { gp: 0.43, commissionRate: 0.0410 }, // 4.10%
-    { gp: 0.44, commissionRate: 0.0430 }, // 4.30%
-    { gp: 0.45, commissionRate: 0.0450 }, // 4.50%
-    { gp: 0.46, commissionRate: 0.0470 }, // 4.70%
-    { gp: 0.47, commissionRate: 0.0490 }, // 4.90%
-    { gp: 0.48, commissionRate: 0.0510 }, // 5.10%
-    { gp: 0.49, commissionRate: 0.0530 }, // 5.30%
-    { gp: 0.50, commissionRate: 0.0550 }  // 5.50%
+    { gp: 0.30, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.31, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.32, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.33, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.34, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.35, commissionRate: 0.0275 }, // 3.00%
+    { gp: 0.36, commissionRate: 0.0285 }, // 3.10%
+    { gp: 0.37, commissionRate: 0.0205 }, // 3.20%
+    { gp: 0.38, commissionRate: 0.0305 }, // 3.30%
+    { gp: 0.39, commissionRate: 0.0315 }, // 3.40%
+    { gp: 0.40, commissionRate: 0.0325 }, // 3.50%
+    { gp: 0.41, commissionRate: 0.0345 }, // 3.70%
+    { gp: 0.42, commissionRate: 0.0365 }, // 3.90%
+    { gp: 0.43, commissionRate: 0.0385 }, // 4.10%
+    { gp: 0.44, commissionRate: 0.0405 }, // 4.30%
+    { gp: 0.45, commissionRate: 0.0425 }, // 4.50%
+    { gp: 0.46, commissionRate: 0.0445 }, // 4.70%
+    { gp: 0.47, commissionRate: 0.0465 }, // 4.90%
+    { gp: 0.48, commissionRate: 0.0485 }, // 5.10%
+    { gp: 0.49, commissionRate: 0.0505 }, // 5.30%
+    { gp: 0.50, commissionRate: 0.0525 }  // 5.50%
   ];
 
   const tier4GPRates = [

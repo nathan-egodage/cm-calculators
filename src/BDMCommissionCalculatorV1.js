@@ -54,17 +54,17 @@ const BDMCommissionCalculatorV1 = () => {
     { gp: 0.37, commissionRate: 0.042 },
     { gp: 0.38, commissionRate: 0.043 },
     { gp: 0.39, commissionRate: 0.044 },
-    { gp: 0.40, commissionRate: 0.046 },
-    { gp: 0.41, commissionRate: 0.048 },
-    { gp: 0.42, commissionRate: 0.050 },
-    { gp: 0.43, commissionRate: 0.052 },
-    { gp: 0.44, commissionRate: 0.054 },
-    { gp: 0.45, commissionRate: 0.056 },
-    { gp: 0.46, commissionRate: 0.058 },
-    { gp: 0.47, commissionRate: 0.060 },
-    { gp: 0.48, commissionRate: 0.062 },
-    { gp: 0.49, commissionRate: 0.064 },
-    { gp: 0.50, commissionRate: 0.066 }
+    { gp: 0.40, commissionRate: 0.045 },
+    { gp: 0.41, commissionRate: 0.047 },
+    { gp: 0.42, commissionRate: 0.049 },
+    { gp: 0.43, commissionRate: 0.051 },
+    { gp: 0.44, commissionRate: 0.053 },
+    { gp: 0.45, commissionRate: 0.055 },
+    { gp: 0.46, commissionRate: 0.057 },
+    { gp: 0.47, commissionRate: 0.059 },
+    { gp: 0.48, commissionRate: 0.061 },
+    { gp: 0.49, commissionRate: 0.063 },
+    { gp: 0.50, commissionRate: 0.065 }
   ];
 
   const tier3GPRates = [
@@ -429,12 +429,12 @@ const BDMCommissionCalculatorV1 = () => {
                 <tr>
                   <td>Tier 1</td>
                   <td>33% - 34%</td>
-                  <td>$2,500</td>
+                  <td>$3,500</td>
                 </tr>
                 <tr>
                   <td>Tier 1</td>
                   <td>34% - 35%</td>
-                  <td>$3,000</td>
+                  <td>$4,500</td>
                 </tr>
                 <tr>
                   <td>Tier 2</td>
