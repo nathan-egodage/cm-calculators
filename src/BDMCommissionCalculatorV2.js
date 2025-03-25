@@ -22,7 +22,7 @@ const BDMCommissionCalculatorV2 = () => {
     if (
       loaded &&
       user &&
-      ["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au"].includes(user.userDetails)
+      ["Nathan@cloudmarc.com.au", "Rocket@cloudmarc.com.au"].includes(user.userDetails)
     ) {
       calculateCommission();
     }
@@ -30,11 +30,11 @@ const BDMCommissionCalculatorV2 = () => {
 
   if (!loaded) return <p>Loading...</p>;
 
-  if (!user || !["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au", "ddallariva@cloudmarc.com.au"].includes(user.userDetails)) {
+  if (!user || !["Nathan@cloudmarc.com.au", "Rocket@cloudmarc.com.au"].includes(user.userDetails)) {
     return <p>You do not have access to this page.</p>;
   }
 
-
+  
   // Commission structure data - Updated based on the provided image
   const revenueTiers = [
     { tier: 'Tier 0', minRevenue: 0, maxRevenue: 1000000, baseGP: null, baseCommissionRate: 0 },

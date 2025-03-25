@@ -24,7 +24,7 @@ const BDMCommissionCalculatorV1 = () => {
     if (
       loaded &&
       user &&
-      ["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au"].includes(user.userDetails)
+      ["Nathan@cloudmarc.com.au", "Rocket@cloudmarc.com.au"].includes(user.userDetails)
     ) {
       calculateCommission();
     }
@@ -32,7 +32,7 @@ const BDMCommissionCalculatorV1 = () => {
 
   if (!loaded) return <p>Loading...</p>;
 
-  if (!user || !["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au", "ddallariva@cloudmarc.com.au"].includes(user.userDetails)) {
+  if (!user || !["Nathan@cloudmarc.com.au", "Rocket@cloudmarc.com.au"].includes(user.userDetails)) {
     return <p>You do not have access to this page.</p>;
   }
 
