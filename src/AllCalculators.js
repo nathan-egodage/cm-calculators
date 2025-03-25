@@ -1,27 +1,31 @@
-// AusContractorGpCalculator.js
+// PhpContractorGpCalculator.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-const AusContractorGpCalculator = () => {
+const PhpContractorGpCalculator = () => {
+  // State for calculator type
+  const [calculatorType, setCalculatorType] = useState('FTE'); // Options: 'FTE', 'Contractor'
+  
   // State for form inputs and calculated values
-  const [dailyRate, setDailyRate] = useState(700);
+  const [salaryPackage, setSalaryPackage] = useState(120000); // For FTE
+  const [dailyRate, setDailyRate] = useState(700); // For Contractor
   const [targetMarginPercent, setTargetMarginPercent] = useState(20);
-  const [dailyClientRate, setDailyClientRate] = useState(931.04);
+  const [dailyClientRate, setDailyClientRate] = useState(0);
   
   // State for configuration settings
   const [payrollTaxApplicable, setPayrollTaxApplicable] = useState('Y');
   const [workcover, setWorkcover] = useState('Y');
-  const [leaveMovements, setLeaveMovements] = useState('N');
-  const [lslMovements, setLslMovements] = useState('N');
+  const [leaveMovements, setLeaveMovements] = useState('Y');
+  const [lslMovements, setLslMovements] = useState('Y');
   const [workingDays, setWorkingDays] = useState(220);
   const [extraExpenses, setExtraExpenses] = useState('N');
   const [additionalExpenses, setAdditionalExpenses] = useState(0);
   
   // State for calculation mode
-  const [calculationMode, setCalculationMode] = useState('dailyRate'); // Options: dailyRate, clientRate, targetMargin
+  const [calculationMode, setCalculationMode] = useState('dailyRate'); // Options depend on calculatorType
   
   // State for calculated values
-  const [annualIncome, setAnnualIncome] = useState(0);
+  const [annualIncome, setAnnualIncome] = useState(0); // For Contractor
   const [payrollTax, setPayrollTax] = useState(0);
   const [workCoverAmount, setWorkCoverAmount] = useState(0);
   const [leaveMovementsAmount, setLeaveMovementsAmount] = useState(0);
@@ -40,11 +44,30 @@ const AusContractorGpCalculator = () => {
   const LEAVE_MOVEMENTS_RATE = 0.0050;
   const LSL_MOVEMENTS_RATE = 0.0005;
 
+  // Effect for calculator type changes
+  useEffect(() => {
+    // Reset calculation mode when calculator type changes
+    if (calculatorType === 'FTE') {
+      setCalculationMode('dailyRate');
+      // Set defaults for FTE
+      setLeaveMovements('Y');
+      setLslMovements('Y');
+      if (dailyClientRate === 0) setDailyClientRate(1057.95);
+    } else {
+      setCalculationMode('dailyRate');
+      // Set defaults for Contractor
+      setLeaveMovements('N');
+      setLslMovements('N');
+      if (dailyClientRate === 0) setDailyClientRate(931.04);
+    }
+  }, [calculatorType]);
+
   // Perform calculations whenever inputs change
   useEffect(() => {
     calculateValues();
   }, [
-    dailyRate, 
+    salaryPackage, 
+    dailyRate,
     targetMarginPercent, 
     dailyClientRate, 
     payrollTaxApplicable, 
@@ -54,29 +77,34 @@ const AusContractorGpCalculator = () => {
     workingDays, 
     extraExpenses,
     additionalExpenses,
-    calculationMode
+    calculationMode,
+    calculatorType
   ]);
 
   // Function to handle the main calculations
   const calculateValues = () => {
-    // Calculate annual income
-    const annualIncomeValue = dailyRate * workingDays;
-    setAnnualIncome(annualIncomeValue);
+    // Determine input based on calculator type
+    const inputAmount = calculatorType === 'FTE' ? salaryPackage : dailyRate * workingDays;
+    
+    // Set annual income for Contractor
+    if (calculatorType === 'Contractor') {
+      setAnnualIncome(inputAmount);
+    }
 
     // Calculate payroll tax if applicable
-    const payrollTaxValue = payrollTaxApplicable === 'Y' ? annualIncomeValue * PAYROLL_TAX_RATE : 0;
+    const payrollTaxValue = payrollTaxApplicable === 'Y' ? inputAmount * PAYROLL_TAX_RATE : 0;
     setPayrollTax(payrollTaxValue);
 
     // Calculate workcover if applicable
-    const workCoverValue = workcover === 'Y' ? annualIncomeValue * WORKCOVER_RATE : 0;
+    const workCoverValue = workcover === 'Y' ? inputAmount * WORKCOVER_RATE : 0;
     setWorkCoverAmount(workCoverValue);
 
     // Calculate leave movements if applicable
-    const leaveMovementsValue = leaveMovements === 'Y' ? annualIncomeValue * LEAVE_MOVEMENTS_RATE : 0;
+    const leaveMovementsValue = leaveMovements === 'Y' ? inputAmount * LEAVE_MOVEMENTS_RATE : 0;
     setLeaveMovementsAmount(leaveMovementsValue);
 
     // Calculate LSL movements if applicable
-    const lslMovementsValue = lslMovements === 'Y' ? annualIncomeValue * LSL_MOVEMENTS_RATE : 0;
+    const lslMovementsValue = lslMovements === 'Y' ? inputAmount * LSL_MOVEMENTS_RATE : 0;
     setLslMovementsAmount(lslMovementsValue);
 
     // Calculate total extra cost percentage
@@ -88,21 +116,21 @@ const AusContractorGpCalculator = () => {
     setTotalExtraCostPercent(totalExtraPercent);
 
     // Calculate extra cost
-    const extraCostValue = annualIncomeValue * totalExtraPercent;
+    const extraCostValue = inputAmount * totalExtraPercent;
     setExtraCost(extraCostValue);
 
     // Calculate total cost
     const extraExpensesAmount = extraExpenses === 'Y' ? additionalExpenses : 0;
-    const totalCostValue = annualIncomeValue + extraCostValue + extraExpensesAmount;
+    const totalCostValue = inputAmount + extraCostValue + extraExpensesAmount;
     setTotalCost(totalCostValue);
 
     // Calculate daily cost
     const dailyCostValue = totalCostValue / workingDays;
     setDailyCost(dailyCostValue);
 
-    // Perform specific calculations based on the mode
+    // Perform specific calculations based on the mode and calculator type
     if (calculationMode === 'dailyRate') {
-      // Calculate daily client rate from daily rate and target margin
+      // Calculate daily client rate
       const marginMultiplier = 1 / (1 - targetMarginPercent / 100);
       const calculatedDailyClientRate = dailyCostValue * marginMultiplier;
       setDailyClientRate(calculatedDailyClientRate);
@@ -118,29 +146,30 @@ const AusContractorGpCalculator = () => {
       const annualRevenueValue = calculatedDailyClientRate * workingDays;
       setAnnualRevenue(annualRevenueValue);
       
-    } else if (calculationMode === 'clientRate') {
-      // Calculate daily rate from target margin and daily client rate
-      // First, calculate what the daily cost would be given the target margin and daily client rate
+    } else if ((calculatorType === 'FTE' && calculationMode === 'salaryPackage') || 
+              (calculatorType === 'Contractor' && calculationMode === 'clientRate')) {
+      // Calculate salary package or daily rate from target margin and daily client rate
+      // First, calculate what the daily cost would be given the target margin and daily rate
       const impliedDailyCost = dailyClientRate * (1 - targetMarginPercent / 100);
       
-      // Then, work backwards to determine what daily rate would result in this daily cost
-      // totalCost = annualIncome * (1 + totalExtraPercent) + extraExpensesAmount
-      // impliedDailyCost = totalCost / workingDays
-      
+      // Then, work backwards to determine what input would result in this daily cost
       const impliedTotalCost = impliedDailyCost * workingDays;
       const extraExpensesAmount = extraExpenses === 'Y' ? additionalExpenses : 0;
       
-      // Solve for annualIncome:
-      // impliedTotalCost = annualIncome * (1 + totalExtraPercent) + extraExpensesAmount
-      // annualIncome = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent)
-      const calculatedAnnualIncome = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent);
+      // Solve for salaryPackage or annualIncome:
+      const calculatedInput = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent);
       
-      // Calculate daily rate
-      const calculatedDailyRate = calculatedAnnualIncome / workingDays;
-      
-      // Update state but avoid infinite loop by not updating if very close to current value
-      if (Math.abs(calculatedDailyRate - dailyRate) > 1) {
-        setDailyRate(calculatedDailyRate);
+      if (calculatorType === 'FTE') {
+        // Update salary package
+        if (Math.abs(calculatedInput - salaryPackage) > 1) {
+          setSalaryPackage(calculatedInput);
+        }
+      } else {
+        // Update daily rate
+        const calculatedDailyRate = calculatedInput / workingDays;
+        if (Math.abs(calculatedDailyRate - dailyRate) > 1) {
+          setDailyRate(calculatedDailyRate);
+        }
       }
       
       // Calculate target margin amount
@@ -155,7 +184,7 @@ const AusContractorGpCalculator = () => {
       setAnnualRevenue(annualRevenueValue);
       
     } else if (calculationMode === 'targetMargin') {
-      // Calculate target margin from daily rate and daily client rate
+      // Calculate target margin from input and daily client rate
       // targetMargin = (dailyClientRate - dailyCost) / dailyClientRate * 100
       const calculatedTargetMarginPercent = ((dailyClientRate - dailyCostValue) / dailyClientRate) * 100;
       
@@ -175,6 +204,11 @@ const AusContractorGpCalculator = () => {
       const annualRevenueValue = dailyClientRate * workingDays;
       setAnnualRevenue(annualRevenueValue);
     }
+  };
+
+  // Handle calculator type change
+  const handleCalculatorTypeChange = (type) => {
+    setCalculatorType(type);
   };
 
   // Handle mode change
@@ -203,17 +237,64 @@ const AusContractorGpCalculator = () => {
     setter(numericValue);
   };
 
-  return (
-    <div className="container" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
-      <div className="nav-buttons" style={{ marginBottom: "8px" }}>
-        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
-      </div>
-      
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>AUS Contractor GP Calculator</h1>
-      
-      <div style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
-        <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
+  // Get calculation mode buttons based on calculator type
+  const getCalculationModeButtons = () => {
+    if (calculatorType === 'FTE') {
+      return (
+        <>
+          <button 
+            onClick={() => handleModeChange('dailyRate')}
+            className={calculationMode === 'dailyRate' ? 'active' : ''}
+            style={{ 
+              flex: 1, 
+              backgroundColor: calculationMode === 'dailyRate' ? '#2563eb' : '#3478f6',
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Calculate Daily Rate
+          </button>
+          <button 
+            onClick={() => handleModeChange('salaryPackage')}
+            className={calculationMode === 'salaryPackage' ? 'active' : ''}
+            style={{ 
+              flex: 1, 
+              backgroundColor: calculationMode === 'salaryPackage' ? '#2563eb' : '#3478f6',
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Calculate Salary Package
+          </button>
+          <button 
+            onClick={() => handleModeChange('targetMargin')}
+            className={calculationMode === 'targetMargin' ? 'active' : ''}
+            style={{ 
+              flex: 1, 
+              backgroundColor: calculationMode === 'targetMargin' ? '#2563eb' : '#3478f6',
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Calculate Target Margin
+          </button>
+        </>
+      );
+    } else {
+      return (
+        <>
           <button 
             onClick={() => handleModeChange('dailyRate')}
             className={calculationMode === 'dailyRate' ? 'active' : ''}
@@ -262,6 +343,137 @@ const AusContractorGpCalculator = () => {
           >
             Calculate Target Margin
           </button>
+        </>
+      );
+    }
+  };
+
+  // Get primary input field based on calculator type
+  const getPrimaryInputField = () => {
+    if (calculatorType === 'FTE') {
+      return (
+        <div style={{ marginBottom: "8px" }}>
+          <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+            AUD$ Salary Package (Including Super)
+            {calculationMode === 'salaryPackage' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+          </label>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
+            <input
+              type="text"
+              value={formatCurrencyInput(salaryPackage.toFixed(2))}
+              onChange={(e) => handleCurrencyInputChange(e.target.value, setSalaryPackage)}
+              style={{ 
+                width: "100%", 
+                paddingLeft: "45px", 
+                paddingTop: "6px", 
+                paddingBottom: "6px", 
+                paddingRight: "6px", 
+                border: "1px solid #d1d5db", 
+                borderRadius: "4px",
+                fontSize: "0.85rem"
+              }}
+              disabled={calculationMode === 'salaryPackage'}
+            />
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div style={{ marginBottom: "8px" }}>
+          <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+            AUD$ Daily Rate (Including Super)
+            {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+          </label>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
+            <input
+              type="text"
+              value={formatCurrencyInput(dailyRate.toFixed(2))}
+              onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
+              style={{ 
+                width: "100%", 
+                paddingLeft: "45px", 
+                paddingTop: "6px", 
+                paddingBottom: "6px", 
+                paddingRight: "6px", 
+                border: "1px solid #d1d5db", 
+                borderRadius: "4px",
+                fontSize: "0.85rem"
+              }}
+              disabled={calculationMode === 'clientRate'}
+            />
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Get results rows based on calculator type
+  const getCalculatorTypeSpecificRows = () => {
+    if (calculatorType === 'Contractor') {
+      return (
+        <>
+          <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+            <td style={{ padding: "4px 8px" }}>Daily Rate (Including Super)</td>
+            <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyRate)}</td>
+          </tr>
+          <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+            <td style={{ padding: "4px 8px" }}>Annual Income (Including Super)</td>
+            <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualIncome)}</td>
+          </tr>
+        </>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="container" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
+      <div className="nav-buttons" style={{ marginBottom: "8px" }}>
+        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
+      </div>
+      
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>AUS GP Calculator</h1>
+      
+      <div style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculator Type</h2>
+        <div style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
+          <button 
+            onClick={() => handleCalculatorTypeChange('FTE')}
+            style={{ 
+              flex: 1, 
+              backgroundColor: calculatorType === 'FTE' ? '#2563eb' : '#3478f6',
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            FTE Calculator
+          </button>
+          <button 
+            onClick={() => handleCalculatorTypeChange('Contractor')}
+            style={{ 
+              flex: 1, 
+              backgroundColor: calculatorType === 'Contractor' ? '#2563eb' : '#3478f6',
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Contractor Calculator
+          </button>
+        </div>
+        
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
+        <div style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
+          {getCalculationModeButtons()}
         </div>
         
         <div style={{ display: "flex", gap: "16px" }}>
@@ -286,8 +498,17 @@ const AusContractorGpCalculator = () => {
                 <select 
                   value={workcover} 
                   disabled={true}
-                  onChange={(e) => setWorkcover(e.target.value)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
+                  style={{ 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
+                    width: "100%", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white", 
+                    color: "black",
+                    appearance: "menulist",
+                    opacity: 0.9
+                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
@@ -301,8 +522,17 @@ const AusContractorGpCalculator = () => {
                 <select 
                   value={leaveMovements} 
                   disabled={true}
-                  onChange={(e) => setLeaveMovements(e.target.value)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
+                  style={{ 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
+                    width: "100%", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white", 
+                    color: "black",
+                    appearance: "menulist",
+                    opacity: 0.9
+                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
@@ -312,10 +542,19 @@ const AusContractorGpCalculator = () => {
               <div style={{ flex: "1 1 50%" }}>
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>LSL Movements</label>
                 <select 
-                  value={lslMovements} 
+                  value={lslMovements}
                   disabled={true}
-                  onChange={(e) => setLslMovements(e.target.value)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
+                  style={{ 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
+                    width: "100%", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white", 
+                    color: "black",
+                    appearance: "menulist",
+                    opacity: 0.9
+                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
@@ -332,8 +571,16 @@ const AusContractorGpCalculator = () => {
                   max="365"
                   value={workingDays}
                   disabled={true}
-                  onChange={(e) => setWorkingDays(parseInt(e.target.value) || 0)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
+                  style={{ 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
+                    width: "100%", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white", 
+                    color: "black",
+                    opacity: 0.9
+                  }}
                 />
               </div>
               
@@ -366,31 +613,7 @@ const AusContractorGpCalculator = () => {
           <div style={{ flex: "1 1 50%" }}>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
 
-            <div style={{ marginBottom: "8px" }}>
-              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                AUD$ Daily Rate (Including Super)
-                {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
-              </label>
-              <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
-                <input
-                  type="text"
-                  value={formatCurrencyInput(dailyRate.toFixed(2))}
-                  onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
-                  style={{ 
-                    width: "15%", 
-                    paddingLeft: "45px", 
-                    paddingTop: "6px", 
-                    paddingBottom: "6px", 
-                    paddingRight: "6px", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    fontSize: "0.85rem"
-                  }}
-                  disabled={calculationMode === 'clientRate'}
-                />
-              </div>
-            </div>
+            {getPrimaryInputField()}
 
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
@@ -403,7 +626,7 @@ const AusContractorGpCalculator = () => {
                   value={targetMarginPercent.toFixed(2)}
                   onChange={(e) => setTargetMarginPercent(parseFloat(e.target.value) || 0)}
                   style={{ 
-                    width: "20%", 
+                    width: "100%", 
                     padding: "6px", 
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
@@ -418,7 +641,9 @@ const AusContractorGpCalculator = () => {
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 AUD$ Daily Client Rate
-                {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                {(calculationMode === 'dailyRate' || 
+                 (calculatorType === 'Contractor' && calculationMode === 'dailyRate')) && 
+                 <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
@@ -427,7 +652,7 @@ const AusContractorGpCalculator = () => {
                   value={formatCurrencyInput(dailyClientRate.toFixed(2))}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyClientRate)}
                   style={{ 
-                    width: "20%", 
+                    width: "100%", 
                     paddingLeft: "45px", 
                     paddingTop: "6px", 
                     paddingBottom: "6px", 
@@ -449,14 +674,13 @@ const AusContractorGpCalculator = () => {
         <div className="result-summary">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Daily Rate (Including Super)</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyRate)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Annual Income (Including Super)</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualIncome)}</td>
-              </tr>
+              {getCalculatorTypeSpecificRows()}
+              {calculatorType === 'FTE' && (
+                <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "4px 8px" }}>Salary Package (Including Super)</td>
+                  <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(salaryPackage)}</td>
+                </tr>
+              )}
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "4px 8px" }}>Payroll Tax ({(PAYROLL_TAX_RATE * 100).toFixed(2)}%)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(payrollTax)}</td>
@@ -521,4 +745,4 @@ const AusContractorGpCalculator = () => {
   );
 };
 
-export default AusContractorGpCalculator;
+export default PhpContractorGpCalculator;
