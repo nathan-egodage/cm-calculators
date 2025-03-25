@@ -1,0 +1,18 @@
+{
+  "auth": {
+    "identityProviders": {
+      "github": {
+        "registration": {
+          "clientIdSettingName": "Ov23li0IZIMM2at5LU2G",
+          "clientSecretSettingName": "c4c7170ac4db2f04bb0151f1654d8d3f93d6615b"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ]
+}
