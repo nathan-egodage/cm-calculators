@@ -6,17 +6,10 @@ const Home = () => {
     <div className="container">
       <h1>CloudMarc Calculators</h1>
       
-      <div className="calculator-menu">
-        <Link to="/bdm-calculator-v1" className="calculator-link">
-          <div className="calculator-card">
-            <h2>BDM Commission Calculator V1</h2>
-            <p>Calculate BDM commissions based on revenue and GP thresholds V1</p>
-          </div>
-        </Link>
-        
+      <div className="calculator-menu">        
         <Link to="/bdm-calculator-v2" className="calculator-link">
           <div className="calculator-card">
-            <h2>BDM Commission Calculator V2</h2>
+            <h2>BDM Commission Calculator</h2>
             <p>Calculate BDM commissions based on revenue and GP thresholds V2</p>
           </div>
         </Link>
