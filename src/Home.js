@@ -6,14 +6,7 @@ const Home = () => {
     <div className="container">
       <h1>CloudMarc Calculators</h1>
       
-      <div className="calculator-menu">        
-        <Link to="/bdm-calculator-v2" className="calculator-link">
-          <div className="calculator-card">
-            <h2>BDM Commission Calculator</h2>
-            <p>Calculate BDM commissions based on revenue and GP thresholds V2</p>
-          </div>
-        </Link>
-        
+      <div className="calculator-menu">                
         <Link to="/aus-fte-gp" className="calculator-link">
           <div className="calculator-card">
             <h2>AUS FTE GP Calculator</h2>
@@ -42,6 +35,9 @@ const Home = () => {
           </div>
         </Link>
       </div>
+      <p className="version-tag">Owner : Nathan Egodage</p>
+      <p className="version-tag">Azure Static Web App | https://github.com/nathan-egodage/cm-calculators.git</p>
+      <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
     </div>
   );
 };

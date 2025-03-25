@@ -164,3 +164,11 @@ button:hover {
 .back-button:hover {
   text-decoration: underline;
 }
+
+.version-tag {
+  font-style: italic;
+  font-weight: normal;
+  text-align: right;
+  font-size: 0.75rem;
+  margin-top: 8px;
+}

@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import BDMCommissionCalculatorV1 from "./BDMCommissionCalculatorV1";
 import BDMCommissionCalculatorV2 from "./BDMCommissionCalculatorV2";
 import AusFteGpCalculator from "./AusFteGpCalculator";
 import AusContractorGpCalculator from "./AusContractorGpCalculator";
@@ -14,7 +13,6 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/bdm-calculator-v1" element={<BDMCommissionCalculatorV1 />} />
         <Route path="/bdm-calculator-v2" element={<BDMCommissionCalculatorV2 />} />
         <Route path="/aus-fte-gp" element={<AusFteGpCalculator />} />
         <Route path="/aus-contractor-gp" element={<AusContractorGpCalculator />} />

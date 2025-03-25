@@ -516,6 +516,7 @@ const AusContractorGpCalculator = () => {
             </tbody>
           </table>
         </div>
+        <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
       </div>
     </div>
   );
