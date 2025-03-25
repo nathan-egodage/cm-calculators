@@ -1,8 +1,10 @@
 // At the top of your file, add:
 import { Link } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
+import useAuth from "./useAuth";
 
 const BDMCommissionCalculatorV1 = () => {
+  const { user, loaded } = useAuth();
   // State variables for input and results
   const [revenue, setRevenue] = useState(1500000);
   const [gp, setGp] = useState(0.35);
@@ -16,6 +18,24 @@ const BDMCommissionCalculatorV1 = () => {
   const [profitAfterCommission, setProfitAfterCommission] = useState(0);
   const [afterCommissionGP, setAfterCommissionGP] = useState(0);
   const [commissionPercentage, setCommissionPercentage] = useState(0);
+
+
+  useEffect(() => {
+    if (
+      loaded &&
+      user &&
+      ["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au"].includes(user.userDetails)
+    ) {
+      calculateCommission();
+    }
+  }, [loaded, user, revenue, gp]);
+
+  if (!loaded) return <p>Loading...</p>;
+
+  if (!user || !["nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au", "ddallariva@cloudmarc.com.au"].includes(user.userDetails)) {
+    return <p>You do not have access to this page.</p>;
+  }
+
 
   // Commission structure data
   const revenueTiers = [
@@ -206,10 +226,6 @@ const BDMCommissionCalculatorV1 = () => {
     return { bonus, details };
   };
 
-  // Calculate commission when inputs change
-  useEffect(() => {
-    calculateCommission();
-  }, [revenue, gp]);
 
   const calculateCommission = () => {
     const details = [];
