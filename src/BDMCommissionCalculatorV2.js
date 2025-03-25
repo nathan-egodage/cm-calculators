@@ -93,7 +93,7 @@ const BDMCommissionCalculatorV2 = () => {
     { gp: 0.34, commissionRate: 0.0250 }, // 2.50%
     { gp: 0.35, commissionRate: 0.0275 }, // 2.75%
     { gp: 0.36, commissionRate: 0.0285 }, // 2.85%
-    { gp: 0.37, commissionRate: 0.0305 }, // 3.05% (fixed typo from 0.0205)
+    { gp: 0.37, commissionRate: 0.0295 }, // 2.95% 
     { gp: 0.38, commissionRate: 0.0305 }, // 3.05%
     { gp: 0.39, commissionRate: 0.0315 }, // 3.15%
     { gp: 0.40, commissionRate: 0.0325 }, // 3.25%
@@ -139,10 +139,10 @@ const BDMCommissionCalculatorV2 = () => {
   const fixedBonusRates = [
     { tierMin: 1, gpMin: 0.33, gpMax: 0.34, rate: 0.007 }, // Tier 1, 33%-34%, 0.7%
     { tierMin: 1, gpMin: 0.34, gpMax: 0.35, rate: 0.009 }, // Tier 1, 34%-35%, 0.9%
-    { tierMin: 2, gpMin: 0.31, gpMax: 0.32, rate: 0.015 }, // Tier 2, 31%-32%, 1.5%
-    { tierMin: 2, gpMin: 0.32, gpMax: 0.33, rate: 0.025 }, // Tier 2, 32%-33%, 2.5%
-    { tierMin: 3, gpMin: 0.28, gpMax: 0.29, rate: 0.025 }, // Tier 3, 28%-29%, 2.5%
-    { tierMin: 3, gpMin: 0.29, gpMax: 0.30, rate: 0.035 }, // Tier 3, 29%-30%, 3.5%
+    { tierMin: 2, gpMin: 0.31, gpMax: 0.32, rate: 0.0015 }, // Tier 2, 31%-32%, 1.5%
+    { tierMin: 2, gpMin: 0.32, gpMax: 0.33, rate: 0.0025 }, // Tier 2, 32%-33%, 2.5%
+    { tierMin: 3, gpMin: 0.28, gpMax: 0.29, rate: 0.0025 }, // Tier 3, 28%-29%, 2.5%
+    { tierMin: 3, gpMin: 0.29, gpMax: 0.30, rate: 0.0035 }, // Tier 3, 29%-30%, 3.5%
     { tierMin: 4, gpMin: 0.26, gpMax: 0.27, rate: 0.002 }, // Tier 4, 26%-27%, 0.2%
     { tierMin: 4, gpMin: 0.27, gpMax: 0.28, rate: 0.003 }  // Tier 4, 27%-28%, 0.3%
   ];
@@ -453,22 +453,22 @@ const BDMCommissionCalculatorV2 = () => {
                 <tr>
                   <td>Tier 2</td>
                   <td>31% - 32%</td>
-                  <td>(Revenue - $1,000,000) × 1.5%</td>
+                  <td>(Revenue - $1,000,000) × 0.15%</td>
                 </tr>
                 <tr>
                   <td>Tier 2</td>
                   <td>32% - 33%</td>
-                  <td>(Revenue - $1,000,000) × 2.5%</td>
+                  <td>(Revenue - $1,000,000) × 0.25%</td>
                 </tr>
                 <tr>
                   <td>Tier 3</td>
                   <td>28% - 29%</td>
-                  <td>(Revenue - $1,000,000) × 2.5%</td>
+                  <td>(Revenue - $1,000,000) × 0.25%</td>
                 </tr>
                 <tr>
                   <td>Tier 3</td>
                   <td>29% - 30%</td>
-                  <td>(Revenue - $1,000,000) × 3.5%</td>
+                  <td>(Revenue - $1,000,000) × 0.35%</td>
                 </tr>
                 <tr>
                   <td>Tier 4</td>
