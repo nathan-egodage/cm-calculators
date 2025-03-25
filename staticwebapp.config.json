@@ -5,14 +5,30 @@
         "registration": {
           "clientIdSettingName": "AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET"
-        }
+        },
+        "userDetailsClaim": "email"
       }
     }
   },
   "routes": [
     {
       "route": "/*",
-      "allowedRoles": ["authenticated"]
+      "allowedRoles": ["authenticated"],
+      "allowedPrincipals": [
+        "nathan@cloudmarc.com.au",
+        "ddallariva@cloudmarc.com.au",
+        "rocket@cloudmarc.com.au"
+      ]
     }
-  ]
+  ],
+  "responseOverrides": {
+    "401": {
+      "statusCode": 302,
+      "redirect": "/.auth/login/aad"
+    },
+    "403": {
+      "statusCode": 200,
+      "body": "You do not have permission to access this application."
+    }
+  }
 }
