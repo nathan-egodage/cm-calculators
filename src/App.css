@@ -117,7 +117,7 @@ button:hover {
   color: #333;
 }
 
-/* Add to your existing App.css */
+/* Calculator Menu Styles */
 
 .calculator-menu {
   display: grid;
@@ -126,27 +126,9 @@ button:hover {
   margin-top: 30px;
 }
 
-.calculator-card {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.calculator-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
 .calculator-link {
   text-decoration: none;
   color: inherit;
-}
-
-.calculator-card h2 {
-  color: #3478f6;
-  margin-bottom: 10px;
 }
 
 .nav-buttons {
@@ -198,14 +180,15 @@ button:hover {
   100% { transform: rotate(360deg); }
 }
 
-/* Add these to your App.css */
-
 /* Australian Theme (Green/Gold) */
 .aus-theme {
   --primary-color: #00843D; /* Australian green */
   --secondary-color: #FFCD00; /* Australian gold */
   --primary-light: #e6f5ec;
   --secondary-light: #fff9e6;
+  --primary-hover: #006633; /* Darker green for hover */
+  --text-on-primary: #ffffff; /* White text on green */
+  --text-on-secondary: #333333; /* Dark text on gold */
 }
 
 /* Philippine Theme (Blue/Red) */
@@ -214,53 +197,94 @@ button:hover {
   --secondary-color: #CE1126; /* Philippine red */
   --primary-light: #e6ecf7;
   --secondary-light: #fae6e8;
+  --primary-hover: #00297b; /* Darker blue for hover */
+  --text-on-primary: #ffffff; /* White text on blue */
+  --text-on-secondary: #ffffff; /* White text on red */
 }
 
 /* Calculator card styling with themes */
 .calculator-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
   border-left: 4px solid var(--primary-color);
+}
+
+.calculator-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .calculator-card.aus-theme {
   background-color: var(--primary-light);
   border-left-color: var(--primary-color);
+  border-bottom: 4px solid var(--secondary-color);
 }
 
 .calculator-card.php-theme {
   background-color: var(--primary-light);
   border-left-color: var(--primary-color);
+  border-bottom: 4px solid var(--secondary-color);
 }
 
 .calculator-card h2 {
   color: var(--primary-color);
+  margin-bottom: 10px;
 }
 
 /* Button styling */
 .aus-theme button {
   background-color: var(--primary-color);
+  color: var(--text-on-primary);
 }
 
 .aus-theme button:hover {
-  background-color: #006b32;
+  background-color: var(--primary-hover);
 }
 
 .php-theme button {
   background-color: var(--primary-color);
+  color: var(--text-on-primary);
 }
 
 .php-theme button:hover {
-  background-color: #002b7a;
+  background-color: var(--primary-hover);
 }
 
 /* Active button styling */
 .aus-theme button.active {
   background-color: var(--secondary-color);
-  color: #333;
+  color: var(--text-on-secondary);
 }
 
 .php-theme button.active {
   background-color: var(--secondary-color);
-  color: white;
+  color: var(--text-on-secondary);
+}
+
+/* Result styling */
+.aus-theme .result-summary {
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-color);
+}
+
+.php-theme .result-summary {
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-color);
+}
+
+.aus-theme .result-highlight {
+  background-color: var(--secondary-light);
+  color: var(--primary-color);
+  border-left: 3px solid var(--secondary-color);
+}
+
+.php-theme .result-highlight {
+  background-color: var(--secondary-light);
+  color: var(--primary-color);
+  border-left: 3px solid var(--secondary-color);
 }
 
 /* Highlight boxes */
@@ -274,7 +298,7 @@ button:hover {
   border: 1px solid var(--secondary-color);
 }
 
-/* Combined Australia-Philippines Theme */
+/* Enhanced combined Australia-Philippines Theme */
 .all-cals-theme {
   --primary-color: #00843D; /* Australian green */
   --secondary-color: #0038A8; /* Philippine blue */
@@ -287,8 +311,10 @@ button:hover {
 /* Special styling for the combined calculator card */
 .all-cals-theme .calculator-card {
   background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
-  border-left: 4px solid var(--secondary-color);
-  border-right: 4px solid var(--primary-color);
+  border-left: 4px solid var(--primary-color); /* Green border left */
+  border-right: 4px solid var(--secondary-color); /* Blue border right */
+  border-bottom: 4px solid; /* Split color border bottom */
+  border-image: linear-gradient(to right, var(--tertiary-color) 50%, var(--quaternary-color) 50%) 1;
 }
 
 .all-cals-theme .calculator-card h2 {
@@ -296,6 +322,7 @@ button:hover {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  font-weight: bold;
 }
 
 .all-cals-theme button {
@@ -304,7 +331,7 @@ button:hover {
 }
 
 .all-cals-theme button:hover {
-  background: linear-gradient(90deg, #006b32 0%, #002b7a 100%);
+  background: linear-gradient(90deg, #006633 0%, #00297b 100%);
 }
 
 .all-cals-theme button.active {
@@ -314,25 +341,39 @@ button:hover {
 
 .all-cals-theme .highlight-box {
   background: linear-gradient(135deg, #fff9e6 0%, #fae6e8 100%);
-  border: 1px solid var(--tertiary-color);
+  border: 1px solid;
+  border-image: linear-gradient(to right, var(--tertiary-color), var(--quaternary-color)) 1;
 }
 
-/* Add to App.css */
 .all-cals-theme .result-summary {
   background: linear-gradient(135deg, #e6f5ec 0%, #e6ecf7 100%);
-  border: 1px solid #0038A8;
+  border: 1px solid;
+  border-image: linear-gradient(to right, var(--primary-color), var(--secondary-color)) 1;
 }
 
 .all-cals-theme .result-table tr:nth-child(even) {
-  background-color: rgba(0, 132, 61, 0.05);
+  background-color: rgba(0, 132, 61, 0.05); /* Light green */
 }
 
 .all-cals-theme .result-table tr:nth-child(odd) {
-  background-color: rgba(0, 56, 168, 0.05);
+  background-color: rgba(0, 56, 168, 0.05); /* Light blue */
 }
 
 .all-cals-theme .result-table tr:last-child {
-  background: linear-gradient(90deg, #FFCD00 0%, #CE1126 100%);
-  color: white;
+  background: linear-gradient(90deg, var(--tertiary-color) 0%, var(--quaternary-color) 100%);
+  color: #333;
   font-weight: bold;
+}
+
+/* Enhanced hover effects for menu cards */
+.calculator-card.aus-theme:hover {
+  box-shadow: 0 8px 20px rgba(0, 132, 61, 0.25), 0 5px 10px rgba(255, 205, 0, 0.2);
+}
+
+.calculator-card.php-theme:hover {
+  box-shadow: 0 8px 20px rgba(0, 56, 168, 0.25), 0 5px 10px rgba(206, 17, 38, 0.2);
+}
+
+.calculator-card.all-cals-theme:hover {
+  box-shadow: 0 8px 20px rgba(0, 132, 61, 0.15), 0 8px 20px rgba(0, 56, 168, 0.15);
 }

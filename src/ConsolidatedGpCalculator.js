@@ -2,26 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-// Color themes for different calculator types
-const colorThemes = {
-  aus: {
-    primary: '#006400', // Green
-    secondary: '#FFD700', // Gold
-    highlight: '#004d00', // Darker green
-    background: '#f0f7f0', // Light green background
-    summaryBackground: '#f5f9f5',
-    resultHighlight: '#eaf5ea',
-    borderColor: '#c8e6c9'
-  },
-  php: {
-    primary: '#0038a8', // Blue (Philippines flag blue)
-    secondary: '#ce1126', // Red (Philippines flag red)
-    highlight: '#002776', // Darker blue
-    background: '#f0f5ff', // Light blue background
-    summaryBackground: '#f5f8ff',
-    resultHighlight: '#eaf2ff',
-    borderColor: '#d0e1ff'
-  }
+// Define theme classes for different calculator types
+const themeClasses = {
+  aus: 'aus-theme',
+  php: 'php-theme'
 };
 
 const ConsolidatedGpCalculator = () => {
@@ -436,33 +420,27 @@ const ConsolidatedGpCalculator = () => {
     }
   };
 
-  // Determine which color theme to use based on calculator type
-  const colorTheme = calculatorType.startsWith('aus') ? colorThemes.aus : colorThemes.php;
+  // Determine current theme based on calculator type
+  const currentTheme = calculatorType.startsWith('aus') ? themeClasses.aus : themeClasses.php;
 
   return (
-    <div className="container" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
+    <div className={`container ${currentTheme}`} style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
-        <Link to="/" className="back-button" style={{ color: colorTheme.primary }}>&#8592; Back to All Calculators</Link>
+        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
       </div>
       
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px", color: colorTheme.primary }}>GP Calculator</h1>
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>GP Calculator</h1>
       
-      <div style={{ marginBottom: "12px", border: `1px solid ${colorTheme.borderColor}`, borderRadius: "4px", padding: "12px", backgroundColor: colorTheme.background }}>
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px", color: colorTheme.primary }}>Calculator Type</h2>
+      <div className={`calculator-card ${currentTheme}`} style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculator Type</h2>
         <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
           <button 
             onClick={() => handleCalculatorTypeChange('ausContractor')}
             className={calculatorType === 'ausContractor' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculatorType === 'ausContractor' 
-                ? colorThemes.aus.highlight 
-                : (calculatorType.startsWith('aus') ? colorThemes.aus.primary : colorThemes.aus.secondary),
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: calculatorType.startsWith('aus') ? "white" : "#333",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -473,14 +451,8 @@ const ConsolidatedGpCalculator = () => {
             className={calculatorType === 'ausFte' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculatorType === 'ausFte' 
-                ? colorThemes.aus.highlight 
-                : (calculatorType.startsWith('aus') ? colorThemes.aus.primary : colorThemes.aus.secondary),
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: calculatorType.startsWith('aus') ? "white" : "#333",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -491,14 +463,8 @@ const ConsolidatedGpCalculator = () => {
             className={calculatorType === 'phpContractor' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculatorType === 'phpContractor' 
-                ? colorThemes.php.highlight 
-                : (calculatorType.startsWith('php') ? colorThemes.php.primary : colorThemes.php.secondary),
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: calculatorType.startsWith('php') ? "white" : "#333",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -509,14 +475,8 @@ const ConsolidatedGpCalculator = () => {
             className={calculatorType === 'phpFte' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculatorType === 'phpFte' 
-                ? colorThemes.php.highlight 
-                : (calculatorType.startsWith('php') ? colorThemes.php.primary : colorThemes.php.secondary),
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: calculatorType.startsWith('php') ? "white" : "#333",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -524,9 +484,9 @@ const ConsolidatedGpCalculator = () => {
           </button>
         </div>
         
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px", color: colorTheme.primary }}>{getPageTitle()}</h2>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>{getPageTitle()}</h2>
         
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px", color: colorTheme.primary }}>Calculation Mode</h2>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
         <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
           {getAvailableCalcModes().map(mode => (
             <button 
@@ -535,12 +495,8 @@ const ConsolidatedGpCalculator = () => {
               className={calculationMode === mode.id ? 'active' : ''}
               style={{ 
                 flex: 1, 
-                backgroundColor: calculationMode === mode.id ? colorTheme.highlight : colorTheme.primary,
                 padding: "8px 0",
                 fontSize: "0.9rem",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
                 cursor: "pointer"
               }}
             >
@@ -551,7 +507,7 @@ const ConsolidatedGpCalculator = () => {
         
         <div style={{ display: "flex", gap: "16px" }}>
           <div style={{ flex: "1 1 50%" }}>
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px", color: colorTheme.primary }}>Configuration</h2>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Configuration</h2>
             
             <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
               <div style={{ flex: "1 1 50%" }}>
@@ -770,7 +726,7 @@ const ConsolidatedGpCalculator = () => {
           </div>
           
           <div style={{ flex: "1 1 50%" }}>
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px", color: colorTheme.primary }}>Calculation Inputs</h2>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
             
             {/* Rate input switch for PHP calculators */}
             {calculatorType.startsWith('php') && calculationMode !== 'clientRate' && (
@@ -780,8 +736,6 @@ const ConsolidatedGpCalculator = () => {
                   onClick={toggleRateInputMode}
                   style={{ 
                     padding: "4px 8px",
-                    backgroundColor: colorTheme.primary,
-                    color: "white",
                     border: "none",
                     borderRadius: "4px",
                     fontSize: "0.8rem",
@@ -951,9 +905,9 @@ const ConsolidatedGpCalculator = () => {
         </div>
       </div>
       
-      <div style={{ marginBottom: "12px", border: `1px solid ${colorTheme.borderColor}`, borderRadius: "4px", padding: "12px", backgroundColor: colorTheme.summaryBackground }}>
-        <h2 style={{ fontSize: "1.1rem", marginBottom: "8px", color: colorTheme.primary }}>Results</h2>
-        <div className="result-summary" style={{ backgroundColor: colorTheme.background, border: `1px solid ${colorTheme.borderColor}` }}>
+      <div className={`highlight-box ${currentTheme}`} style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
+        <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Results</h2>
+        <div className="result-summary">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
               {/* PHP Monthly Salary for PHP Calculators */}
@@ -1045,7 +999,7 @@ const ConsolidatedGpCalculator = () => {
               )}
               
               {/* Total Cost */}
-              <tr style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Total Cost</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(totalCost)}</td>
               </tr>
@@ -1057,38 +1011,38 @@ const ConsolidatedGpCalculator = () => {
               </tr>
               
               {/* Target Margin % */}
-              <tr style={{ borderBottom: `1px solid ${colorTheme.borderColor}`, fontWeight: "bold" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Target Margin %</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(targetMarginPercent)}</td>
               </tr>
               
               {/* Target Margin $ */}
-              <tr style={{ borderBottom: `1px solid ${colorTheme.borderColor}` }}>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "4px 8px" }}>Target Margin $</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(targetMarginAmount)}</td>
               </tr>
               
               {/* Daily Client Rate */}
-              <tr style={{ borderBottom: `1px solid ${colorTheme.borderColor}`, backgroundColor: colorTheme.highlight, fontWeight: "bold", color: "white" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "#e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Daily Client Rate</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyClientRate)}</td>
               </tr>
               
               {/* Annual Profit */}
-              <tr style={{ borderBottom: `1px solid ${colorTheme.borderColor}`, backgroundColor: colorTheme.resultHighlight }}>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "4px 8px" }}>Annual Profit</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualProfit)}</td>
               </tr>
               
               {/* Annual Revenue */}
-              <tr style={{ borderBottom: `1px solid ${colorTheme.borderColor}`, backgroundColor: colorTheme.resultHighlight }}>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "4px 8px" }}>Annual Revenue</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualRevenue)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p className="version-tag" style={{ color: colorTheme.primary }}>V1.0.0 (26-Mar-2025)</p>
+        <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
       </div>
     </div>
   );

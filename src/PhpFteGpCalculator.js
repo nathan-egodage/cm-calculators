@@ -240,14 +240,14 @@ const PhpFteGpCalculator = () => {
   };
 
   return (
-    <div className="container" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
+    <div className="container php-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
         <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
       </div>
       
       <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>PHP FTE GP Calculator</h1>
       
-      <div style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
+      <div className="calculator-card php-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
         <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
         <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
           <button 
@@ -255,12 +255,8 @@ const PhpFteGpCalculator = () => {
             className={calculationMode === 'dailyRate' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculationMode === 'dailyRate' ? '#2563eb' : '#3478f6',
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -271,12 +267,8 @@ const PhpFteGpCalculator = () => {
             className={calculationMode === 'clientRate' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculationMode === 'clientRate' ? '#2563eb' : '#3478f6',
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -287,12 +279,8 @@ const PhpFteGpCalculator = () => {
             className={calculationMode === 'targetMargin' ? 'active' : ''}
             style={{ 
               flex: 1, 
-              backgroundColor: calculationMode === 'targetMargin' ? '#2563eb' : '#3478f6',
               padding: "8px 0",
               fontSize: "0.9rem",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
               cursor: "pointer"
             }}
           >
@@ -490,8 +478,6 @@ const PhpFteGpCalculator = () => {
                   onClick={toggleRateInputMode}
                   style={{ 
                     padding: "4px 8px",
-                    backgroundColor: "#2563eb",
-                    color: "white",
                     border: "none",
                     borderRadius: "4px",
                     fontSize: "0.8rem",
@@ -619,7 +605,7 @@ const PhpFteGpCalculator = () => {
         </div>
       </div>
       
-      <div style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
+      <div className="highlight-box php-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
         <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Results</h2>
         <div className="result-summary">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
@@ -672,7 +658,7 @@ const PhpFteGpCalculator = () => {
                 <td style={{ padding: "4px 8px" }}>13th Month Pay</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(thirteenthMonthPayAmount)}</td>
               </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Total Cost</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(totalCost)}</td>
               </tr>
@@ -680,7 +666,7 @@ const PhpFteGpCalculator = () => {
                 <td style={{ padding: "4px 8px" }}>Daily Cost</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyCost)}</td>
               </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Target Margin %</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(targetMarginPercent)}</td>
               </tr>
@@ -688,7 +674,7 @@ const PhpFteGpCalculator = () => {
                 <td style={{ padding: "4px 8px" }}>Target Margin $</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(targetMarginAmount)}</td>
               </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "#e5e7eb", fontWeight: "bold" }}>
+              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "#e5e7eb", fontWeight: "bold" }}>
                 <td style={{ padding: "4px 8px" }}>Daily Client Rate</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyClientRate)}</td>
               </tr>
