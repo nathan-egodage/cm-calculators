@@ -14,11 +14,21 @@
     {
       "route": "/*",
       "allowedRoles": ["authenticated"],
-      "allowedPrincipals": [
-        "nathan@cloudmarc.com.au",
-        "ddallariva@cloudmarc.com.au",
-        "rocket@cloudmarc.com.au"
-      ]
+      "allowedPrincipals": {
+        "identities": [
+          "nathan@cloudmarc.com.au",
+          "ddallariva@cloudmarc.com.au",
+          "rocket@cloudmarc.com.au"
+        ]
+      }
+    },
+    {
+      "route": "/.auth/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/assets/*",
+      "allowedRoles": ["anonymous"]
     }
   ],
   "navigationFallback": {
@@ -32,7 +42,7 @@
     },
     "403": {
       "statusCode": 200,
-      "body": "You do not have permission to access this application."
+      "body": "You do not have permission to access this application. Please contact your administrator if you believe this is an error."
     }
   }
 }
