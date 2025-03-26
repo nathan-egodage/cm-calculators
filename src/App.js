@@ -44,7 +44,8 @@ function App() {
         const ALLOWED_USERS = [
           'nathan@cloudmarc.com.au',
           'ddallariva@cloudmarc.com.au',
-          'rocket@cloudmarc.com.au'
+          'rocket@cloudmarc.com.au',
+          'user1@cloudmarc.com.au'
         ].map(email => email.toLowerCase());
 
         const authorized = userEmail && ALLOWED_USERS.includes(userEmail);
