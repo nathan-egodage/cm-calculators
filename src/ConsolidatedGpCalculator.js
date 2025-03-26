@@ -234,7 +234,7 @@ const ConsolidatedGpCalculator = () => {
     setDailyCost(dailyCostValue);
 
     // Perform specific calculations based on the calculation mode and calculator type
-    if (calculationMode === 'dailyRate' || calculationMode === 'salaryPackage') {
+    if (calculationMode === 'dailyRate') {
       // Calculate daily client rate from daily rate/salary and target margin
       const marginMultiplier = 1 / (1 - targetMarginPercent / 100);
       const calculatedDailyClientRate = dailyCostValue * marginMultiplier;
@@ -249,6 +249,31 @@ const ConsolidatedGpCalculator = () => {
       setAnnualProfit(annualProfitValue);
       
       const annualRevenueValue = calculatedDailyClientRate * workingDays;
+      setAnnualRevenue(annualRevenueValue);
+      
+    } else if (calculationMode === 'salaryPackage' && calculatorType === 'ausFte') {
+      // Calculate salary package from target margin and daily client rate
+      const impliedDailyCost = dailyClientRate * (1 - targetMarginPercent / 100);
+      const impliedTotalCost = impliedDailyCost * workingDays;
+      const extraExpensesAmount = extraExpenses === 'Y' ? additionalExpenses : 0;
+      
+      // Determine the salary package needed to result in the implied daily cost
+      const calculatedSalaryPackage = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent);
+      
+      // Update state but avoid infinite loop by not updating if very close to current value
+      if (Math.abs(calculatedSalaryPackage - salaryPackage) > 1) {
+        setSalaryPackage(calculatedSalaryPackage);
+      }
+      
+      // Calculate target margin amount
+      const targetMarginAmountValue = dailyClientRate - impliedDailyCost;
+      setTargetMarginAmount(targetMarginAmountValue);
+      
+      // Calculate annual profit and revenue
+      const annualProfitValue = targetMarginAmountValue * workingDays;
+      setAnnualProfit(annualProfitValue);
+      
+      const annualRevenueValue = dailyClientRate * workingDays;
       setAnnualRevenue(annualRevenueValue);
       
     } else if (calculationMode === 'clientRate') {
@@ -316,24 +341,22 @@ const ConsolidatedGpCalculator = () => {
 
   // Toggle between daily rate and PHP salary as input for PHP calculators
   const toggleRateInputMode = () => {
-    setRateInputMode(prevMode => prevMode === 'dailyRate' ? 'phpSalary' : 'dailyRate');
+    setRateInputMode(currentMode => currentMode === 'dailyRate' ? 'phpSalary' : 'dailyRate');
   };
 
-// Handle calculator type change
-const handleCalculatorTypeChange = (type) => {
-  setCalculatorType(type);
-  
-  // Reset calculation mode based on type
-  if (type === 'ausFte') {
-    setCalculationMode(prevMode => 
-      prevMode === 'clientRate' ? 'salaryPackage' : prevMode
-    );
-  } else {
-    setCalculationMode(prevMode => 
-      prevMode === 'salaryPackage' ? 'dailyRate' : prevMode
-    );
-  }
-};
+  // Handle calculator type change
+  const handleCalculatorTypeChange = (type) => {
+    setCalculatorType(type);
+    
+    // Reset calculation mode based on type
+    if (type === 'ausFte') {
+      setCalculationMode(currentMode => 
+        currentMode === 'clientRate' ? 'salaryPackage' : currentMode
+      );
+    } else if (calculationMode === 'salaryPackage') {
+      setCalculationMode('dailyRate');
+    }
+  };
 
   // Handle mode change
   const handleModeChange = (mode) => {
@@ -867,14 +890,13 @@ const handleCalculatorTypeChange = (type) => {
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 AUD$ Daily Client Rate
-                {(calculationMode === 'dailyRate' || calculationMode === 'salaryPackage') && 
-                  <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={calculationMode === 'dailyRate' || calculationMode === 'salaryPackage' ? 
+                  value={calculationMode === 'dailyRate' ? 
                     Math.round(dailyClientRate) : 
                     dailyClientRate === 0 ? '' : Math.round(dailyClientRate)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyClientRate)}
@@ -888,7 +910,7 @@ const handleCalculatorTypeChange = (type) => {
                     borderRadius: "4px",
                     fontSize: "0.85rem"
                   }}
-                  disabled={calculationMode === 'dailyRate' || calculationMode === 'salaryPackage'}
+                  disabled={calculationMode === 'dailyRate'}
                 />
               </div>
             </div>
@@ -1033,7 +1055,7 @@ const handleCalculatorTypeChange = (type) => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V1.0.1 (27-Mar-2025)</p>
+        <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
       </div>
     </div>
   );
