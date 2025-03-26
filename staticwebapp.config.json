@@ -5,11 +5,18 @@
         "registration": {
           "clientIdSettingName": "AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET",
-          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85/v2.0"
+          "openIdIssuer": "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0"
         },
         "userDetailsClaim": "preferred_username",
         "validate": {
-          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"]
+          "allowedAudiences": ["YOUR_CLIENT_ID"],
+          "allowedPrincipals": {
+            "identities": [
+              "nathan@cloudmarc.com.au",
+              "ddallariva@cloudmarc.com.au",
+              "rocket@cloudmarc.com.au"
+            ]
+          }
         }
       }
     }
@@ -30,13 +37,17 @@
     {
       "route": "/*",
       "allowedRoles": ["authenticated"],
-      "allowedPrincipals": {
-        "identities": [
-          "nathan@cloudmarc.com.au",
-          "ddallariva@cloudmarc.com.au",
-          "rocket@cloudmarc.com.au"
-        ]
-      }
+      "rules": [
+        {
+          "match": "roles",
+          "principals": [
+            "nathan@cloudmarc.com.au",
+            "ddallariva@cloudmarc.com.au",
+            "rocket@cloudmarc.com.au"
+          ],
+          "requireAllRoles": false
+        }
+      ]
     }
   ],
   "navigationFallback": {
@@ -45,12 +56,12 @@
   },
   "responseOverrides": {
     "401": {
-      "statusCode": 302,
-      "redirect": "/.auth/login/aad?post_login_redirect_uri=/redirect"
+      "redirect": "/.auth/login/aad",
+      "statusCode": 302
     },
     "403": {
-      "statusCode": 302,
-      "redirect": "/.auth/login/aad?post_login_redirect_uri=/error?code=403"
+      "redirect": "/error?code=403",
+      "statusCode": 302
     }
   }
 }
