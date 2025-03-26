@@ -4,24 +4,14 @@
       "azureActiveDirectory": {
         "registration": {
           "clientIdSettingName": "AAD_CLIENT_ID",
-          "clientSecretSettingName": "AAD_CLIENT_SECRET"
+          "clientSecretSettingName": "AAD_CLIENT_SECRET",
+          "openIdIssuer": "https://login.microsoftonline.com/<your-tenant-id>/v2.0"
         },
-        "userDetailsClaim": "email"
+        "userDetailsClaim": "preferred_username"
       }
     }
   },
   "routes": [
-    {
-      "route": "/*",
-      "allowedRoles": ["authenticated"],
-      "allowedPrincipals": {
-        "identities": [
-          "nathan@cloudmarc.com.au",
-          "ddallariva@cloudmarc.com.au",
-          "rocket@cloudmarc.com.au"
-        ]
-      }
-    },
     {
       "route": "/.auth/*",
       "allowedRoles": ["anonymous"]
@@ -29,6 +19,17 @@
     {
       "route": "/assets/*",
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"],
+      "allowedPrincipals": {
+        "identities": [
+          "nathan@cloudmarc.com.au",
+          "ddallariva@cloudmarc.com.au", 
+          "rocket@cloudmarc.com.au"
+        ]
+      }
     }
   ],
   "navigationFallback": {
@@ -41,8 +42,8 @@
       "redirect": "/.auth/login/aad"
     },
     "403": {
-      "statusCode": 200,
-      "body": "You do not have permission to access this application. Please contact your administrator if you believe this is an error."
+      "statusCode": 302,
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=/403"
     }
   }
 }
