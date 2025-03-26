@@ -45,7 +45,10 @@ function App() {
           'nathan@cloudmarc.com.au',
           'ddallariva@cloudmarc.com.au',
           'rocket@cloudmarc.com.au',
-          'user1@cloudmarc.com.au'
+          'dnewland@cloudmarc.com.au',
+          'dscanlon@cloudmarc.com.au',
+          'jgregory@cloudmarc.com.au',
+          'sbrownbill@cloudmarc.com.au'
         ].map(email => email.toLowerCase());
 
         const authorized = userEmail && ALLOWED_USERS.includes(userEmail);

@@ -22,7 +22,7 @@ const BDMCommissionCalculatorV2 = () => {
     if (
       loaded &&
       user &&
-      ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au"].includes(user.userDetails)
+      ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au","dnewland@cloudmarc.com.au"].includes(user.userDetails)
     ) {
       calculateCommission();
     }
@@ -30,7 +30,7 @@ const BDMCommissionCalculatorV2 = () => {
 
   if (!loaded) return <p>Loading...</p>;
 
-  if (!user || !["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au"].includes(user.userDetails)) {
+  if (!user || !["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au","dnewland@cloudmarc.com.au"].includes(user.userDetails)) {
     return <p>You do not have access to this page.</p>;
   }
 
