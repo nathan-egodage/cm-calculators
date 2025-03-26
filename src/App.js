@@ -5,6 +5,7 @@ import AusFteGpCalculator from "./AusFteGpCalculator";
 import AusContractorGpCalculator from "./AusContractorGpCalculator";
 import PhpContractorGpCalculator from "./PhpContractorGpCalculator";
 import PhpFteGpCalculator from "./PhpFteGpCalculator";
+import ConsolidatedGpCalculator from "./ConsolidatedGpCalculator";
 import Home from "./Home";
 import "./App.css";
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/aus-contractor-gp" element={<AusContractorGpCalculator />} />
         <Route path="/php-contractor-gp" element={<PhpContractorGpCalculator />} />
         <Route path="/php-fte-gp" element={<PhpFteGpCalculator />} />
+        <Route path="/all-cals" element={<ConsolidatedGpCalculator />} />
       </Routes>
     </Router>
   );

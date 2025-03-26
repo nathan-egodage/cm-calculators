@@ -5,8 +5,14 @@ const Home = () => {
   return (
     <div className="container">
       <h1>CloudMarc Calculators</h1>
-      
-      <div className="calculator-menu">                
+
+      <div className="calculator-menu">    
+        <Link to="/all-cals" className="calculator-link">
+          <div className="calculator-card">
+            <h2>All GP Calculators</h2>
+            <p>One page with all GP calculators.</p>
+          </div>
+        </Link>
         <Link to="/aus-fte-gp" className="calculator-link">
           <div className="calculator-card">
             <h2>AUS FTE GP Calculator</h2>
@@ -37,9 +43,8 @@ const Home = () => {
       </div>
       <p className="version-tag">Owner : Nathan Egodage</p>
       <p className="version-tag">Azure Static Web App | https://github.com/nathan-egodage/cm-calculators.git</p>
-      <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
+      <p className="version-tag">V1.0.1 (27-Mar-2025)</p>
     </div>
   );
 };
-
 export default Home;

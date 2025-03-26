@@ -518,7 +518,7 @@ const AusFteGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p style={{ textAlign: "right", fontSize: "0.75rem", color: "#6b7280", marginTop: "8px" }}>V1.0.0 (26-Mar-2025)</p>
+        <p style={{ textAlign: "right", fontSize: "0.75rem", color: "#6b7280", marginTop: "8px" }}>V1.0.1 (27-Mar-2025)</p>
       </div>
     </div>
   );
