@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const AusContractorGpCalculator = () => {
   // State for form inputs and calculated values
   const [dailyRate, setDailyRate] = useState(700);
-  const [targetMarginPercent, setTargetMarginPercent] = useState(20);
+  const [targetMarginPercent, setTargetMarginPercent] = useState(35);
   const [dailyClientRate, setDailyClientRate] = useState(931.04);
   
   // State for configuration settings
@@ -197,10 +197,12 @@ const AusContractorGpCalculator = () => {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Handle currency input changes by removing commas before parsing
+  // Handle currency input changes
   const handleCurrencyInputChange = (value, setter) => {
-    const numericValue = parseFloat(value.replace(/,/g, '')) || 0;
-    setter(numericValue);
+    // Remove all non-digit characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    // Parse to float or default to 0
+    setter(numericValue === '' ? 0 : parseFloat(numericValue));
   };
 
   return (
@@ -375,7 +377,9 @@ const AusContractorGpCalculator = () => {
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={formatCurrencyInput(dailyRate.toFixed(2))}
+                  value={calculationMode === 'clientRate' ? 
+                    Math.round(dailyRate) : 
+                    dailyRate === 0 ? '' : Math.round(dailyRate)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
                   style={{ 
                     width: "15%", 
@@ -394,14 +398,19 @@ const AusContractorGpCalculator = () => {
 
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                Target Margin
+                Target Margin %
                 {calculationMode === 'targetMargin' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <input
-                  type="number"
-                  value={targetMarginPercent.toFixed(2)}
-                  onChange={(e) => setTargetMarginPercent(parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={calculationMode === 'targetMargin' ? 
+                    Math.round(targetMarginPercent) : 
+                    targetMarginPercent === 0 ? '' : Math.round(targetMarginPercent)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    setTargetMarginPercent(value === '' ? 0 : parseFloat(value));
+                  }}
                   style={{ 
                     width: "20%", 
                     padding: "6px", 
@@ -410,7 +419,6 @@ const AusContractorGpCalculator = () => {
                     fontSize: "0.85rem"
                   }}
                   disabled={calculationMode === 'targetMargin'}
-                  step="0.01"
                 />
               </div>
             </div>
@@ -424,7 +432,9 @@ const AusContractorGpCalculator = () => {
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={formatCurrencyInput(dailyClientRate.toFixed(2))}
+                  value={calculationMode === 'dailyRate' ? 
+                    Math.round(dailyClientRate) : 
+                    dailyClientRate === 0 ? '' : Math.round(dailyClientRate)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyClientRate)}
                   style={{ 
                     width: "20%", 

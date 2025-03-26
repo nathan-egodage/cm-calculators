@@ -5,8 +5,8 @@ import { Link } from "react-router-dom";
 const PhpFteGpCalculator = () => {
   // State for form inputs and calculated values
   const [phpRate, setPhpRate] = useState(0.028);
-  const [dailyRate, setDailyRate] = useState(200);
-  const [targetMarginPercent, setTargetMarginPercent] = useState(20);
+  const [dailyRate, setDailyRate] = useState(210);
+  const [targetMarginPercent, setTargetMarginPercent] = useState(50);
   const [dailyClientRate, setDailyClientRate] = useState(286.28);
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(142857.14);
   
@@ -19,6 +19,7 @@ const PhpFteGpCalculator = () => {
   const [leaveMovements, setLeaveMovements] = useState('N');
   const [lslMovements, setLslMovements] = useState('N');
   const [workingDays, setWorkingDays] = useState(220);
+  const [phpFteWorkingDays, setPhpFteWorkingDays] = useState(240);
   const [extraExpenses, setExtraExpenses] = useState('Y');
   const [additionalExpenses, setAdditionalExpenses] = useState(0);
   const [thirteenthMonthPay, setThirteenthMonthPay] = useState('Y');
@@ -97,7 +98,7 @@ const PhpFteGpCalculator = () => {
   // Function to handle the main calculations
   const calculateValues = () => {
     // Calculate annual income
-    const annualIncomeValue = dailyRate * workingDays;
+    const annualIncomeValue = dailyRate * phpFteWorkingDays;
     setAnnualIncome(annualIncomeValue);
 
     // Calculate payroll tax if applicable
@@ -230,10 +231,12 @@ const PhpFteGpCalculator = () => {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Handle currency input changes by removing commas before parsing
+  // Handle currency input changes
   const handleCurrencyInputChange = (value, setter) => {
-    const numericValue = parseFloat(value.replace(/,/g, '')) || 0;
-    setter(numericValue);
+    // Remove all non-digit characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    // Parse to float or default to 0
+    setter(numericValue === '' ? 0 : parseFloat(numericValue));
   };
 
   return (
@@ -510,7 +513,9 @@ const PhpFteGpCalculator = () => {
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={formatCurrencyInput(dailyRate.toFixed(2))}
+                  value={calculationMode === 'clientRate' || rateInputMode === 'phpSalary' ? 
+                    Math.round(dailyRate) : 
+                    dailyRate === 0 ? '' : Math.round(dailyRate)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
                   style={{ 
                     width: "25%", 
@@ -529,7 +534,7 @@ const PhpFteGpCalculator = () => {
 
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                PHP Monthly Salary (160 hours)
+                PHP Monthly Salary (FTE)
                 {rateInputMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
                 {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
@@ -537,7 +542,9 @@ const PhpFteGpCalculator = () => {
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>₱</div>
                 <input
                   type="text"
-                  value={formatCurrencyInput(phpMonthlySalary.toFixed(2))}
+                  value={rateInputMode === 'dailyRate' || calculationMode === 'clientRate' ? 
+                    Math.round(phpMonthlySalary) : 
+                    phpMonthlySalary === 0 ? '' : Math.round(phpMonthlySalary)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setPhpMonthlySalary)}
                   style={{ 
                     width: "25%", 
@@ -556,14 +563,19 @@ const PhpFteGpCalculator = () => {
 
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                Target Margin
+                Target Margin %
                 {calculationMode === 'targetMargin' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <input
-                  type="number"
-                  value={targetMarginPercent.toFixed(2)}
-                  onChange={(e) => setTargetMarginPercent(parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={calculationMode === 'targetMargin' ? 
+                    Math.round(targetMarginPercent) : 
+                    targetMarginPercent === 0 ? '' : Math.round(targetMarginPercent)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    setTargetMarginPercent(value === '' ? 0 : parseFloat(value));
+                  }}
                   style={{ 
                     width: "20%", 
                     padding: "6px", 
@@ -572,7 +584,6 @@ const PhpFteGpCalculator = () => {
                     fontSize: "0.85rem"
                   }}
                   disabled={calculationMode === 'targetMargin'}
-                  step="0.01"
                 />
               </div>
             </div>
@@ -586,7 +597,9 @@ const PhpFteGpCalculator = () => {
                 <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={formatCurrencyInput(dailyClientRate.toFixed(2))}
+                  value={calculationMode === 'dailyRate' ? 
+                    Math.round(dailyClientRate) : 
+                    dailyClientRate === 0 ? '' : Math.round(dailyClientRate)}
                   onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyClientRate)}
                   style={{ 
                     width: "20%", 
@@ -612,7 +625,7 @@ const PhpFteGpCalculator = () => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>PHP Monthly Salary (160 hours)</td>
+                <td style={{ padding: "4px 8px" }}>PHP Monthly Salary (FTE)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPhpCurrency(phpMonthlySalary)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
