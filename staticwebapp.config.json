@@ -5,11 +5,11 @@
         "registration": {
           "clientIdSettingName": "AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET",
-          "openIdIssuer": "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0"
+          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85/v2.0"
         },
         "userDetailsClaim": "preferred_username",
         "validate": {
-          "allowedAudiences": ["YOUR_CLIENT_ID"],
+          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"],
           "allowedPrincipals": {
             "identities": [
               "nathan@cloudmarc.com.au",
