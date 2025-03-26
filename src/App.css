@@ -197,3 +197,142 @@ button:hover {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Add these to your App.css */
+
+/* Australian Theme (Green/Gold) */
+.aus-theme {
+  --primary-color: #00843D; /* Australian green */
+  --secondary-color: #FFCD00; /* Australian gold */
+  --primary-light: #e6f5ec;
+  --secondary-light: #fff9e6;
+}
+
+/* Philippine Theme (Blue/Red) */
+.php-theme {
+  --primary-color: #0038A8; /* Philippine blue */
+  --secondary-color: #CE1126; /* Philippine red */
+  --primary-light: #e6ecf7;
+  --secondary-light: #fae6e8;
+}
+
+/* Calculator card styling with themes */
+.calculator-card {
+  border-left: 4px solid var(--primary-color);
+}
+
+.calculator-card.aus-theme {
+  background-color: var(--primary-light);
+  border-left-color: var(--primary-color);
+}
+
+.calculator-card.php-theme {
+  background-color: var(--primary-light);
+  border-left-color: var(--primary-color);
+}
+
+.calculator-card h2 {
+  color: var(--primary-color);
+}
+
+/* Button styling */
+.aus-theme button {
+  background-color: var(--primary-color);
+}
+
+.aus-theme button:hover {
+  background-color: #006b32;
+}
+
+.php-theme button {
+  background-color: var(--primary-color);
+}
+
+.php-theme button:hover {
+  background-color: #002b7a;
+}
+
+/* Active button styling */
+.aus-theme button.active {
+  background-color: var(--secondary-color);
+  color: #333;
+}
+
+.php-theme button.active {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+/* Highlight boxes */
+.aus-theme .highlight-box {
+  background-color: var(--secondary-light);
+  border: 1px solid var(--secondary-color);
+}
+
+.php-theme .highlight-box {
+  background-color: var(--secondary-light);
+  border: 1px solid var(--secondary-color);
+}
+
+/* Combined Australia-Philippines Theme */
+.all-cals-theme {
+  --primary-color: #00843D; /* Australian green */
+  --secondary-color: #0038A8; /* Philippine blue */
+  --tertiary-color: #FFCD00; /* Australian gold */
+  --quaternary-color: #CE1126; /* Philippine red */
+  --primary-light: #e6f5ec; /* Light green */
+  --secondary-light: #e6ecf7; /* Light blue */
+}
+
+/* Special styling for the combined calculator card */
+.all-cals-theme .calculator-card {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
+  border-left: 4px solid var(--secondary-color);
+  border-right: 4px solid var(--primary-color);
+}
+
+.all-cals-theme .calculator-card h2 {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.all-cals-theme button {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+}
+
+.all-cals-theme button:hover {
+  background: linear-gradient(90deg, #006b32 0%, #002b7a 100%);
+}
+
+.all-cals-theme button.active {
+  background: linear-gradient(90deg, var(--tertiary-color) 0%, var(--quaternary-color) 100%);
+  color: #333;
+}
+
+.all-cals-theme .highlight-box {
+  background: linear-gradient(135deg, #fff9e6 0%, #fae6e8 100%);
+  border: 1px solid var(--tertiary-color);
+}
+
+/* Add to App.css */
+.all-cals-theme .result-summary {
+  background: linear-gradient(135deg, #e6f5ec 0%, #e6ecf7 100%);
+  border: 1px solid #0038A8;
+}
+
+.all-cals-theme .result-table tr:nth-child(even) {
+  background-color: rgba(0, 132, 61, 0.05);
+}
+
+.all-cals-theme .result-table tr:nth-child(odd) {
+  background-color: rgba(0, 56, 168, 0.05);
+}
+
+.all-cals-theme .result-table tr:last-child {
+  background: linear-gradient(90deg, #FFCD00 0%, #CE1126 100%);
+  color: white;
+  font-weight: bold;
+}
