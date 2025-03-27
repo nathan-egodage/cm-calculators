@@ -6,6 +6,8 @@ import AusContractorGpCalculator from './AusContractorGpCalculator';
 import PhpContractorGpCalculator from './PhpContractorGpCalculator';
 import PhpFteGpCalculator from './PhpFteGpCalculator';
 import ConsolidatedGpCalculator from './ConsolidatedGpCalculator';
+import GenericOffshoreContractorGpCalculator from './GenericOffshoreContractorGpCalculator';
+
 import Home from './Home';
 import './App.css';
 
@@ -118,9 +120,14 @@ function App() {
           authStatus.isAuthorized ? <ConsolidatedGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/all-cals' }} replace />
         } />
         
+        <Route path="/generic-contractor-gp" element={
+          authStatus.isAuthorized ? <GenericOffshoreContractorGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/generic-contractor-gp' }} replace />
+        } />
+
         <Route path="*" element={
           <Navigate to={authStatus.isAuthorized ? '/' : '/.auth/login/aad'} replace />
         } />
+
       </Routes>
     </Router>
   );
