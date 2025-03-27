@@ -302,52 +302,53 @@ const GenericOffshoreContractorGpCalculator = () => {
   };
 
   return (
-    <div className="container">
+    <div className="container generic-theme">
       <div className="nav-buttons">
-        <Link to="/" className="back-button offshore-back-btn">
+        <Link to="/" className="back-button">
           ← Back to All Calculators
         </Link>
       </div>
 
-      <h1 className="offshore-title">Offshore Contractor GP Calculator</h1>
+      <h1>Offshore Contractor GP Calculator</h1>
 
-      <div className="offshore-calculator-card">
-        <h2 className="offshore-section-title">Calculation Mode</h2>
-        <div className="offshore-mode-buttons">
+      <div className="calculator-card">
+        <h2>Calculation Mode</h2>
+        <div className="mode-buttons">
           <button
             onClick={() => handleModeChange("dailyRate")}
-            className={`offshore-mode-button ${
-              calculationMode === "dailyRate" ? "offshore-active-blue" : ""
+            className={`mode-button ${
+              calculationMode === "dailyRate" ? "active" : ""
             }`}
           >
             Calculate Client Rate
           </button>
           <button
             onClick={() => handleModeChange("clientRate")}
-            className={`offshore-mode-button ${
-              calculationMode === "clientRate" ? "offshore-active-blue" : ""
+            className={`mode-button ${
+              calculationMode === "clientRate" ? "active" : ""
             }`}
           >
             Calculate Contractor Rate
           </button>
           <button
             onClick={() => handleModeChange("targetMargin")}
-            className={`offshore-mode-button ${
-              calculationMode === "targetMargin" ? "offshore-active-blue" : ""
+            className={`mode-button ${
+              calculationMode === "targetMargin" ? "active" : ""
             }`}
           >
             Calculate Target Margin
           </button>
         </div>
 
-        <div className="offshore-content-columns">
-          <div className="offshore-column">
-            <h2 className="offshore-section-title">Configuration</h2>
+        <div className="content-columns">
+          <div className="column">
+            <h2>Configuration</h2>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>Country</label>
               <select
                 value={country}
+                className="calculated-input"
                 onChange={(e) => handleCountryChange(e.target.value)}
               >
                 {Object.keys(COUNTRIES).map((countryName) => (
@@ -358,33 +359,31 @@ const GenericOffshoreContractorGpCalculator = () => {
               </select>
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>Currency</label>
               <input
                 type="text"
                 value={currency}
                 readOnly
-                className="offshore-readonly-input"
-                style={{
-                  width: "15%",
-                }}
+                
+                style={{ width: "15%" }}
               />
             </div>
 
-            <div className="offshore-form-group">
-              Exchange Rate ({currency}/AUD)
+            <div className="form-group">
+              <label>Exchange Rate ({currency}/AUD)</label>
               <input
                 type="number"
                 step="0.000001"
                 value={exchangeRate}
+                className="calculated-input"
                 onChange={(e) =>
                   setExchangeRate(parseFloat(e.target.value) || 0)
                 }
-                
               />
             </div>
 
-            <div className="offshore-form-group" style={{ display: "none" }}>
+            <div className="form-group" style={{ display: "none" }}>
               <label>Is Payroll Tax applicable?</label>
               <select
                 value={payrollTaxApplicable}
@@ -396,7 +395,7 @@ const GenericOffshoreContractorGpCalculator = () => {
               </select>
             </div>
 
-            <div className="offshore-form-group" style={{ display: "none" }}>
+            <div className="form-group" style={{ display: "none" }}>
               <label>Workcover</label>
               <select
                 value={workcover}
@@ -408,7 +407,7 @@ const GenericOffshoreContractorGpCalculator = () => {
               </select>
             </div>
 
-            <div className="offshore-form-group" style={{ display: "none" }}>
+            <div className="form-group" style={{ display: "none" }}>
               <label>Leave Movements</label>
               <select
                 value={leaveMovements}
@@ -420,7 +419,7 @@ const GenericOffshoreContractorGpCalculator = () => {
               </select>
             </div>
 
-            <div className="offshore-form-group" style={{ display: "none" }}>
+            <div className="form-group" style={{ display: "none" }}>
               <label>LSL Movements</label>
               <select
                 value={lslMovements}
@@ -432,7 +431,7 @@ const GenericOffshoreContractorGpCalculator = () => {
               </select>
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>Working Days</label>
               <input
                 type="number"
@@ -446,7 +445,7 @@ const GenericOffshoreContractorGpCalculator = () => {
               />
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>Extra Expenses</label>
               <select
                 value={extraExpenses}
@@ -459,7 +458,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             {extraExpenses === "Y" && (
-              <div className="offshore-form-group">
+              <div className="form-group">
                 <label>Extra Expenses Amount ($)</label>
                 <input
                   type="number"
@@ -473,42 +472,40 @@ const GenericOffshoreContractorGpCalculator = () => {
             )}
           </div>
 
-          <div className="offshore-column">
-            <h2 className="offshore-section-title">Calculation Inputs</h2>
+          <div className="column">
+            <h2>Calculation Inputs</h2>
 
             {/* Only show the rate input type switch when not in Calculate Contractor Rate mode */}
             {calculationMode !== "clientRate" && (
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-medium text-slate-700">
-                  Rate Input Type:
-                </span>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "8px"
+              }}>
+                <span style={{ fontSize: "0.85rem" }}>Rate Input Type:</span>
                 <button
                   onClick={toggleRateInputMode}
-                  style={{
-                    padding: "4px 8px",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "0.8rem",
-                    cursor: "pointer",
-                  }}
+                  className="rate-toggle-button"
                 >
-                  Switch to {currency} Salary input
+                  Switch to {rateInputMode === "dailyRate" ? currency + " Salary" : "Daily Rate"} input
                 </button>
               </div>
             )}
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>
                 AUD$ Daily Rate
                 {(calculationMode === "clientRate" ||
                   rateInputMode === "localSalary") && (
-                  <span className="offshore-calculated-label">
+                  <span className="calculated-label">
                     (Calculated)
                   </span>
                 )}
+
               </label>
-              <div className="offshore-input-currency-wrapper">
-                <span className="offshore-currency-prefix">AUD</span>
+              <div className="input-currency-wrapper">
+                <span className="currency-prefix">AUD$</span>
                 <input
                   type="text"
                   value={
@@ -524,6 +521,7 @@ const GenericOffshoreContractorGpCalculator = () => {
                   }
                   style={{
                     width: "25%",
+                    paddingLeft: "45px"
                   }}
                   disabled={
                     calculationMode === "clientRate" ||
@@ -532,25 +530,25 @@ const GenericOffshoreContractorGpCalculator = () => {
                   className={
                     calculationMode === "clientRate" ||
                     rateInputMode === "localSalary"
-                      ? "offshore-calculated-input"
+                      ? "calculated-input"
                       : ""
                   }
                 />
               </div>
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>
                 {currency} Monthly Salary (160 hours)
                 {(rateInputMode === "dailyRate" ||
                   calculationMode === "clientRate") && (
-                  <span className="offshore-calculated-label">
+                  <span className="calculated-label">
                     (Calculated)
                   </span>
                 )}
               </label>
-              <div className="offshore-input-currency-wrapper">
-                <span className="offshore-currency-prefix">{currency}</span>
+              <div className="input-currency-wrapper">
+                <span className="currency-prefix">{currency}</span>
                 <input
                   type="text"
                   value={
@@ -565,10 +563,11 @@ const GenericOffshoreContractorGpCalculator = () => {
                     handleCurrencyInputChange(
                       e.target.value,
                       setMonthlyLocalSalary
-                    )
+                    ) 
                   }
                   style={{
                     width: "25%",
+                    paddingLeft: currency.length > 3 ? "45px" : "35px"
                   }}
                   disabled={
                     rateInputMode === "dailyRate" ||
@@ -577,18 +576,18 @@ const GenericOffshoreContractorGpCalculator = () => {
                   className={
                     rateInputMode === "dailyRate" ||
                     calculationMode === "clientRate"
-                      ? "offshore-calculated-input"
+                      ? "calculated-input"
                       : ""
                   }
                 />
               </div>
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>
                 Target Margin %{" "}
                 {calculationMode === "targetMargin" && (
-                  <span className="offshore-calculated-label">
+                  <span className="calculated-label">
                     (Calculated)
                   </span>
                 )}
@@ -607,28 +606,28 @@ const GenericOffshoreContractorGpCalculator = () => {
                   setTargetMarginPercent(value === "" ? 0 : parseFloat(value));
                 }}
                 style={{
-                  width: "15%",
+                  width: "15%"
                 }}
                 disabled={calculationMode === "targetMargin"}
                 className={
                   calculationMode === "targetMargin"
-                    ? "offshore-calculated-input"
+                    ? "calculated-input"
                     : ""
                 }
               />
             </div>
 
-            <div className="offshore-form-group">
+            <div className="form-group">
               <label>
                 AUD$ Daily Client Rate{" "}
                 {calculationMode === "dailyRate" && (
-                  <span className="offshore-calculated-label">
+                  <span className="calculated-label">
                     (Calculated)
                   </span>
                 )}
               </label>
-              <div className="offshore-input-currency-wrapper">
-                <span className="offshore-currency-prefix">AUD</span>
+              <div className="input-currency-wrapper">
+                <span className="currency-prefix">AUD$</span>
                 <input
                   type="text"
                   value={
@@ -646,11 +645,12 @@ const GenericOffshoreContractorGpCalculator = () => {
                   }
                   style={{
                     width: "25%",
+                    paddingLeft: "45px"
                   }}
                   disabled={calculationMode === "dailyRate"}
                   className={
                     calculationMode === "dailyRate"
-                      ? "offshore-calculated-input"
+                      ? "calculated-input"
                       : ""
                   }
                 />
@@ -660,9 +660,9 @@ const GenericOffshoreContractorGpCalculator = () => {
         </div>
       </div>
 
-      <div className="offshore-results-card">
-        <h2 className="offshore-section-title">Results</h2>
-        <div className="offshore-results-table">
+      <div className="results-card">
+        <h2>Results</h2>
+        <div>
           <table>
             <tbody>
               <tr>
@@ -715,7 +715,7 @@ const GenericOffshoreContractorGpCalculator = () => {
                   )}
                 </td>
               </tr>
-              <tr className="offshore-highlight-row">
+              <tr className="highlight-row">
                 <td>Total Cost</td>
                 <td>{formatCurrency(totalCost)}</td>
               </tr>
@@ -723,7 +723,7 @@ const GenericOffshoreContractorGpCalculator = () => {
                 <td>Daily Cost</td>
                 <td>{formatCurrency(dailyCost)}</td>
               </tr>
-              <tr className="offshore-highlight-row">
+              <tr className="highlight-row">
                 <td>Target Margin %</td>
                 <td>{formatPercent(targetMarginPercent)}</td>
               </tr>
@@ -731,7 +731,7 @@ const GenericOffshoreContractorGpCalculator = () => {
                 <td>Target Margin $</td>
                 <td>{formatCurrency(targetMarginAmount)}</td>
               </tr>
-              <tr className="offshore-highlight-row offshore-highlight-client-rate">
+              <tr className="highlight-row highlight-client-rate">
                 <td>Daily Client Rate</td>
                 <td>{formatCurrency(dailyClientRate)}</td>
               </tr>
@@ -746,7 +746,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="offshore-version-tag">V1.0.0 (27-Mar-2025)</p>
+        <p className="version-tag">V1.0.0 (27-Mar-2025)</p>
       </div>
     </div>
   );

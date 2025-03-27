@@ -10,14 +10,14 @@ const Home = () => {
         <Link to="/all-cals" className="calculator-link">
           <div className="calculator-card all-cals-theme">
             <h2>All GP Calculators</h2>
-            <p>Combined view with all GP calculators</p>
+            <p>Combined view with all GP calculators (AU & PHP)</p>
           </div>
         </Link>  
 
         <Link to="/generic-contractor-gp" className="calculator-link">
           <div className="calculator-card all-cals-theme">
             <h2>Offshore Contractor (Generic)</h2>
-            <p>Calculate Gross Profit for Offshore (Generic) Contractors (LK, VN, IN & NZ)</p>
+            <p>Calculate Gross Profit for Offshore Contractors (LK,VN,IN & NZ)</p>
           </div>
         </Link>
 
