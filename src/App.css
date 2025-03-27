@@ -489,202 +489,202 @@ button:hover {
   font-weight: bold;
 }
 
-/* Generic Offshore Calculator Theme */
-.generic-theme {
-  background-color: #ffffff;
-  --primary-hover: #F0EDCC;  /* Darker blue for hover */
-  color: #02343F;
+/* India Theme for Generic Offshore Contractor GP Calculator */
+.india-theme {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px;
+  --primary-color: #0C6500;  /* Dark blue from logo */
+  --secondary-color: #0C6500; /* Orange from logo */
+ 
 }
 
 
-
-
-
-.generic-theme h1 {
+.india-theme h1 {
   font-size: 1.5rem;
-  margin-bottom: 12px;
-  color: #02343F;
+  margin-bottom: 8px;
+  color: #000080; /* Navy blue */
+  font-weight: 600;
 }
 
-.generic-theme h2 {
+.india-theme h2 {
   font-size: 1.2rem;
   margin-bottom: 8px;
-  color: #02343F;
+  color: #0C6500; /* Darker green for better readability */
+  font-weight: 600;
 }
 
-.generic-theme .calculator-card {
-  margin-bottom: 12px;
+.india-theme .calculator-card {
+  background-color: #FFFFFF;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   padding: 12px;
-  background-color: #ffffff;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.generic-theme .mode-buttons {
+.india-theme .results-card {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.india-theme .mode-buttons {
   display: flex;
   gap: 5px;
   margin-bottom: 12px;
 }
 
-.generic-theme .mode-button {
+.india-theme .mode-button {
   flex: 1;
   padding: 8px 0;
   font-size: 0.9rem;
   cursor: pointer;
-  background-color: #F0EDCC;
-  border: 1px solid #e5e7eb;
+  background-color: #0C6500;
   border-radius: 4px;
-  color: #02343F;
-  transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
-.generic-theme .mode-button.active {
-  background-color: #02343F;
-  color: #F0EDCC;
-  border-color: #02343F;
-}
-
-.generic-theme .content-columns {
-  display: flex;
-  gap: 16px;
-}
-
-.generic-theme .column {
-  flex: 1 1 50%;
-}
-
-.generic-theme .form-group {
-  margin-bottom: 12px;
-}
-
-.generic-theme label {
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-  display: block;
-}
-
-.generic-theme input,
-.generic-theme select {
-  padding: 6px;
-  font-size: 0.85rem;
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-}
-
-.generic-theme input:disabled,
-.generic-theme select:disabled {
-  background-color: #f9fafb;
-  opacity: 0.9;
-}
-
-.generic-theme .calculated-label {
-  margin-left: 4px;
-  color: #FF0000;
+.india-theme .mode-button.active {
+  background-color: #FF9933; /* Saffron/orange */
+  color: white;
+  border-color: #FF9933;
   font-weight: bold;
 }
 
-.generic-theme .input-currency-wrapper {
+.india-theme .rate-toggle-button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background-color: #0C6500; /* Darker green for better contrast */
+  color: white;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.india-theme .back-button {
+  color: #000080; /* Navy blue */
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.india-theme .form-group {
+  margin-bottom: 8px;
+}
+
+.india-theme .form-group label {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  display: block;
+  color: #333333;
+  font-weight: 500;
+}
+
+.india-theme input, 
+.india-theme select {
+  padding: 6px;
+  font-size: 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  color: #333333;
+}
+
+.india-theme .calculated-input {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #333333;
+  font-weight: 500;
+}
+
+.india-theme .calculated-label {
+  margin-left: 4px;
+  color: #FF0000; /* Darker saffron/orange for better readability */
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+.india-theme .input-currency-wrapper {
   position: relative;
 }
 
-.generic-theme .currency-prefix {
+.india-theme .currency-prefix {
   position: absolute;
   left: 8px;
   top: 7px;
-  color: #6b7280;
+  color: #444444; /* Darker text color for better visibility */
   font-size: 0.85rem;
+  font-weight: 500;
 }
 
-.generic-theme input.with-prefix {
-  padding-left: 45px;
-}
-
-.generic-theme .calculated-input {
-  background-color: #F0EDCC;
-  opacity: 0.9;
-}
-
-.generic-theme .results-card {
-  margin-bottom: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 12px;
-  background-color: #F0EDCC;
-}
-
-.generic-theme table {
+.india-theme table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
 
-.generic-theme table tr {
+.india-theme tr {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.generic-theme table td {
+.india-theme td {
   padding: 4px 8px;
+  color: #333333;
 }
 
-.generic-theme table td:last-child {
+.india-theme td:last-child {
   text-align: right;
   white-space: nowrap;
 }
 
-.generic-theme .highlight-row {
+.india-theme .highlight-row {
   font-weight: bold;
+  background-color: #FFF2E5;
+  color: var(--primary-color);
+  border-left: 3px solid var(--secondary-color);
+  font-size: 18px;
 }
 
-.generic-theme .highlight-client-rate {
-  background-color: #02343F;
-  color: #F0EDCC;
+.india-theme .highlight-client-rate {
+  background-color: #FFE0B2; /* Light saffron background */
+  color: #000080; /* Navy blue text for contrast */
 }
 
-.generic-theme .version-tag {
-  margin-top: 8px;
+.india-theme .version-tag {
+  font-size: 0.75rem;
   text-align: right;
-  font-size: 0.7rem;
   color: #6b7280;
+  margin-top: 8px;
 }
 
-/* Shared styles */
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 12px;
+/* Additional improvements for better readability */
+.india-theme select {
+  appearance: menulist;
+  background-image: none;
 }
 
-.nav-buttons {
-  margin-bottom: 8px;
+.india-theme select:disabled,
+.india-theme input:disabled {
+  background-color: #f3f3f3;
+  color: #555555;
+  opacity: 0.9;
+  cursor: default;
+  background-color: light-dark(rgba(239, 239, 239, 0.3), rgba(59, 59, 59, 0.3));
+  color: light-dark(rgb(84, 84, 84), rgb(170, 170, 170));
 }
 
-.back-button {
-  text-decoration: none;
-  display: inline-block;
-  padding: 6px 10px;
-  color: #02343F;
-  font-size: 0.9rem;
+.india-theme select:focus,
+.india-theme input:focus {
+  outline: none;
+  border-color: #FF9933;
+  box-shadow: 0 0 0 2px rgba(255, 153, 51, 0.2);
 }
 
-/* Rate input type toggle button */
-.rate-toggle-button {
-  padding: 4px 8px;
-  background-color: #02343F;
-  color: #F0EDCC;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-/* Media queries for responsive design */
-@media (max-width: 768px) {
-  .generic-theme .content-columns {
-    flex-direction: column;
-  }
-  
-  .generic-theme .column {
-    flex: 1 1 100%;
-  }
-}

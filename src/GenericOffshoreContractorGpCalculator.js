@@ -4,14 +4,14 @@ import { Link } from "react-router-dom";
 
 const GenericOffshoreContractorGpCalculator = () => {
   // State for country and currency
-  const [country, setCountry] = useState("Sri Lanka");
-  const [currency, setCurrency] = useState("LKR");
-  const [exchangeRate, setExchangeRate] = useState(0.0053);
+  const [country, setCountry] = useState("India");
+  const [currency, setCurrency] = useState("INR");
+  const [exchangeRate, setExchangeRate] = useState(0.019);
 
   // State for form inputs and calculated values
-  const [monthlyLocalSalary, setMonthlyLocalSalary] = useState(754717);
+  const [monthlyLocalSalary, setMonthlyLocalSalary] = useState(84210);
   const [dailyRate, setDailyRate] = useState(200.0);
-  const [targetMarginPercent, setTargetMarginPercent] = useState(20.0);
+  const [targetMarginPercent, setTargetMarginPercent] = useState(50.0);
   const [dailyClientRate, setDailyClientRate] = useState(265.73);
 
   // State for input mode
@@ -302,23 +302,29 @@ const GenericOffshoreContractorGpCalculator = () => {
   };
 
   return (
-    <div className="container generic-theme">
-      <div className="nav-buttons">
+    <div className="container india-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
+      <div className="nav-buttons" style={{ marginBottom: "8px" }}>
         <Link to="/" className="back-button">
           ← Back to All Calculators
         </Link>
       </div>
 
-      <h1>Offshore Contractor GP Calculator</h1>
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>Offshore Contractor GP Calculator</h1>
 
-      <div className="calculator-card">
-        <h2>Calculation Mode</h2>
-        <div className="mode-buttons">
+      <div className="calculator-card" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
+        <div className="mode-buttons" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
           <button
             onClick={() => handleModeChange("dailyRate")}
             className={`mode-button ${
               calculationMode === "dailyRate" ? "active" : ""
             }`}
+            style={{ 
+              flex: 1, 
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              cursor: "pointer"
+            }}
           >
             Calculate Client Rate
           </button>
@@ -327,6 +333,12 @@ const GenericOffshoreContractorGpCalculator = () => {
             className={`mode-button ${
               calculationMode === "clientRate" ? "active" : ""
             }`}
+            style={{ 
+              flex: 1, 
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              cursor: "pointer"
+            }}
           >
             Calculate Contractor Rate
           </button>
@@ -335,21 +347,28 @@ const GenericOffshoreContractorGpCalculator = () => {
             className={`mode-button ${
               calculationMode === "targetMargin" ? "active" : ""
             }`}
+            style={{ 
+              flex: 1, 
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              cursor: "pointer"
+            }}
           >
             Calculate Target Margin
           </button>
         </div>
 
-        <div className="content-columns">
-          <div className="column">
-            <h2>Configuration</h2>
+        <div style={{ display: "flex", gap: "16px" }}>
+          <div style={{ flex: "1 1 50%" }}>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Configuration</h2>
 
             <div className="form-group">
-              <label>Country</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Country</label>
               <select
                 value={country}
                 className="calculated-input"
                 onChange={(e) => handleCountryChange(e.target.value)}
+                style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
               >
                 {Object.keys(COUNTRIES).map((countryName) => (
                   <option key={countryName} value={countryName}>
@@ -360,18 +379,18 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label>Currency</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Currency</label>
               <input
                 type="text"
                 value={currency}
                 readOnly
-                
-                style={{ width: "15%" }}
+                className="calculated-input"
+                style={{ width: "15%", padding: "6px", fontSize: "0.85rem", border: "1px solid #d1d5db", borderRadius: "4px",backgroundColor: "#f3f4f6"}}
               />
             </div>
 
             <div className="form-group">
-              <label>Exchange Rate ({currency}/AUD)</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Exchange Rate ({currency}/AUD)</label>
               <input
                 type="number"
                 step="0.000001"
@@ -380,6 +399,7 @@ const GenericOffshoreContractorGpCalculator = () => {
                 onChange={(e) =>
                   setExchangeRate(parseFloat(e.target.value) || 0)
                 }
+                style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px", }}
               />
             </div>
 
@@ -432,7 +452,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label>Working Days</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Working Days</label>
               <input
                 type="number"
                 min="1"
@@ -442,15 +462,25 @@ const GenericOffshoreContractorGpCalculator = () => {
                 onChange={(e) =>
                   setWorkingDays(parseInt(e.target.value) || 220)
                 }
+                style={{ 
+                  padding: "6px", 
+                  fontSize: "0.85rem", 
+                  width: "100%", 
+                  border: "1px solid #d1d5db", 
+                  borderRadius: "4px",
+                  backgroundColor: "#f3f4f6", 
+                  color: "black",
+                  opacity: 0.9
+                }}
               />
             </div>
 
             <div className="form-group">
-              <label>Extra Expenses</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses</label>
               <select
                 value={extraExpenses}
-                disabled={true}
                 onChange={(e) => setExtraExpenses(e.target.value)}
+                style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
               >
                 <option value="Y">Yes</option>
                 <option value="N">No</option>
@@ -459,21 +489,21 @@ const GenericOffshoreContractorGpCalculator = () => {
 
             {extraExpenses === "Y" && (
               <div className="form-group">
-                <label>Extra Expenses Amount ($)</label>
+                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses Amount ($)</label>
                 <input
                   type="number"
                   value={additionalExpenses}
-                  disabled={true}
                   onChange={(e) =>
                     setAdditionalExpenses(parseFloat(e.target.value) || 0)
                   }
+                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
                 />
               </div>
             )}
           </div>
 
-          <div className="column">
-            <h2>Calculation Inputs</h2>
+          <div style={{ flex: "1 1 50%" }}>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
 
             {/* Only show the rate input type switch when not in Calculate Contractor Rate mode */}
             {calculationMode !== "clientRate" && (
@@ -487,6 +517,13 @@ const GenericOffshoreContractorGpCalculator = () => {
                 <button
                   onClick={toggleRateInputMode}
                   className="rate-toggle-button"
+                  style={{ 
+                    padding: "4px 8px",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "0.8rem",
+                    cursor: "pointer"
+                  }}
                 >
                   Switch to {rateInputMode === "dailyRate" ? currency + " Salary" : "Daily Rate"} input
                 </button>
@@ -494,7 +531,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             )}
 
             <div className="form-group">
-              <label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 AUD$ Daily Rate
                 {(calculationMode === "clientRate" ||
                   rateInputMode === "localSalary") && (
@@ -502,7 +539,6 @@ const GenericOffshoreContractorGpCalculator = () => {
                     (Calculated)
                   </span>
                 )}
-
               </label>
               <div className="input-currency-wrapper">
                 <span className="currency-prefix">AUD$</span>
@@ -521,7 +557,13 @@ const GenericOffshoreContractorGpCalculator = () => {
                   }
                   style={{
                     width: "25%",
-                    paddingLeft: "45px"
+                    paddingLeft: "45px",
+                    paddingTop: "6px", 
+                    paddingBottom: "6px", 
+                    paddingRight: "6px", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    fontSize: "0.85rem"
                   }}
                   disabled={
                     calculationMode === "clientRate" ||
@@ -538,7 +580,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 {currency} Monthly Salary (160 hours)
                 {(rateInputMode === "dailyRate" ||
                   calculationMode === "clientRate") && (
@@ -567,7 +609,13 @@ const GenericOffshoreContractorGpCalculator = () => {
                   }
                   style={{
                     width: "25%",
-                    paddingLeft: currency.length > 3 ? "45px" : "35px"
+                    paddingLeft: currency.length > 3 ? "45px" : "35px",
+                    paddingTop: "6px", 
+                    paddingBottom: "6px", 
+                    paddingRight: "6px", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    fontSize: "0.85rem"
                   }}
                   disabled={
                     rateInputMode === "dailyRate" ||
@@ -584,7 +632,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 Target Margin %{" "}
                 {calculationMode === "targetMargin" && (
                   <span className="calculated-label">
@@ -606,7 +654,11 @@ const GenericOffshoreContractorGpCalculator = () => {
                   setTargetMarginPercent(value === "" ? 0 : parseFloat(value));
                 }}
                 style={{
-                  width: "15%"
+                  width: "20%",
+                  padding: "6px", 
+                  border: "1px solid #d1d5db", 
+                  borderRadius: "4px",
+                  fontSize: "0.85rem"
                 }}
                 disabled={calculationMode === "targetMargin"}
                 className={
@@ -618,7 +670,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 AUD$ Daily Client Rate{" "}
                 {calculationMode === "dailyRate" && (
                   <span className="calculated-label">
@@ -632,10 +684,10 @@ const GenericOffshoreContractorGpCalculator = () => {
                   type="text"
                   value={
                     calculationMode === "dailyRate"
-                      ? dailyClientRate.toFixed(2)
+                      ? Math.round(dailyClientRate)
                       : dailyClientRate === 0
                       ? ""
-                      : dailyClientRate.toFixed(2)
+                      : Math.round(dailyClientRate)
                   }
                   onChange={(e) =>
                     handleCurrencyInputChange(
@@ -644,8 +696,14 @@ const GenericOffshoreContractorGpCalculator = () => {
                     )
                   }
                   style={{
-                    width: "25%",
-                    paddingLeft: "45px"
+                    width: "20%",
+                    paddingLeft: "45px",
+                    paddingTop: "6px", 
+                    paddingBottom: "6px", 
+                    paddingRight: "6px", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    fontSize: "0.85rem"
                   }}
                   disabled={calculationMode === "dailyRate"}
                   className={
@@ -660,93 +718,93 @@ const GenericOffshoreContractorGpCalculator = () => {
         </div>
       </div>
 
-      <div className="results-card">
-        <h2>Results</h2>
-        <div>
-          <table>
+      <div className="results-card" style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", marginBottom: "12px" }}>
+        <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Results</h2>
+        <div className="result-summary">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
-              <tr>
-                <td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>
                   {currency} Monthly Salary ({HOURS_PER_MONTH} hours)
                 </td>
-                <td>{formatLocalCurrency(monthlyLocalSalary)}</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatLocalCurrency(monthlyLocalSalary)}</td>
               </tr>
-              <tr>
-                <td>Daily Rate</td>
-                <td>{formatCurrency(dailyRate)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Daily Rate</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyRate)}</td>
               </tr>
-              <tr>
-                <td>Annual Income</td>
-                <td>{formatCurrency(annualIncome)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Annual Income</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualIncome)}</td>
               </tr>
-              <tr>
-                <td>Payroll Tax ({(PAYROLL_TAX_RATE * 100).toFixed(2)}%)</td>
-                <td>{formatCurrency(payrollTax)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Payroll Tax ({(PAYROLL_TAX_RATE * 100).toFixed(2)}%)</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(payrollTax)}</td>
               </tr>
-              <tr>
-                <td>Workcover ({(WORKCOVER_RATE * 100).toFixed(2)}%)</td>
-                <td>{formatCurrency(workCoverAmount)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Workcover ({(WORKCOVER_RATE * 100).toFixed(2)}%)</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(workCoverAmount)}</td>
               </tr>
-              <tr>
-                <td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>
                   Leave Movements ({(LEAVE_MOVEMENTS_RATE * 100).toFixed(2)}%)
                 </td>
-                <td>{formatCurrency(leaveMovementsAmount)}</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(leaveMovementsAmount)}</td>
               </tr>
-              <tr>
-                <td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>
                   LSL Movements ({(LSL_MOVEMENTS_RATE * 100).toFixed(2)}%)
                 </td>
-                <td>{formatCurrency(lslMovementsAmount)}</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(lslMovementsAmount)}</td>
               </tr>
-              <tr>
-                <td>Total Extra Cost %</td>
-                <td>{formatPercent(totalExtraCostPercent * 100)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Total Extra Cost %</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(totalExtraCostPercent * 100)}</td>
               </tr>
-              <tr>
-                <td>Extra Cost</td>
-                <td>{formatCurrency(extraCost)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Extra Cost</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(extraCost)}</td>
               </tr>
-              <tr>
-                <td>Extra Expenses</td>
-                <td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Extra Expenses</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>
                   {formatCurrency(
                     extraExpenses === "Y" ? additionalExpenses : 0
                   )}
                 </td>
               </tr>
-              <tr className="highlight-row">
-                <td>Total Cost</td>
-                <td>{formatCurrency(totalCost)}</td>
+              <tr className="highlight-row" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
+                <td style={{ padding: "4px 8px" }}>Total Cost</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(totalCost)}</td>
               </tr>
-              <tr>
-                <td>Daily Cost</td>
-                <td>{formatCurrency(dailyCost)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Daily Cost</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyCost)}</td>
               </tr>
-              <tr className="highlight-row">
-                <td>Target Margin %</td>
-                <td>{formatPercent(targetMarginPercent)}</td>
+              <tr className="highlight-row" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
+                <td style={{ padding: "4px 8px" }}>Target Margin %</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(targetMarginPercent)}</td>
               </tr>
-              <tr>
-                <td>Target Margin $</td>
-                <td>{formatCurrency(targetMarginAmount)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Target Margin $</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(targetMarginAmount)}</td>
               </tr>
-              <tr className="highlight-row highlight-client-rate">
-                <td>Daily Client Rate</td>
-                <td>{formatCurrency(dailyClientRate)}</td>
+              <tr className="highlight-row highlight-client-rate" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "#e5e7eb", fontWeight: "bold" }}>
+                <td style={{ padding: "4px 8px" }}>Daily Client Rate</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyClientRate)}</td>
               </tr>
-              <tr>
-                <td>Annual Profit</td>
-                <td>{formatCurrency(annualProfit)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Annual Profit</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualProfit)}</td>
               </tr>
-              <tr>
-                <td>Annual Revenue</td>
-                <td>{formatCurrency(annualRevenue)}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Annual Revenue</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualRevenue)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V1.0.0 (27-Mar-2025)</p>
+        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V1.0.0 (27-Mar-2025)</p>
       </div>
     </div>
   );
