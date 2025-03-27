@@ -20,7 +20,7 @@ const PhpFteGpCalculator = () => {
   const [lslMovements, setLslMovements] = useState('N');
   const [workingDays, setWorkingDays] = useState(220);
   const [phpFteWorkingDays, setPhpFteWorkingDays] = useState(240);
-  const [extraExpenses, setExtraExpenses] = useState('Y');
+  const [extraExpenses, setExtraExpenses] = useState('N');
   const [additionalExpenses, setAdditionalExpenses] = useState(0);
   const [thirteenthMonthPay, setThirteenthMonthPay] = useState('Y');
   const [hmo, setHmo] = useState(150);

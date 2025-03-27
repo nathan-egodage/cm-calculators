@@ -424,7 +424,6 @@ const PhpContractorGpCalculator = () => {
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses</label>
                 <select 
                   value={extraExpenses} 
-                  disabled={true}
                   onChange={(e) => setExtraExpenses(e.target.value)}
                   style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
                 >
@@ -439,7 +438,6 @@ const PhpContractorGpCalculator = () => {
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses Amount ($)</label>
                 <input
                   type="number"
-                  disabled={true}
                   value={additionalExpenses}
                   onChange={(e) => setAdditionalExpenses(parseFloat(e.target.value) || 0)}
                   style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}

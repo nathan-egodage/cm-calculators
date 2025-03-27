@@ -377,3 +377,115 @@ button:hover {
 .calculator-card.all-cals-theme:hover {
   box-shadow: 0 8px 20px rgba(0, 132, 61, 0.15), 0 8px 20px rgba(0, 56, 168, 0.15);
 }
+
+
+/* CloudMarc Theme Styles */
+.cloudmarc-theme {
+  --primary-color: #1A4A8D;  /* Dark blue from logo */
+  --secondary-color: #FF6B35; /* Orange from logo */
+  --primary-light: #E6EAF3;  /* Light blue/gray */
+  --secondary-light: #FFF0E6; /* Light orange */
+  --primary-hover: #123A6B;  /* Darker blue for hover */
+  --text-on-primary: #FFFFFF; /* White text on blue */
+  --text-on-secondary: #333333; /* Dark text on orange */
+}
+
+/* Calculator card styling with CloudMarc theme */
+.cloudmarc-theme .calculator-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(26, 74, 141, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid var(--primary-color);
+}
+
+.cloudmarc-theme .calculator-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(26, 74, 141, 0.15);
+}
+
+.cloudmarc-theme .calculator-card h2 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+/* Button styling */
+.cloudmarc-theme button {
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+}
+
+.cloudmarc-theme button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Active button styling */
+.cloudmarc-theme button.active {
+  background-color: var(--secondary-color);
+  color: var(--text-on-secondary);
+}
+
+/* Result styling */
+.cloudmarc-theme .result-summary {
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-color);
+}
+
+.cloudmarc-theme .result-highlight {
+  background-color: var(--secondary-light);
+  color: var(--primary-color);
+  border-left: 3px solid var(--secondary-color);
+}
+
+/* Highlight boxes */
+.cloudmarc-theme .highlight-box {
+  background-color: var(--secondary-light);
+  border: 1px solid var(--secondary-color);
+}
+
+/* Enhanced hover effects */
+.cloudmarc-theme .calculator-card:hover {
+  box-shadow: 0 8px 20px rgba(26, 74, 141, 0.25), 0 5px 10px rgba(255, 107, 53, 0.2);
+}
+
+/* Input and form elements */
+.cloudmarc-theme input[type="number"] {
+  border-color: var(--primary-color);
+  focus-visible: var(--secondary-color);
+}
+
+.cloudmarc-theme .toggle-button {
+  color: var(--primary-color);
+}
+
+/* Gradient effects for added visual interest */
+.cloudmarc-theme .calculator-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--primary-light) 100%);
+  border-left: 4px solid var(--primary-color);
+  border-bottom: 4px solid var(--secondary-color);
+}
+
+.cloudmarc-theme button {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+}
+
+.cloudmarc-theme button:hover {
+  background: linear-gradient(90deg, var(--primary-hover) 0%, #FF5722 100%);
+}
+
+.cloudmarc-theme .result-table tr:nth-child(even) {
+  background-color: rgba(26, 74, 141, 0.05); /* Light blue */
+}
+
+.cloudmarc-theme .result-table tr:nth-child(odd) {
+  background-color: rgba(255, 107, 53, 0.05); /* Light orange */
+}
+
+.cloudmarc-theme .result-table tr:last-child {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+  font-weight: bold;
+}
+

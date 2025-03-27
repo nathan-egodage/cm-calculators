@@ -122,7 +122,7 @@ const ConsolidatedGpCalculator = () => {
         setLslMovements('N');
         setWorkingDays(220);
         setPhpFteWorkingDays(240);
-        setExtraExpenses('Y');
+        setExtraExpenses('N');
         setAdditionalExpenses(0);
         setThirteenthMonthPay('Y');
         setHmo(150);
@@ -620,15 +620,14 @@ const ConsolidatedGpCalculator = () => {
                 <select 
                   value={extraExpenses} 
                   onChange={(e) => setExtraExpenses(e.target.value)}
-                  disabled={calculatorType.startsWith('php')}
                   style={{ 
                     padding: "6px", 
                     fontSize: "0.85rem", 
                     width: "100%", 
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
-                    backgroundColor: calculatorType.startsWith('php') ? "#f3f4f6" : "white",
-                    color: calculatorType.startsWith('php') ? "#6b7280" : "black"
+                    backgroundColor: "white",
+                    color: "black"
                   }}
                 >
                   <option value="Y">Yes</option>
@@ -690,15 +689,14 @@ const ConsolidatedGpCalculator = () => {
                   type="number"
                   value={additionalExpenses}
                   onChange={(e) => setAdditionalExpenses(parseFloat(e.target.value) || 0)}
-                  disabled={calculatorType.startsWith('php')}
                   style={{ 
                     padding: "6px", 
                     fontSize: "0.85rem", 
                     width: "100%", 
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
-                    backgroundColor: calculatorType.startsWith('php') ? "#f3f4f6" : "white",
-                    color: calculatorType.startsWith('php') ? "#6b7280" : "black"
+                    backgroundColor: "white",
+                    color: "black"
                   }}
                 />
               </div>

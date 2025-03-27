@@ -6,13 +6,14 @@ const Home = () => {
     <div className="container">
       <h1>CloudMarc Calculators</h1>
 
-      <div className="calculator-menu">    
-<Link to="/all-cals" className="calculator-link">
-  <div className="calculator-card all-cals-theme">
-    <h2>All GP Calculators</h2>
-    <p>Combined view with all GP calculators</p>
-  </div>
-</Link>
+      <div className="calculator-menu">  
+        <Link to="/all-cals" className="calculator-link">
+          <div className="calculator-card all-cals-theme">
+            <h2>All GP Calculators</h2>
+            <p>Combined view with all GP calculators</p>
+          </div>
+        </Link>  
+
         <Link to="/aus-fte-gp" className="calculator-link">
           <div className="calculator-card aus-theme">
             <h2>AUS FTE GP Calculator</h2>
