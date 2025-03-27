@@ -503,15 +503,14 @@ button:hover {
 .india-theme h1 {
   font-size: 1.5rem;
   margin-bottom: 8px;
-  color: #000080; /* Navy blue */
   font-weight: 600;
 }
 
 .india-theme h2 {
   font-size: 1.2rem;
   margin-bottom: 8px;
-  color: #0C6500; /* Darker green for better readability */
-  font-weight: 600;
+   /* Darker green for better readability */
+  font-weight: bold;
 }
 
 .india-theme .calculator-card {
@@ -570,7 +569,6 @@ button:hover {
 .india-theme .back-button {
   color: #000080; /* Navy blue */
   text-decoration: none;
-  font-size: 0.9rem;
   font-weight: 500;
 }
 
