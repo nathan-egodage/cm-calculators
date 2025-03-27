@@ -17,7 +17,7 @@ const Home = () => {
         <Link to="/generic-contractor-gp" className="calculator-link">
           <div className="calculator-card all-cals-theme">
             <h2>Offshore Contractor (Generic)</h2>
-            <p>Calculate Gross Profit for Offshore (Genric) Contractors</p>
+            <p>Calculate Gross Profit for Offshore (Generic) Contractors (LK, VN, IN & NZ)</p>
           </div>
         </Link>
 
