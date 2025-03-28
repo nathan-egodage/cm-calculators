@@ -10,7 +10,7 @@ const Home = () => {
         <Link to="/all-cals" className="calculator-link">
           <div className="calculator-card all-cals-theme">
             <h2>All GP Calculators</h2>
-            <p>Combined view with all GP calculators (AU & PHP)</p>
+            <p>Combined view with all GP calculators (AU,PH,LK,IN,VN,NZ)</p>
           </div>
         </Link>  
 

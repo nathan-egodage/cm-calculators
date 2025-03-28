@@ -4,12 +4,13 @@ import { Link } from "react-router-dom";
 // Define theme classes for different calculator types
 const themeClasses = {
   aus: 'aus-theme',
-  php: 'php-theme'
+  php: 'php-theme',
+  offshore: 'india-theme' // Using india-theme as default for offshore
 };
 
 const ConsolidatedGpCalculator = () => {
   // Calculator type selection
-  const [calculatorType, setCalculatorType] = useState('ausContractor'); // 'ausContractor', 'ausFte', 'phpContractor', 'phpFte'
+  const [calculatorType, setCalculatorType] = useState('ausContractor'); // 'ausContractor', 'ausFte', 'phpContractor', 'phpFte', 'offshore'
   
   // Common state for form inputs and calculated values
   const [dailyRate, setDailyRate] = useState(700);
@@ -20,7 +21,29 @@ const ConsolidatedGpCalculator = () => {
   // PHP specific state with API integration
   const [phpRate, setPhpRate] = useState(0.02800); // Default rate
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(150000);
-  const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'
+  const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'/'localSalary'
+  
+  // Offshore specific state
+  const [country, setCountry] = useState("India");
+  const [currency, setCurrency] = useState("INR");
+  const [monthlyLocalSalary, setMonthlyLocalSalary] = useState(84210);
+  
+  // Available countries and their currencies for offshore
+  const COUNTRIES = {
+    "Sri Lanka": "LKR",
+    Vietnam: "VND",
+    India: "INR",
+    "New Zealand": "NZD",
+  };
+
+  // Exchange rates for each currency to AUD (fallback values)
+  const EXCHANGE_RATES = {
+    LKR: 0.005400,
+    VND: 0.000062,
+    INR: 0.019000,
+    NZD: 0.910000,
+    PHP: 0.02800,
+  };
   
   // API status tracking
   const [apiStatus, setApiStatus] = useState(null);
@@ -66,40 +89,65 @@ const ConsolidatedGpCalculator = () => {
   const HOURS_PER_MONTH = 160;
   const DAYS_PER_MONTH = 20;
 
+  // Function to handle country change
+  const handleCountryChange = (selectedCountry) => {
+    setCountry(selectedCountry);
+    const selectedCurrency = COUNTRIES[selectedCountry];
+    setCurrency(selectedCurrency);
+    fetchExchangeRate(selectedCurrency);
+  };
+
   // Fetch exchange rate from API when component mounts or calculator type changes
   useEffect(() => {
-    const fetchExchangeRate = async () => {
-      if (!calculatorType.startsWith('php')) return;
-      
-      setIsApiLoading(true);
-      try {
-        const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=PHP');
-        setApiStatus(response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Calculate PHP/AUD rate as 1 / (rate from API)
-          const newRate = 1 / data.rates.PHP;
-          setPhpRate(parseFloat(newRate.toFixed(5)));
-        } else {
-          // If API call fails, use the default rate
-          console.error('API returned error status:', response.status);
-          // Keep the default rate (0.02800)
-        }
-      } catch (error) {
-        console.error('Error fetching exchange rate:', error);
-        setApiStatus(500);
-        // Keep the default rate (0.02800)
-      } finally {
-        setIsApiLoading(false);
-      }
-    };
-
-    // Only fetch exchange rate for PHP calculator types
     if (calculatorType.startsWith('php')) {
-      fetchExchangeRate();
+      fetchExchangeRate('PHP');
+    } else if (calculatorType === 'offshore') {
+      fetchExchangeRate(currency);
     }
-  }, [calculatorType]);
+  }, [calculatorType, currency]);
+
+  // Function to fetch exchange rate from API
+  const fetchExchangeRate = async (currencyCode) => {
+    if (!currencyCode) return;
+    
+    setIsApiLoading(true);
+    try {
+      const response = await fetch(`https://api.frankfurter.app/latest?from=AUD&to=${currencyCode}`);
+      setApiStatus(response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Calculate currency/AUD rate as 1 / (rate from API)
+        const newRate = 1 / data.rates[currencyCode];
+        
+        if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
+          setPhpRate(parseFloat(newRate.toFixed(5)));
+        } else if (calculatorType === 'offshore') {
+          // For offshore, we use the common exchange rate variable
+          setPhpRate(parseFloat(newRate.toFixed(5))); // We're reusing the phpRate variable
+        }
+      } else {
+        console.error('API returned error status:', response.status);
+        // Use the default fallback rate
+        if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
+          setPhpRate(EXCHANGE_RATES.PHP);
+        } else if (calculatorType === 'offshore') {
+          setPhpRate(EXCHANGE_RATES[currencyCode] || 0.01); // Fallback rate
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      setApiStatus(500);
+      // Use the default fallback rate
+      if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
+        setPhpRate(EXCHANGE_RATES.PHP);
+      } else if (calculatorType === 'offshore') {
+        setPhpRate(EXCHANGE_RATES[currencyCode] || 0.01); // Fallback rate
+      }
+    } finally {
+      setIsApiLoading(false);
+    }
+  };
 
   // Set initial values based on calculator type
   useEffect(() => {
@@ -165,36 +213,82 @@ const ConsolidatedGpCalculator = () => {
         setThirteenthMonthPay('Y');
         setHmo(150);
         break;
+      case 'offshore':
+        setDailyRate(200);
+        setTargetMarginPercent(50);
+        setDailyClientRate(265.73);
+        setMonthlyLocalSalary(84210);
+        setRateInputMode('dailyRate');
+        setPayrollTaxApplicable('N');
+        setWorkcover('N');
+        setLeaveMovements('N');
+        setLslMovements('N');
+        setWorkingDays(220);
+        setExtraExpenses('Y');
+        setAdditionalExpenses(150);
+        setCountry('India');
+        setCurrency('INR');
+        break;
       default:
         break;
     }
   };
 
-  // Effect to handle conversion between daily rate and PHP monthly salary for PHP calculators
+  // Effect to handle conversion between daily rate and monthly salary in local currency
   useEffect(() => {
-    if (!calculatorType.startsWith('php')) return;
-    
-    if (rateInputMode === 'dailyRate' && phpRate > 0) {
-      const calculatedPhpMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
-      setPhpMonthlySalary(calculatedPhpMonthlySalary);
-    } else if (rateInputMode === 'phpSalary' && phpRate > 0) {
-      const calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
-      setDailyRate(calculatedDailyRate);
+    if (calculatorType.startsWith('php') || calculatorType === 'offshore') {
+      if (rateInputMode === 'dailyRate' && phpRate > 0) {
+        // Calculate monthly salary from daily rate
+        const calculatedMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
+        
+        if (calculatorType.startsWith('php')) {
+          setPhpMonthlySalary(calculatedMonthlySalary);
+        } else if (calculatorType === 'offshore') {
+          setMonthlyLocalSalary(calculatedMonthlySalary);
+        }
+      } else if ((rateInputMode === 'phpSalary' || rateInputMode === 'localSalary') && phpRate > 0) {
+        // Calculate daily rate from monthly salary
+        let calculatedDailyRate;
+        
+        if (calculatorType.startsWith('php')) {
+          calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
+        } else if (calculatorType === 'offshore') {
+          calculatedDailyRate = (monthlyLocalSalary * phpRate) / DAYS_PER_MONTH;
+        }
+        
+        setDailyRate(calculatedDailyRate);
+      }
     }
-  }, [dailyRate, phpMonthlySalary, phpRate, rateInputMode, calculatorType]);
+  }, [dailyRate, phpMonthlySalary, monthlyLocalSalary, phpRate, rateInputMode, calculatorType]);
 
-  // Effect to handle PHP rate changes
+  // Effect to handle exchange rate changes
   useEffect(() => {
-    if (!calculatorType.startsWith('php') || phpRate <= 0) return;
+    if (phpRate <= 0) return;
     
-    if (rateInputMode === 'dailyRate') {
-      const calculatedPhpMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
-      setPhpMonthlySalary(calculatedPhpMonthlySalary);
-    } else {
-      const calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
-      setDailyRate(calculatedDailyRate);
+    if (calculatorType.startsWith('php') || calculatorType === 'offshore') {
+      if (rateInputMode === 'dailyRate') {
+        // Recalculate monthly salary based on current daily rate
+        const calculatedMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
+        
+        if (calculatorType.startsWith('php')) {
+          setPhpMonthlySalary(calculatedMonthlySalary);
+        } else if (calculatorType === 'offshore') {
+          setMonthlyLocalSalary(calculatedMonthlySalary);
+        }
+      } else {
+        // Recalculate daily rate based on current monthly salary
+        let calculatedDailyRate;
+        
+        if (calculatorType.startsWith('php')) {
+          calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
+        } else if (calculatorType === 'offshore') {
+          calculatedDailyRate = (monthlyLocalSalary * phpRate) / DAYS_PER_MONTH;
+        }
+        
+        setDailyRate(calculatedDailyRate);
+      }
     }
-  }, [phpRate, calculatorType, rateInputMode, dailyRate, phpMonthlySalary]);
+  }, [phpRate, calculatorType, rateInputMode]);
 
   // Perform calculations whenever inputs change
   useEffect(() => {
@@ -205,6 +299,7 @@ const ConsolidatedGpCalculator = () => {
     salaryPackage,
     phpRate,
     phpMonthlySalary,
+    monthlyLocalSalary,
     targetMarginPercent,
     dailyClientRate,
     payrollTaxApplicable,
@@ -217,14 +312,16 @@ const ConsolidatedGpCalculator = () => {
     additionalExpenses,
     thirteenthMonthPay,
     hmo,
-    calculationMode
+    calculationMode,
+    country,
+    currency
   ]);
 
   // Function to handle the main calculations
   const calculateValues = () => {
     // Calculate annual income based on calculator type
     let annualIncomeValue = 0;
-    if (calculatorType === 'ausContractor' || calculatorType.startsWith('php')) {
+    if (calculatorType === 'ausContractor' || calculatorType.startsWith('php') || calculatorType === 'offshore') {
       const effectiveWorkingDays = calculatorType === 'phpFte' ? phpFteWorkingDays : workingDays;
       annualIncomeValue = dailyRate * effectiveWorkingDays;
     } else if (calculatorType === 'ausFte') {
@@ -342,10 +439,15 @@ const ConsolidatedGpCalculator = () => {
         if (Math.abs(calculatedDailyRate - dailyRate) > 1) {
           setDailyRate(calculatedDailyRate);
           
-          // If in phpSalary mode, also update PHP monthly salary
-          if (calculatorType.startsWith('php') && rateInputMode === 'phpSalary' && phpRate > 0) {
-            const calculatedPhpMonthlySalary = (calculatedDailyRate * DAYS_PER_MONTH) / phpRate;
-            setPhpMonthlySalary(calculatedPhpMonthlySalary);
+          // Update monthly salary based on rate input mode and calculator type
+          if (rateInputMode !== 'dailyRate' && phpRate > 0) {
+            if (calculatorType.startsWith('php')) {
+              const calculatedPhpMonthlySalary = (calculatedDailyRate * DAYS_PER_MONTH) / phpRate;
+              setPhpMonthlySalary(calculatedPhpMonthlySalary);
+            } else if (calculatorType === 'offshore') {
+              const calculatedLocalMonthlySalary = (calculatedDailyRate * DAYS_PER_MONTH) / phpRate;
+              setMonthlyLocalSalary(calculatedLocalMonthlySalary);
+            }
           }
         }
       }
@@ -383,9 +485,13 @@ const ConsolidatedGpCalculator = () => {
     }
   };
 
-  // Toggle between daily rate and PHP salary as input for PHP calculators
+  // Toggle between daily rate and local currency salary as input
   const toggleRateInputMode = () => {
-    setRateInputMode(currentMode => currentMode === 'dailyRate' ? 'phpSalary' : 'dailyRate');
+    if (calculatorType.startsWith('php')) {
+      setRateInputMode(currentMode => currentMode === 'dailyRate' ? 'phpSalary' : 'dailyRate');
+    } else if (calculatorType === 'offshore') {
+      setRateInputMode(currentMode => currentMode === 'dailyRate' ? 'localSalary' : 'dailyRate');
+    }
   };
 
   // Handle calculator type change
@@ -407,14 +513,34 @@ const ConsolidatedGpCalculator = () => {
     setCalculationMode(mode);
   };
 
+  // Handle PHP rate change
+  const handleRateChange = (value) => {
+    const rate = parseFloat(value);
+    if (rate > 0) {
+      setPhpRate(rate);
+    } else {
+      // Set default fallback based on calculator type and currency
+      if (calculatorType.startsWith('php')) {
+        setPhpRate(0.02800);
+      } else if (calculatorType === 'offshore') {
+        setPhpRate(EXCHANGE_RATES[currency] || 0.01);
+      }
+    }
+  };
+
   // Format currency with prefixes and 2 decimal points
   const formatCurrency = (value) => {
     return `AUD$ ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
-  // Format PHP currency with ₱ prefix and 2 decimal points
-  const formatPhpCurrency = (value) => {
-    return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  // Format local currency with appropriate prefix and 2 decimal points
+  const formatLocalCurrency = (value) => {
+    if (calculatorType.startsWith('php')) {
+      return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    } else if (calculatorType === 'offshore') {
+      return `${currency} ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    }
+    return `${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
   // Format percentage with 2 decimal points
@@ -437,6 +563,7 @@ const ConsolidatedGpCalculator = () => {
       case 'ausFte': return 'AUS FTE GP Calculator';
       case 'phpContractor': return 'PHP Contractor GP Calculator';
       case 'phpFte': return 'PHP FTE GP Calculator';
+      case 'offshore': return `${country} Offshore Contractor GP Calculator`;
       default: return 'GP Calculator';
     }
   };
@@ -459,24 +586,25 @@ const ConsolidatedGpCalculator = () => {
   };
 
   // Determine current theme based on calculator type
-  const currentTheme = calculatorType.startsWith('aus') ? themeClasses.aus : themeClasses.php;
+  const getCurrentTheme = () => {
+    if (calculatorType.startsWith('aus')) {
+      return themeClasses.aus;
+    } else if (calculatorType.startsWith('php')) {
+      return themeClasses.php;
+    } else if (calculatorType === 'offshore') {
+      return themeClasses.offshore;
+    }
+    return themeClasses.aus; // Default
+  };
 
   // Get API status indicator to display alongside the exchange rate
   const getApiStatusIndicator = () => {
     if (isApiLoading) return '(Loading...)';
     if (apiStatus === null) return '';
-    return `(API Status: ${apiStatus})`;
+    return `(Status: ${apiStatus})`;
   };
-  
-  // Handle PHP rate change
-  const handlePhpRateChange = (value) => {
-    const rate = parseFloat(value);
-    if (rate > 0) {
-      setPhpRate(rate);
-    } else {
-      setPhpRate(0.02800); // Default fallback
-    }
-  };
+
+  const currentTheme = getCurrentTheme();
 
   return (
     <div className={`container ${currentTheme}`} style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
@@ -484,16 +612,16 @@ const ConsolidatedGpCalculator = () => {
         <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
       </div>
       
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>GP Calculator</h1>
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>Offshore Contractor GP Calculator</h1>
       
       <div className={`calculator-card ${currentTheme}`} style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
         <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculator Type</h2>
-        <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
+        <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px", flexWrap: "wrap" }}>
           <button 
             onClick={() => handleCalculatorTypeChange('ausContractor')}
             className={calculatorType === 'ausContractor' ? 'active' : ''}
             style={{ 
-              flex: 1, 
+              flex: "1 1 18%", 
               padding: "8px 0",
               fontSize: "0.9rem",
               cursor: "pointer"
@@ -505,7 +633,7 @@ const ConsolidatedGpCalculator = () => {
             onClick={() => handleCalculatorTypeChange('ausFte')}
             className={calculatorType === 'ausFte' ? 'active' : ''}
             style={{ 
-              flex: 1, 
+              flex: "1 1 18%", 
               padding: "8px 0",
               fontSize: "0.9rem",
               cursor: "pointer"
@@ -517,7 +645,7 @@ const ConsolidatedGpCalculator = () => {
             onClick={() => handleCalculatorTypeChange('phpContractor')}
             className={calculatorType === 'phpContractor' ? 'active' : ''}
             style={{ 
-              flex: 1, 
+              flex: "1 1 18%", 
               padding: "8px 0",
               fontSize: "0.9rem",
               cursor: "pointer"
@@ -529,7 +657,7 @@ const ConsolidatedGpCalculator = () => {
             onClick={() => handleCalculatorTypeChange('phpFte')}
             className={calculatorType === 'phpFte' ? 'active' : ''}
             style={{ 
-              flex: 1, 
+              flex: "1 1 18%", 
               padding: "8px 0",
               fontSize: "0.9rem",
               cursor: "pointer"
@@ -537,9 +665,46 @@ const ConsolidatedGpCalculator = () => {
           >
             PHP FTE
           </button>
+          <button 
+            onClick={() => handleCalculatorTypeChange('offshore')}
+            className={calculatorType === 'offshore' ? 'active' : ''}
+            style={{ 
+              flex: "1 1 18%", 
+              padding: "8px 0",
+              fontSize: "0.9rem",
+              cursor: "pointer"
+            }}
+          >
+            Offshore Contractor (LK,IN,VN,NZ)
+          </button>
         </div>
         
         <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>{getPageTitle()}</h2>
+        
+        {/* Country selection for offshore calculator */}
+        {calculatorType === 'offshore' && (
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Country</label>
+            <select 
+              value={country}
+              onChange={(e) => handleCountryChange(e.target.value)}
+              style={{ 
+                padding: "6px", 
+                fontSize: "0.85rem", 
+                width: "100%", 
+                maxWidth: "200px",
+                border: "1px solid #d1d5db", 
+                borderRadius: "4px"
+              }}
+            >
+              {Object.keys(COUNTRIES).map((countryName) => (
+                <option key={countryName} value={countryName}>
+                  {countryName}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         
         <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
         <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
@@ -564,21 +729,41 @@ const ConsolidatedGpCalculator = () => {
           <div style={{ flex: "1 1 50%" }}>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Configuration</h2>
             
+            {/* Show currency for offshore */}
+            {calculatorType === 'offshore' && (
+              <div style={{ marginBottom: "8px" }}>
+                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Currency</label>
+                <input
+                  type="text"
+                  value={currency}
+                  readOnly
+                  style={{ 
+                    width: "15%", 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "#f3f4f6"
+                  }}
+                />
+              </div>
+            )}
+            
             <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
               <div style={{ flex: "1 1 50%" }}>
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Is Payroll Tax applicable?</label>
                 <select 
                   value={payrollTaxApplicable} 
                   onChange={(e) => setPayrollTaxApplicable(e.target.value)}
-                  disabled={calculatorType.startsWith('php')}
+                  disabled={calculatorType.startsWith('php') || calculatorType === 'offshore'}
                   style={{ 
                     padding: "6px", 
                     fontSize: "0.85rem", 
                     width: "100%", 
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
-                    backgroundColor: calculatorType.startsWith('php') ? "#f3f4f6" : "white",
-                    color: calculatorType.startsWith('php') ? "#6b7280" : "black"
+                    backgroundColor: (calculatorType.startsWith('php') || calculatorType === 'offshore') ? "#f3f4f6" : "white",
+                    color: (calculatorType.startsWith('php') || calculatorType === 'offshore') ? "#6b7280" : "black"
                   }}
                 >
                   <option value="Y">Yes</option>
@@ -691,12 +876,12 @@ const ConsolidatedGpCalculator = () => {
               </div>
             </div>
             
-            {/* PHP specific configuration fields */}
-            {calculatorType.startsWith('php') && (
+            {/* Exchange rate field for PHP and offshore calculators */}
+            {(calculatorType.startsWith('php') || calculatorType === 'offshore') && (
               <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
                 <div style={{ flex: "1 1 50%" }}>
                   <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                    PHP/AUD <span style={{ 
+                    {calculatorType.startsWith('php') ? 'PHP/AUD' : `${currency}/AUD`} <span style={{ 
                       color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
                     }}>{getApiStatusIndicator()}</span>
                   </label>
@@ -704,7 +889,7 @@ const ConsolidatedGpCalculator = () => {
                     type="number"
                     step="0.00001"
                     value={phpRate.toFixed(5)}
-                    onChange={(e) => handlePhpRateChange(e.target.value)}
+                    onChange={(e) => handleRateChange(e.target.value)}
                     style={{ 
                       padding: "6px", 
                       fontSize: "0.85rem", 
@@ -790,8 +975,8 @@ const ConsolidatedGpCalculator = () => {
           <div style={{ flex: "1 1 50%" }}>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
             
-            {/* Rate input switch for PHP calculators */}
-            {calculatorType.startsWith('php') && calculationMode !== 'clientRate' && (
+            {/* Rate input switch for PHP and offshore calculators */}
+            {(calculatorType.startsWith('php') || calculatorType === 'offshore') && calculationMode !== 'clientRate' && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <span style={{ fontSize: "0.85rem" }}>Rate Input Type:</span>
                 <button 
@@ -804,7 +989,9 @@ const ConsolidatedGpCalculator = () => {
                     cursor: "pointer"
                   }}
                 >
-                  Switch to {rateInputMode === 'dailyRate' ? 'PHP Salary' : 'Daily Rate'} input
+                  Switch to {rateInputMode === 'dailyRate' ? 
+                    (calculatorType.startsWith('php') ? 'PHP Salary' : `${currency} Salary`) : 
+                    'Daily Rate'} input
                 </button>
               </div>
             )}
@@ -846,7 +1033,7 @@ const ConsolidatedGpCalculator = () => {
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                   AUD$ Daily Rate
                   {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
-                  {calculatorType.startsWith('php') && rateInputMode === 'phpSalary' && calculationMode !== 'clientRate' && 
+                  {(calculatorType.startsWith('php') || calculatorType === 'offshore') && rateInputMode !== 'dailyRate' && calculationMode !== 'clientRate' && 
                     <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
                 </label>
                 <div style={{ position: "relative" }}>
@@ -854,7 +1041,7 @@ const ConsolidatedGpCalculator = () => {
                   <input
                     type="text"
                     value={calculationMode === 'clientRate' || 
-                          (calculatorType.startsWith('php') && rateInputMode === 'phpSalary') ? 
+                          ((calculatorType.startsWith('php') || calculatorType === 'offshore') && rateInputMode !== 'dailyRate') ? 
                       Math.round(dailyRate) : 
                       dailyRate === 0 ? '' : Math.round(dailyRate)}
                     onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
@@ -869,13 +1056,13 @@ const ConsolidatedGpCalculator = () => {
                       fontSize: "0.85rem"
                     }}
                     disabled={calculationMode === 'clientRate' || 
-                             (calculatorType.startsWith('php') && rateInputMode === 'phpSalary')}
+                             ((calculatorType.startsWith('php') || calculatorType === 'offshore') && rateInputMode !== 'dailyRate')}
                   />
                 </div>
               </div>
             )}
 
-            {/* PHP Monthly Salary input for PHP calculators */}
+            {/* Monthly Salary input for PHP calculators */}
             {calculatorType.startsWith('php') && (
               <div style={{ marginBottom: "8px" }}>
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
@@ -894,6 +1081,38 @@ const ConsolidatedGpCalculator = () => {
                     style={{ 
                       width: "25%", 
                       paddingLeft: "25px", 
+                      paddingTop: "6px", 
+                      paddingBottom: "6px", 
+                      paddingRight: "6px", 
+                      border: "1px solid #d1d5db", 
+                      borderRadius: "4px",
+                      fontSize: "0.85rem"
+                    }}
+                    disabled={rateInputMode === 'dailyRate' || calculationMode === 'clientRate'}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Monthly Salary input for offshore calculators */}
+            {calculatorType === 'offshore' && (
+              <div style={{ marginBottom: "8px" }}>
+                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                  {currency} Monthly Salary (160 hours)
+                  {rateInputMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                  {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                </label>
+                <div style={{ position: "relative" }}>
+                  <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>{currency}</div>
+                  <input
+                    type="text"
+                    value={rateInputMode === 'dailyRate' || calculationMode === 'clientRate' ? 
+                      Math.round(monthlyLocalSalary) : 
+                      monthlyLocalSalary === 0 ? '' : Math.round(monthlyLocalSalary)}
+                    onChange={(e) => handleCurrencyInputChange(e.target.value, setMonthlyLocalSalary)}
+                    style={{ 
+                      width: "25%", 
+                      paddingLeft: currency.length > 3 ? "45px" : "35px", 
                       paddingTop: "6px", 
                       paddingBottom: "6px", 
                       paddingRight: "6px", 
@@ -972,14 +1191,26 @@ const ConsolidatedGpCalculator = () => {
         <div className="result-summary">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
-              {/* PHP Monthly Salary for PHP Calculators */}
+              {/* Monthly Salary for PHP Calculators */}
               {calculatorType.startsWith('php') && (
                 <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
                   <td style={{ padding: "4px 8px" }}>
                     PHP Monthly Salary {calculatorType === 'phpFte' ? '(FTE)' : '(160 hours)'}
                   </td>
                   <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>
-                    {formatPhpCurrency(phpMonthlySalary)}
+                    {formatLocalCurrency(phpMonthlySalary)}
+                  </td>
+                </tr>
+              )}
+              
+              {/* Monthly Salary for Offshore Calculators */}
+              {calculatorType === 'offshore' && (
+                <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "4px 8px" }}>
+                    {currency} Monthly Salary (160 hours)
+                  </td>
+                  <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>
+                    {formatLocalCurrency(monthlyLocalSalary)}
                   </td>
                 </tr>
               )}
@@ -1104,7 +1335,7 @@ const ConsolidatedGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V1.0.0 (28-Mar-2025)</p>
+        <p className="version-tag">V1.1.0 (28-Mar-2025)</p>
       </div>
     </div>
   );
