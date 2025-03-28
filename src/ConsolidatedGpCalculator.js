@@ -1,4 +1,3 @@
-// ConsolidatedGpCalculator.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
@@ -18,10 +17,14 @@ const ConsolidatedGpCalculator = () => {
   const [targetMarginPercent, setTargetMarginPercent] = useState(35);
   const [dailyClientRate, setDailyClientRate] = useState(950);
   
-  // PHP specific state
-  const [phpRate, setPhpRate] = useState(0.028);
+  // PHP specific state with API integration
+  const [phpRate, setPhpRate] = useState(0.02800); // Default rate
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(150000);
   const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'
+  
+  // API status tracking
+  const [apiStatus, setApiStatus] = useState(null);
+  const [isApiLoading, setIsApiLoading] = useState(false);
   
   // Additional state for FTE calculators
   const [thirteenthMonthPay, setThirteenthMonthPay] = useState('Y');
@@ -63,6 +66,41 @@ const ConsolidatedGpCalculator = () => {
   const HOURS_PER_MONTH = 160;
   const DAYS_PER_MONTH = 20;
 
+  // Fetch exchange rate from API when component mounts or calculator type changes
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      if (!calculatorType.startsWith('php')) return;
+      
+      setIsApiLoading(true);
+      try {
+        const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=PHP');
+        setApiStatus(response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Calculate PHP/AUD rate as 1 / (rate from API)
+          const newRate = 1 / data.rates.PHP;
+          setPhpRate(parseFloat(newRate.toFixed(5)));
+        } else {
+          // If API call fails, use the default rate
+          console.error('API returned error status:', response.status);
+          // Keep the default rate (0.02800)
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        setApiStatus(500);
+        // Keep the default rate (0.02800)
+      } finally {
+        setIsApiLoading(false);
+      }
+    };
+
+    // Only fetch exchange rate for PHP calculator types
+    if (calculatorType.startsWith('php')) {
+      fetchExchangeRate();
+    }
+  }, [calculatorType]);
+
   // Set initial values based on calculator type
   useEffect(() => {
     resetDefaults();
@@ -95,7 +133,7 @@ const ConsolidatedGpCalculator = () => {
         setAdditionalExpenses(0);
         break;
       case 'phpContractor':
-        setPhpRate(0.028);
+        // Don't reset phpRate here as it's now coming from the API
         setDailyRate(200);
         setTargetMarginPercent(50);
         setDailyClientRate(266);
@@ -110,7 +148,7 @@ const ConsolidatedGpCalculator = () => {
         setAdditionalExpenses(100);
         break;
       case 'phpFte':
-        setPhpRate(0.028);
+        // Don't reset phpRate here as it's now coming from the API
         setDailyRate(210);
         setTargetMarginPercent(50);
         setDailyClientRate(286);
@@ -423,6 +461,23 @@ const ConsolidatedGpCalculator = () => {
   // Determine current theme based on calculator type
   const currentTheme = calculatorType.startsWith('aus') ? themeClasses.aus : themeClasses.php;
 
+  // Get API status indicator to display alongside the exchange rate
+  const getApiStatusIndicator = () => {
+    if (isApiLoading) return '(Loading...)';
+    if (apiStatus === null) return '';
+    return `(API Status: ${apiStatus})`;
+  };
+  
+  // Handle PHP rate change
+  const handlePhpRateChange = (value) => {
+    const rate = parseFloat(value);
+    if (rate > 0) {
+      setPhpRate(rate);
+    } else {
+      setPhpRate(0.02800); // Default fallback
+    }
+  };
+
   return (
     <div className={`container ${currentTheme}`} style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
@@ -640,22 +695,31 @@ const ConsolidatedGpCalculator = () => {
             {calculatorType.startsWith('php') && (
               <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
                 <div style={{ flex: "1 1 50%" }}>
-                  <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>PHP to AUD Rate</label>
+                  <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                    PHP/AUD <span style={{ 
+                      color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
+                    }}>{getApiStatusIndicator()}</span>
+                  </label>
                   <input
                     type="number"
-                    step="0.001"
-                    value={phpRate}
-                    disabled={true}
+                    step="0.00001"
+                    value={phpRate.toFixed(5)}
+                    onChange={(e) => handlePhpRateChange(e.target.value)}
                     style={{ 
                       padding: "6px", 
                       fontSize: "0.85rem", 
                       width: "100%", 
                       border: "1px solid #d1d5db", 
                       borderRadius: "4px",
-                      backgroundColor: "#f3f4f6",
-                      color: "#6b7280"
+                      backgroundColor: "white",
+                      color: "black"
                     }}
                   />
+                  {isApiLoading && (
+                    <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
+                      Fetching latest exchange rate...
+                    </div>
+                  )}
                 </div>
                 
                 {calculatorType === 'phpFte' && (
@@ -1040,7 +1104,7 @@ const ConsolidatedGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V1.0.0 (26-Mar-2025)</p>
+        <p className="version-tag">V1.0.0 (28-Mar-2025)</p>
       </div>
     </div>
   );

@@ -7,6 +7,10 @@ const GenericOffshoreContractorGpCalculator = () => {
   const [country, setCountry] = useState("India");
   const [currency, setCurrency] = useState("INR");
   const [exchangeRate, setExchangeRate] = useState(0.019);
+  
+  // State for API status
+  const [apiStatus, setApiStatus] = useState(null);
+  const [apiStatusCode, setApiStatusCode] = useState(null);
 
   // State for form inputs and calculated values
   const [monthlyLocalSalary, setMonthlyLocalSalary] = useState(84210);
@@ -59,18 +63,49 @@ const GenericOffshoreContractorGpCalculator = () => {
     "New Zealand": "NZD",
   };
 
-  // Exchange rates for each currency to AUD
+  // Exchange rates for each currency to AUD (fallback values)
   const EXCHANGE_RATES = {
-    LKR: 0.0053,
+    LKR: 0.005400,
     VND: 0.000062,
-    INR: 0.019,
-    NZD: 0.91,
+    INR: 0.019000,
+    NZD: 0.910000,
+  };
+
+  // Function to fetch exchange rate from API
+  const fetchExchangeRate = async (currencyCode) => {
+    try {
+      setApiStatus('loading');
+      const response = await fetch(`https://api.frankfurter.app/latest?from=AUD&to=${currencyCode}`);
+      setApiStatusCode(response.status);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data && data.rates && data.rates[currencyCode]) {
+        // Calculate rate as 1/rate since we want CUR/AUD, not AUD/CUR
+        const newRate = parseFloat((1 / data.rates[currencyCode]).toFixed(6));
+        setExchangeRate(newRate);
+        setApiStatus('success');
+      } else {
+        throw new Error('Invalid API response format');
+      }
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      setApiStatus('error');
+      // Fall back to default exchange rate
+      setExchangeRate(EXCHANGE_RATES[currencyCode]);
+    }
+
   };
 
   // Effect to handle country selection
   useEffect(() => {
-    setCurrency(COUNTRIES[country]);
-    setExchangeRate(EXCHANGE_RATES[COUNTRIES[country]]);
+    const selectedCurrency = COUNTRIES[country];
+    setCurrency(selectedCurrency);
+    fetchExchangeRate(selectedCurrency);
   }, [country]);
 
   // Effect to handle daily rate and monthly salary calculations
@@ -390,7 +425,18 @@ const GenericOffshoreContractorGpCalculator = () => {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Exchange Rate ({currency}/AUD)</label>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                Exchange Rate ({currency}/AUD)
+                {apiStatusCode && (
+                  <span style={{ 
+                    marginLeft: "8px", 
+                    fontSize: "0.75rem", 
+                    color: apiStatus === 'success' ? "green" : apiStatus === 'error' ? "red" : "gray" 
+                  }}>
+                    (API Status: {apiStatusCode})
+                  </span>
+                )}
+              </label>
               <input
                 type="number"
                 step="0.000001"
@@ -804,7 +850,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V1.0.0 (27-Mar-2025)</p>
+        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V1.1.0 (28-Mar-2025)</p>
       </div>
     </div>
   );

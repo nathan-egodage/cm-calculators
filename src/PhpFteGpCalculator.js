@@ -10,6 +10,10 @@ const PhpFteGpCalculator = () => {
   const [dailyClientRate, setDailyClientRate] = useState(286.28);
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(142857.14);
   
+  // API status tracking
+  const [apiStatus, setApiStatus] = useState(null);
+  const [isApiLoading, setIsApiLoading] = useState(false);
+  
   // State for input mode
   const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'
   
@@ -50,6 +54,36 @@ const PhpFteGpCalculator = () => {
   const LSL_MOVEMENTS_RATE = 0.0005;
   const HOURS_PER_MONTH = 160;
   const DAYS_PER_MONTH = 20;
+
+  // Fetch exchange rate from API when component mounts
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      setIsApiLoading(true);
+      try {
+        const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=PHP');
+        setApiStatus(response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Calculate PHP/AUD rate as 1 / (rate from API)
+          const newRate = 1 / data.rates.PHP;
+          setPhpRate(parseFloat(newRate.toFixed(5)));
+        } else {
+          // If API call fails, use the default rate
+          console.error('API returned error status:', response.status);
+          // Keep the default rate (0.02800)
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        setApiStatus(500);
+        // Keep the default rate (0.02800)
+      } finally {
+        setIsApiLoading(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
 
   // Effect to handle conversion between daily rate and PHP monthly salary
   useEffect(() => {
@@ -209,6 +243,23 @@ const PhpFteGpCalculator = () => {
   // Handle mode change
   const handleModeChange = (mode) => {
     setCalculationMode(mode);
+  };
+  
+  // Handle PHP rate change
+  const handlePhpRateChange = (value) => {
+    const rate = parseFloat(value);
+    if (rate > 0) {
+      setPhpRate(rate);
+    } else {
+      setPhpRate(0.02800); // Default fallback
+    }
+  };
+
+  // Get API status indicator to display alongside the exchange rate
+  const getApiStatusIndicator = () => {
+    if (isApiLoading) return '(Loading...)';
+    if (apiStatus === null) return '';
+    return `(API Status: ${apiStatus})`;
   };
 
   // Format currency with AUD$ prefix and 2 decimal points
@@ -405,22 +456,31 @@ const PhpFteGpCalculator = () => {
             
             <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
               <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>PHP to AUD Rate</label>
+                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                  PHP/AUD <span style={{ 
+                    color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
+                  }}>{getApiStatusIndicator()}</span>
+                </label>
                 <input
                   type="number"
-                  step="0.001"
-                  value={phpRate}
-                  disabled={true}
+                  step="0.00001"
+                  value={phpRate.toFixed(5)}
+                  onChange={(e) => handlePhpRateChange(e.target.value)}
                   style={{ 
                     padding: "6px", 
                     fontSize: "0.85rem", 
                     width: "100%", 
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#6b7280"
+                    backgroundColor: "white",
+                    color: "black"
                   }}
                 />
+                {isApiLoading && (
+                  <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
+                    Fetching latest exchange rate...
+                  </div>
+                )}
               </div>
               
               <div style={{ flex: "1 1 50%" }}>
@@ -689,7 +749,7 @@ const PhpFteGpCalculator = () => {
             </tbody>
           </table>
         </div>
-         <p className="version-tag">V1.0.1 (27-Mar-2025)</p>
+         <p className="version-tag">V1.0.2 (28-Mar-2025)</p>
       </div>
     </div>
   );
