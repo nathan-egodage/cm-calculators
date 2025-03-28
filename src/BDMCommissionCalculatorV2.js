@@ -296,7 +296,7 @@ const BDMCommissionCalculatorV2 = () => {
   };
 
   return (
-    <div className="container">
+    <div className="container bdm-theme">
       <div className="nav-buttons">
         <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
       </div>
