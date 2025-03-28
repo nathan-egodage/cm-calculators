@@ -616,8 +616,8 @@ button:hover {
 
 .india-theme .currency-prefix {
   position: absolute;
-  left: 8px;
-  top: 7px;
+  left: 4px;
+  top: 6px;
   color: #444444; /* Darker text color for better visibility */
   font-size: 0.85rem;
   font-weight: 500;

@@ -362,7 +362,7 @@ const AusContractorGpCalculator = () => {
                 {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
+                <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
                   value={calculationMode === 'clientRate' ? 
@@ -417,7 +417,7 @@ const AusContractorGpCalculator = () => {
                 {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: "8px", top: "7px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
+                <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
                   value={calculationMode === 'dailyRate' ? 
