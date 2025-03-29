@@ -202,6 +202,17 @@ button:hover {
   --text-on-secondary: #ffffff; /* White text on red */
 }
 
+/* india-theme Theme (Blue/Red) */
+.india-theme {
+  --primary-color: #0C6500; /* Darker green for better contrast */
+  --secondary-color: #FF9933; /* Philippine red */
+  --primary-light: #e6ecf7;
+  --secondary-light: #fae6e8;
+  --primary-hover: #FF9933; /* Darker blue for hover */
+  --text-on-primary: #ffffff; /* White text on blue */
+  --text-on-secondary: #ffffff; /* White text on red */
+}
+
 /* Calculator card styling with themes */
 .calculator-card {
   background-color: #ffffff;
@@ -253,6 +264,16 @@ button:hover {
   background-color: var(--primary-hover);
 }
 
+.india-theme button {
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+}
+
+.india-theme button:hover {
+  background-color: var(--primary-hover);
+}
+
+
 /* Active button styling */
 .aus-theme button.active {
   background-color: var(--secondary-color);
@@ -264,6 +285,13 @@ button:hover {
   color: var(--text-on-secondary);
 }
 
+.india-theme button.active {
+  background-color: #FF9933;
+  color: var(--text-on-secondary);
+}
+
+
+
 /* Result styling */
 .aus-theme .result-summary {
   background-color: var(--primary-light);
@@ -274,6 +302,7 @@ button:hover {
   background-color: var(--primary-light);
   border: 1px solid var(--primary-color);
 }
+
 
 .aus-theme .result-highlight {
   background-color: var(--secondary-light);
@@ -487,16 +516,6 @@ button:hover {
   background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   color: white;
   font-weight: bold;
-}
-
-/* India Theme for Generic Offshore Contractor GP Calculator */
-.india-theme {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 12px;
-  --primary-color: #0C6500;  /* Dark blue from logo */
-  --secondary-color: #0C6500; /* Orange from logo */
- 
 }
 
 
