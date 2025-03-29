@@ -206,7 +206,7 @@ button:hover {
 .india-theme {
   --primary-color: #0C6500; /* Darker green for better contrast */
   --secondary-color: #FF9933; /* Philippine red */
-  --primary-light: #e6ecf7;
+  --primary-light: #e6f5ec;
   --secondary-light: #fae6e8;
   --primary-hover: #FF9933; /* Darker blue for hover */
   --text-on-primary: #ffffff; /* White text on blue */
@@ -314,6 +314,12 @@ button:hover {
   background-color: var(--secondary-light);
   color: var(--primary-color);
   border-left: 3px solid var(--secondary-color);
+}
+
+.india-theme .result-highlight {
+  background-color: #e6f5ec;
+  color: #0C6500;
+  border-left: 3px solid #0C6500;
 }
 
 /* Highlight boxes */
@@ -533,8 +539,8 @@ button:hover {
 }
 
 .india-theme .calculator-card {
-  background-color: #FFFFFF;
-  border: 1px solid #e5e7eb;
+  background-color: #f5faff;
+  border: 1px solid #d0e7ff;
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 12px;
@@ -542,8 +548,8 @@ button:hover {
 }
 
 .india-theme .results-card {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: #e6f5ec;
+  border: 1px solid #e6f5ec;
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 12px;
@@ -705,6 +711,13 @@ button:hover {
   box-shadow: 0 0 0 2px rgba(255, 153, 51, 0.2);
 }
 
+.india-theme.result-summary {
+  background-color: #f5faff;
+  border: 1px solid #d0e7ff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
 
 /* BDM Commission Calculator Theme */
 .bdm-theme {
