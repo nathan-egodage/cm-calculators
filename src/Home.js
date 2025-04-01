@@ -11,7 +11,7 @@ const Home = () => {
 
   // Check if user is authorized to see BDM calculator
   const isBdmAuthorized = loaded && user && 
-    ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", 
+    ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au", 
      "ddallariva@cloudmarc.com.au", "dnewland@cloudmarc.com.au"].includes(user.userDetails);
 
   // Base calculator data with added category and icon properties
