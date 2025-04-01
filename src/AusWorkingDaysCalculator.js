@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './App.css';
+import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
 
 const AusWorkingDaysCalculator = () => {
-  const [startDate, setStartDate] = useState('');
+  // Initialize start date to today
+  const today = new Date().toISOString().split('T')[0];
+  
+  const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState('');
   const [workingDays, setWorkingDays] = useState(null);
   const [includeStartDate, setIncludeStartDate] = useState(true);
   const [includeEndDate, setIncludeEndDate] = useState(true);
-  const [selectedState, setSelectedState] = useState('NSW');
+  const [selectedState, setSelectedState] = useState('VIC');
   const [publicHolidays, setPublicHolidays] = useState([]);
   const [customHolidays, setCustomHolidays] = useState([]);
   const [newCustomHoliday, setNewCustomHoliday] = useState({ 
@@ -32,6 +36,145 @@ const AusWorkingDaysCalculator = () => {
     { code: 'ACT', name: 'Australian Capital Territory' }
   ];
 
+  // Helper function to check if a date is a weekday
+  const isWeekday = (date) => {
+    const day = date.getDay();
+    return day !== 0 && day !== 6; // Not Sunday (0) and not Saturday (6)
+  };
+
+  // Helper function to get next working day
+  const getNextWorkingDay = (date) => {
+    const nextDay = new Date(date);
+    while (!isWeekday(nextDay)) {
+      nextDay.setDate(nextDay.getDate() + 1);
+    }
+    return nextDay;
+  };
+
+  // Helper function to add working days to a date
+  const addWorkingDays = (startDate, days) => {
+    const date = new Date(startDate);
+    let workingDaysAdded = 0;
+    
+    while (workingDaysAdded < days) {
+      date.setDate(date.getDate() + 1);
+      if (isWeekday(date)) {
+        workingDaysAdded++;
+      }
+    }
+    
+    return date;
+  };
+
+  // Date shortcut helper functions
+  const getNextMonthFirstWeekday = () => {
+    const now = new Date();
+    // Set to 1st of next month
+    const firstDay = new Date(now.getFullYear(), now.getMonth() + 2, 1);
+    
+    // Ensure it's a working day
+    return getNextWorkingDay(firstDay).toISOString().split('T')[0];
+  };
+
+  const getTodayPlus = (days) => {
+    const now = new Date();
+    now.setDate(now.getDate() + days);
+    // Ensure it's a working day
+    return getNextWorkingDay(now).toISOString().split('T')[0];
+  };
+
+  // Get date after specified number of working days
+  const getTodayPlusWorkingDays = (workDays) => {
+    const now = new Date();
+    // Start with today and ensure it's a working day
+    const startDate = getNextWorkingDay(now);
+    // Add working days
+    return addWorkingDays(startDate, workDays).toISOString().split('T')[0];
+  };
+
+  const getMidYear = () => {
+    const now = new Date();
+    const midYear = new Date(now.getFullYear(), 5, 30); // June 30th
+    
+    // If we're past mid-year, use next year
+    if (now > midYear) {
+      midYear.setFullYear(now.getFullYear() + 1);
+    }
+    
+    return midYear.toISOString().split('T')[0];
+  };
+
+  const getYearEnd = () => {
+    const now = new Date();
+    const yearEnd = new Date(now.getFullYear(), 11, 31); // December 31st
+    
+    // If we're past year-end, use next year
+    if (now > yearEnd) {
+      yearEnd.setFullYear(now.getFullYear() + 1);
+    }
+    
+    return yearEnd.toISOString().split('T')[0];
+  };
+
+  // Apply start date shortcut
+  const applyStartDateShortcut = (shortcut) => {
+    let newStartDate;
+    
+    switch(shortcut) {
+      case 'today':
+        // Get today if it's a working day, otherwise get next working day
+        const todayDate = new Date(today);
+        newStartDate = isWeekday(todayDate) 
+          ? today 
+          : getNextWorkingDay(todayDate).toISOString().split('T')[0];
+        break;
+      case 'nextMonth':
+        newStartDate = getNextMonthFirstWeekday();
+        break;
+      case 'plus7':
+        newStartDate = getTodayPlus(7);
+        break;
+      case 'plus14':
+        newStartDate = getTodayPlus(14);
+        break;
+      default:
+        // Ensure default is also a working day
+        const defaultDate = new Date(today);
+        newStartDate = isWeekday(defaultDate)
+          ? today
+          : getNextWorkingDay(defaultDate).toISOString().split('T')[0];
+    }
+    
+    setStartDate(newStartDate);
+  };
+
+  // Apply end date shortcut
+  const applyEndDateShortcut = (shortcut) => {
+    let newEndDate;
+    
+    switch(shortcut) {
+      case 'plus120':
+        // Add 120 working days
+        newEndDate = getTodayPlusWorkingDays(121);
+        break;
+      case 'plus180':
+        // Add 180 working days
+        newEndDate = getTodayPlusWorkingDays(180);
+        break;
+      case 'midYear':
+        newEndDate = getMidYear();
+        break;
+      case 'yearEnd':
+        newEndDate = getYearEnd();
+        break;
+      default:
+        // Default to today + 30 working days
+        newEndDate = getTodayPlusWorkingDays(30);
+    }
+    
+    setEndDate(newEndDate);
+  };
+
   // Initialize with Christmas mandatory shutdown period
   useEffect(() => {
     const year = new Date().getFullYear();
@@ -44,6 +187,15 @@ const AusWorkingDaysCalculator = () => {
       endDate: newYearEnd,
       name: 'Christmas Mandatory Shutdown'
     }]);
+    
+    // Set a default end date to today + 30 working days
+    setEndDate(getTodayPlusWorkingDays(30));
+    
+    // Ensure start date is a working day
+    const todayDate = new Date(today);
+    if (!isWeekday(todayDate)) {
+      setStartDate(getNextWorkingDay(todayDate).toISOString().split('T')[0]);
+    }
   }, []);
 
   // Fetch public holidays from Nager.Date API
@@ -252,6 +404,13 @@ const AusWorkingDaysCalculator = () => {
     return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
   };
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
   return (
     <div className="calculator-container compact">
       <div className="calculator-header">
@@ -288,13 +447,14 @@ const AusWorkingDaysCalculator = () => {
           </div>
           
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group date-group">
               <label>Start Date:</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
+              <div className="date-display">{formatDate(startDate)}</div>
               <label className="checkbox-label">
                 <input
                   type="checkbox"
@@ -303,15 +463,26 @@ const AusWorkingDaysCalculator = () => {
                 />
                 Include start date
               </label>
+              
+              <div className="date-shortcuts">
+                <h4>Quick Select:</h4>
+                <div className="shortcut-buttons">
+                  <button type="button" onClick={() => applyStartDateShortcut('today')} className="shortcut-btn">Today (Weekday)</button>
+                  <button type="button" onClick={() => applyStartDateShortcut('nextMonth')} className="shortcut-btn">Next Month 1st Weekday</button>
+                  <button type="button" onClick={() => applyStartDateShortcut('plus7')} className="shortcut-btn">Today + 7 Days (Weekday)</button>
+                  <button type="button" onClick={() => applyStartDateShortcut('plus14')} className="shortcut-btn">Today + 14 Days (Weekday)</button>
+                </div>
+              </div>
             </div>
             
-            <div className="form-group">
+            <div className="form-group date-group">
               <label>End Date:</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
+              <div className="date-display">{formatDate(endDate)}</div>
               <label className="checkbox-label">
                 <input
                   type="checkbox"
@@ -320,6 +491,16 @@ const AusWorkingDaysCalculator = () => {
                 />
                 Include end date
               </label>
+              
+              <div className="date-shortcuts">
+                <h4>Quick Select:</h4>
+                <div className="shortcut-buttons">
+                  <button type="button" onClick={() => applyEndDateShortcut('plus120')} className="shortcut-btn">Today + 120 Working Days</button>
+                  <button type="button" onClick={() => applyEndDateShortcut('plus180')} className="shortcut-btn">Today + 180 Working Days</button>
+                  <button type="button" onClick={() => applyEndDateShortcut('midYear')} className="shortcut-btn">30-Jun</button>
+                  <button type="button" onClick={() => applyEndDateShortcut('yearEnd')} className="shortcut-btn">31-Dec</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -459,9 +640,73 @@ const AusWorkingDaysCalculator = () => {
           </div>
         )}
       </div>
-       <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V2.0.0 (01-Apr-2025)</p>
+      <div className="section"> <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p> </div>
+      
+      {/* Custom styles for date shortcuts */}
+      <style jsx>{`
+        .date-group {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+        
+        .date-display {
+          margin-top: 4px;
+          font-size: 0.85em;
+          color: #666;
+        }
+        
+        .date-shortcuts {
+          margin-top: 10px;
+          background-color: #f5f5f5;
+          border-radius: 4px;
+          padding: 8px;
+        }
+        
+        .date-shortcuts h4 {
+          margin: 0 0 6px 0;
+          font-size: 0.85em;
+          color: #555;
+        }
+        
+        .shortcut-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        
+        .shortcut-btn {
+          background-color: #28a745;
+          border: 1px solid #ccc;
+          border-radius: 3px;
+          padding: 5px 8px;
+          font-size: 0.8em;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .shortcut-btn:hover {
+          background-color: #d0d0d0;
+          border-color: #aaa;
+        }
+        
+        .shortcut-btn:active {
+          background-color: #c0c0c0;
+          transform: translateY(1px);
+        }
+        
+        @media (max-width: 768px) {
+          .shortcut-buttons {
+            flex-direction: column;
+          }
+          
+          .shortcut-btn {
+            width: 100%;
+            margin-bottom: 5px;
+          }
+        }
+      `}</style>
     </div>
-
   );
 };
 

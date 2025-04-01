@@ -1,6 +1,7 @@
 // GenericOffshoreContractorGpCalculator.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
 
 const GenericOffshoreContractorGpCalculator = () => {
   // State for country and currency
@@ -850,7 +851,9 @@ const GenericOffshoreContractorGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V2.0.0 (01-Apr-2025)</p>
+        <div className="section">
+         <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p>
+        </div>
       </div>
     </div>
   );

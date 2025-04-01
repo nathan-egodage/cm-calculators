@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
 import useAuth from "./useAuth";
+import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
 
 const BDMCommissionCalculatorV2 = () => {
   const { user, loaded } = useAuth();
@@ -18,22 +19,35 @@ const BDMCommissionCalculatorV2 = () => {
   const [afterCommissionGP, setAfterCommissionGP] = useState(0);
   const [commissionPercentage, setCommissionPercentage] = useState(0);
 
+  // Check if user is authorized to access the BDM calculator
+  const isBdmAuthorized = () => {
+    if (!user) return false;
+    
+    return AUTHORIZED_USERS.bdmCalculator.some(email => 
+      email.toLowerCase() === user.userDetails.toLowerCase()
+    );
+  };
+
   useEffect(() => {
-    if (
-      loaded &&
-      user &&
-      ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au","dnewland@cloudmarc.com.au"].includes(user.userDetails)
-    ) {
+    if (loaded && isBdmAuthorized()) {
       calculateCommission();
     }
   }, [loaded, user, revenue, gp]);
 
-  if (!loaded) return <p>Loading...</p>;
-
-  if (!user || !["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au","ddallariva@cloudmarc.com.au","dnewland@cloudmarc.com.au"].includes(user.userDetails)) {
-    return <p>You do not have access to this page.</p>;
+  // Loading state
+  if (!loaded) {
+    return (
+      <div className="auth-loading-container">
+        <div className="auth-loading-spinner"></div>
+        <p>Verifying your access permissions...</p>
+      </div>
+    );
   }
 
+  // If not authorized, redirect to home
+  if (!isBdmAuthorized()) {
+    return <Navigate to="/" replace />;
+  }
   
   // Commission structure data - Updated based on the provided Excel
   const revenueTiers = [
@@ -491,7 +505,10 @@ const BDMCommissionCalculatorV2 = () => {
             </ul>
           </div>
         </details>
-         <p className="version-tag">V2.0.0 (01-Apr-2025)</p>
+      </div>
+      
+      <div className="section">
+        <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p>
       </div>
     </div>
   );

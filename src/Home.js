@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import useAuth from "./useAuth";
+import { APP_VERSION, AUTHORIZED_USERS, isUserAuthorized } from "./appConfig";
 
 const Home = () => {
   // Get the authenticated user
@@ -8,11 +9,33 @@ const Home = () => {
   
   // State to track active category filter
   const [activeCategory, setActiveCategory] = useState("all");
+  
+  // Check if loading is still in progress
+  if (!loaded) {
+    return (
+      <div className="auth-loading-container">
+        <div className="auth-loading-spinner"></div>
+        <p>Verifying your access permissions...</p>
+      </div>
+    );
+  }
+  
+  // Check if user is authorized to access the home page
+  const isHomeAuthorized = user && 
+    AUTHORIZED_USERS.homeAccess.some(email => 
+      email.toLowerCase() === user.userDetails.toLowerCase()
+    );
+    
+  // If user is not authorized, redirect to login page
+  if (!isHomeAuthorized) {
+    return <Navigate to="/.auth/login/aad" state={{ from: '/' }} replace />;
+  }
 
   // Check if user is authorized to see BDM calculator
-  const isBdmAuthorized = loaded && user && 
-    ["Nathan@cloudmarc.com.au", "nathan@cloudmarc.com.au", "rocket@cloudmarc.com.au", 
-     "ddallariva@cloudmarc.com.au", "dnewland@cloudmarc.com.au"].includes(user.userDetails);
+  const isBdmAuthorized = user && 
+    AUTHORIZED_USERS.bdmCalculator.some(email => 
+      email.toLowerCase() === user.userDetails.toLowerCase()
+    );
 
   // Base calculator data with added category and icon properties
   const baseCalculators = [
@@ -21,25 +44,34 @@ const Home = () => {
       title: "All GP Calculators",
       description: "Combined view with all GP calculators (AU,PH,LK,IN,VN,NZ)",
       path: "/all-cals",
-      category: "combined",
+      category: ["combined", "australia", "philippines", "offshore"],
       theme: "all-cals-theme",
       icon: "📊"
     },
-      {
+    {
       id: "aus-working-days-cal",
       title: "Australian Working Days Calculator",
       description: "Calculate Australian Working Days",
       path: "/aus-working-days-cal",
-      category: "australia",
+      category: ["australia", "tools"],
       theme: "india-theme",
       icon: "📅"
+    },
+    {
+      id: "generic-contractor-gp",
+      title: "Offshore Contractor (Generic)",
+      description: "Calculate Gross Profit for Offshore Contractors (LK,VN,IN & NZ)",
+      path: "/generic-contractor-gp",
+      category: ["offshore"],
+      theme: "all-cals-theme",
+      icon: "🌏"
     },
     {
       id: "aus-fte-gp",
       title: "AUS FTE GP Calculator",
       description: "Calculate Gross Profit for Australian Full-Time Employees",
       path: "/aus-fte-gp",
-      category: "australia",
+      category: ["australia"],
       theme: "aus-theme",
       icon: "🇦🇺"
     },
@@ -48,7 +80,7 @@ const Home = () => {
       title: "AUS Contractor GP Calculator",
       description: "Calculate Gross Profit for Australian Contractors",
       path: "/aus-contractor-gp",
-      category: "australia",
+      category: ["australia"],
       theme: "aus-theme",
       icon: "🇦🇺"
     },
@@ -57,7 +89,7 @@ const Home = () => {
       title: "PHP Contractor GP Calculator",
       description: "Calculate Gross Profit for Philippine Contractors",
       path: "/php-contractor-gp",
-      category: "philippines",
+      category: ["philippines", "offshore"],
       theme: "php-theme",
       icon: "🇵🇭"
     },
@@ -66,18 +98,9 @@ const Home = () => {
       title: "PHP FTE GP Calculator",
       description: "Calculate Gross Profit for Philippine Full-Time Employees",
       path: "/php-fte-gp",
-      category: "philippines",
+      category: ["philippines", "offshore"],
       theme: "php-theme",
       icon: "🇵🇭"
-    },
-    {
-      id: "generic-contractor-gp",
-      title: "Offshore Contractor (Generic)",
-      description: "Calculate Gross Profit for Offshore Contractors (LK,VN,IN & NZ)",
-      path: "/generic-contractor-gp",
-      category: "offshore",
-      theme: "all-cals-theme",
-      icon: "🌏"
     }
   ];
 
@@ -87,7 +110,7 @@ const Home = () => {
     title: "BDM Commission Calculator",
     description: "Calculate BDM Commissions",
     path: "/bdm-calculator-v2",
-    category: "commission",
+    category: ["commission"],
     theme: "bdm-theme",
     icon: "💰"
   };
@@ -103,7 +126,8 @@ const Home = () => {
     { id: "australia", label: "AU" },
     { id: "philippines", label: "PH" },
     { id: "offshore", label: "Offshore" },
-    { id: "combined", label: "Combined" }
+    { id: "combined", label: "Combined" },
+    { id: "tools", label: "Tools" }
   ];
 
   // Add commission category only if user has access to BDM calculator
@@ -114,7 +138,7 @@ const Home = () => {
   // Filter calculators based on active category
   const filteredCalculators = activeCategory === "all" 
     ? calculators 
-    : calculators.filter(calc => calc.category === activeCategory);
+    : calculators.filter(calc => calc.category.includes(activeCategory));
 
   return (
     <div className="container compact-home">
@@ -149,7 +173,9 @@ const Home = () => {
       </div>
 
       <div className="compact-footer">
-        <span className="compact-version">Owner: Nathan Egodage | V2.0.0 (01-Apr-2025)</span>
+        <span className="compact-version">
+          Owner: {APP_VERSION.owner} | {APP_VERSION.number} ({APP_VERSION.date})
+        </span>
       </div>
     </div>
   );

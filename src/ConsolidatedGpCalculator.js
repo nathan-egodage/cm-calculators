@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
 
 // Define theme classes for different calculator types
 const themeClasses = {
@@ -1335,7 +1336,9 @@ const ConsolidatedGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V2.0.0 (01-Apr-2025)</p>
+        <div className="section">
+         <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p>
+        </div>
       </div>
     </div>
   );
