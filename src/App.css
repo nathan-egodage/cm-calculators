@@ -1340,3 +1340,67 @@ button:hover {
 }
 
 
+/* Add these styles to your App.css file */
+
+/* Australian Working Days Calculator Styles - with namespace to avoid conflicts */
+.aus-calculator .date-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.aus-calculator .date-display {
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.aus-calculator .date-shortcuts {
+  margin-top: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.aus-calculator .date-shortcuts h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.85em;
+  color: #555;
+}
+
+.aus-calculator .shortcut-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aus-calculator .shortcut-btn {
+  background-color: #28a745;
+  color: white;
+  border: 1px solid #218838;
+  border-radius: 3px;
+  padding: 5px 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.aus-calculator .shortcut-btn:hover {
+  background-color: #218838;
+}
+
+.aus-calculator .shortcut-btn:active {
+  background-color: #1e7e34;
+  transform: translateY(1px);
+}
+
+@media (max-width: 768px) {
+  .aus-calculator .shortcut-buttons {
+    flex-direction: column;
+  }
+  
+  .aus-calculator .shortcut-btn {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}

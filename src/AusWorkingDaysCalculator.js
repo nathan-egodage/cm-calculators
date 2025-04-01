@@ -45,75 +45,116 @@ const AusWorkingDaysCalculator = () => {
   // Helper function to get next working day
   const getNextWorkingDay = (date) => {
     const nextDay = new Date(date);
+    nextDay.setHours(0, 0, 0, 0);
     while (!isWeekday(nextDay)) {
       nextDay.setDate(nextDay.getDate() + 1);
     }
     return nextDay;
   };
 
-  // Helper function to add working days to a date
-  const addWorkingDays = (startDate, days) => {
-    const date = new Date(startDate);
-    let workingDaysAdded = 0;
+  // FIXED: Next Month 1st Weekday function
+  const getNextMonthFirstWeekday = () => {
+    // Get current date
+    const now = new Date();
     
-    while (workingDaysAdded < days) {
-      date.setDate(date.getDate() + 1);
-      if (isWeekday(date)) {
-        workingDaysAdded++;
+    // Create date for first day of next month
+    // Uses string manipulation to avoid timezone issues
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // 1-12
+    
+    let nextMonthYear = year;
+    let nextMonth = month + 1;
+    
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextMonthYear++;
+    }
+    
+    // Format month with leading zero if needed
+    const nextMonthStr = nextMonth.toString().padStart(2, '0');
+    
+    // Create exact date string for first of next month
+    const firstOfNextMonthStr = `${nextMonthYear}-${nextMonthStr}-01`;
+    
+    // Convert to date object and find first weekday
+    const firstOfNextMonth = new Date(firstOfNextMonthStr);
+    let firstWeekday = new Date(firstOfNextMonth);
+    
+    // Find first weekday
+    while (!isWeekday(firstWeekday)) {
+      firstWeekday.setDate(firstWeekday.getDate() + 1);
+    }
+    
+    // Return date in YYYY-MM-DD format
+    return firstWeekday.toISOString().split('T')[0];
+  };
+
+  const getDatePlus = (baseDate, days) => {
+    const date = new Date(baseDate);
+    date.setDate(date.getDate() + days);
+    // Ensure it's a working day
+    return getNextWorkingDay(date).toISOString().split('T')[0];
+  };
+
+  // FIXED: Calculate exact number of working days
+  const getDatePlusWorkingDays = (baseDate, workDays) => {
+    // Parse input date and ensure hours/minutes/seconds are zeroed
+    const startingDate = new Date(baseDate);
+    startingDate.setHours(0, 0, 0, 0);
+    
+    // We want to track the actual days calculated
+    let workingDaysCount = 0;
+    
+    // Start with the next day after the base date
+    let currentDate = new Date(startingDate);
+    currentDate.setDate(currentDate.getDate() + 1);
+    
+    // Loop until we have the exact number of working days
+    while (workingDaysCount < workDays) {
+      if (isWeekday(currentDate)) {
+        workingDaysCount++;
+      }
+      
+      // If we haven't reached our target, move to next day
+      if (workingDaysCount < workDays) {
+        currentDate.setDate(currentDate.getDate() + 1);
       }
     }
     
-    return date;
+    // Convert to YYYY-MM-DD format
+    return currentDate.toISOString().split('T')[0];
   };
 
-  // Date shortcut helper functions
-  const getNextMonthFirstWeekday = () => {
-    const now = new Date();
-    // Set to 1st of next month
-    const firstDay = new Date(now.getFullYear(), now.getMonth() + 2, 1);
-    
-    // Ensure it's a working day
-    return getNextWorkingDay(firstDay).toISOString().split('T')[0];
-  };
-
-  const getTodayPlus = (days) => {
-    const now = new Date();
-    now.setDate(now.getDate() + days);
-    // Ensure it's a working day
-    return getNextWorkingDay(now).toISOString().split('T')[0];
-  };
-
-  // Get date after specified number of working days
-  const getTodayPlusWorkingDays = (workDays) => {
-    const now = new Date();
-    // Start with today and ensure it's a working day
-    const startDate = getNextWorkingDay(now);
-    // Add working days
-    return addWorkingDays(startDate, workDays).toISOString().split('T')[0];
-  };
-
+  // FIXED: Hard-coded exact date format for mid-year
   const getMidYear = () => {
     const now = new Date();
-    const midYear = new Date(now.getFullYear(), 5, 30); // June 30th
+    const currentYear = now.getFullYear();
     
-    // If we're past mid-year, use next year
-    if (now > midYear) {
-      midYear.setFullYear(now.getFullYear() + 1);
+    // Create June 30 for the current year
+    const june30 = `${currentYear}-06-30`;
+    
+    // If we're past June 30, use next year
+    if (now > new Date(june30)) {
+      return `${currentYear + 1}-06-30`;
     }
     
-    return midYear.toISOString().split('T')[0];
+    return june30;
   };
 
+  // FIXED: Hard-coded exact date format for year-end
   const getYearEnd = () => {
     const now = new Date();
-    const yearEnd = new Date(now.getFullYear(), 11, 31); // December 31st
+    const currentYear = now.getFullYear();
     
-    // If we're past year-end, use next year
-    if (now > yearEnd) {
-      yearEnd.setFullYear(now.getFullYear() + 1);
+    // Create December 31 for the current year
+    const dec31 = `${currentYear}-12-31`;
+    
+    // If we're past December 31, use next year
+    if (now > new Date(dec31)) {
+      return `${currentYear + 1}-12-31`;
     }
     
-    return yearEnd.toISOString().split('T')[0];
+    return dec31;
   };
 
   // Apply start date shortcut
@@ -132,10 +173,10 @@ const AusWorkingDaysCalculator = () => {
         newStartDate = getNextMonthFirstWeekday();
         break;
       case 'plus7':
-        newStartDate = getTodayPlus(7);
+        newStartDate = getDatePlus(today, 7);
         break;
       case 'plus14':
-        newStartDate = getTodayPlus(14);
+        newStartDate = getDatePlus(today, 14);
         break;
       default:
         // Ensure default is also a working day
@@ -148,28 +189,30 @@ const AusWorkingDaysCalculator = () => {
     setStartDate(newStartDate);
   };
 
-  // Apply end date shortcut
+  // Apply end date shortcut (uses selected start date instead of today)
   const applyEndDateShortcut = (shortcut) => {
     let newEndDate;
     
     switch(shortcut) {
       case 'plus120':
-        // Add 120 working days
-        newEndDate = getTodayPlusWorkingDays(121);
+        // Add exactly 120 working days from the selected start date
+        newEndDate = getDatePlusWorkingDays(startDate, 120);
         break;
       case 'plus180':
-        // Add 180 working days
-        newEndDate = getTodayPlusWorkingDays(180);
+        // Add exactly 180 working days from the selected start date
+        newEndDate = getDatePlusWorkingDays(startDate, 180);
         break;
       case 'midYear':
+        // Use exact June 30th
         newEndDate = getMidYear();
         break;
       case 'yearEnd':
+        // Use exact December 31st
         newEndDate = getYearEnd();
         break;
       default:
-        // Default to today + 30 working days
-        newEndDate = getTodayPlusWorkingDays(30);
+        // Default to selected start date + 30 working days
+        newEndDate = getDatePlusWorkingDays(startDate, 30);
     }
     
     setEndDate(newEndDate);
@@ -189,7 +232,7 @@ const AusWorkingDaysCalculator = () => {
     }]);
     
     // Set a default end date to today + 30 working days
-    setEndDate(getTodayPlusWorkingDays(30));
+    setEndDate(getDatePlusWorkingDays(today, 30));
     
     // Ensure start date is a working day
     const todayDate = new Date(today);
@@ -412,7 +455,7 @@ const AusWorkingDaysCalculator = () => {
   };
 
   return (
-    <div className="calculator-container compact">
+    <div className="calculator-container compact aus-calculator">
       <div className="calculator-header">
         <Link to="/" className="back-button">← Back to All Calculators</Link>
         <h2>Australian Working Days Calculator</h2>
@@ -495,8 +538,8 @@ const AusWorkingDaysCalculator = () => {
               <div className="date-shortcuts">
                 <h4>Quick Select:</h4>
                 <div className="shortcut-buttons">
-                  <button type="button" onClick={() => applyEndDateShortcut('plus120')} className="shortcut-btn">Today + 120 Working Days</button>
-                  <button type="button" onClick={() => applyEndDateShortcut('plus180')} className="shortcut-btn">Today + 180 Working Days</button>
+                  <button type="button" onClick={() => applyEndDateShortcut('plus120')} className="shortcut-btn">Start Date + 120 Working Days</button>
+                  <button type="button" onClick={() => applyEndDateShortcut('plus180')} className="shortcut-btn">Start Date + 180 Working Days</button>
                   <button type="button" onClick={() => applyEndDateShortcut('midYear')} className="shortcut-btn">30-Jun</button>
                   <button type="button" onClick={() => applyEndDateShortcut('yearEnd')} className="shortcut-btn">31-Dec</button>
                 </div>
@@ -640,72 +683,8 @@ const AusWorkingDaysCalculator = () => {
           </div>
         )}
       </div>
-      <div className="section"> <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p> </div>
       
-      {/* Custom styles for date shortcuts */}
-      <style jsx>{`
-        .date-group {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-        }
-        
-        .date-display {
-          margin-top: 4px;
-          font-size: 0.85em;
-          color: #666;
-        }
-        
-        .date-shortcuts {
-          margin-top: 10px;
-          background-color: #f5f5f5;
-          border-radius: 4px;
-          padding: 8px;
-        }
-        
-        .date-shortcuts h4 {
-          margin: 0 0 6px 0;
-          font-size: 0.85em;
-          color: #555;
-        }
-        
-        .shortcut-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-        
-        .shortcut-btn {
-          background-color: #28a745;
-          border: 1px solid #ccc;
-          border-radius: 3px;
-          padding: 5px 8px;
-          font-size: 0.8em;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .shortcut-btn:hover {
-          background-color: #d0d0d0;
-          border-color: #aaa;
-        }
-        
-        .shortcut-btn:active {
-          background-color: #c0c0c0;
-          transform: translateY(1px);
-        }
-        
-        @media (max-width: 768px) {
-          .shortcut-buttons {
-            flex-direction: column;
-          }
-          
-          .shortcut-btn {
-            width: 100%;
-            margin-bottom: 5px;
-          }
-        }
-      `}</style>
+      <div className="section"> <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p> </div>
     </div>
   );
 };
