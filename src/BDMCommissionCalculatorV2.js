@@ -491,7 +491,7 @@ const BDMCommissionCalculatorV2 = () => {
             </ul>
           </div>
         </details>
-         <p className="version-tag">V1.0.1 (27-Mar-2025)</p>
+         <p className="version-tag">V2.0.0 (01-Apr-2025)</p>
       </div>
     </div>
   );

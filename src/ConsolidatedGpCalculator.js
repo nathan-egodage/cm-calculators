@@ -1335,7 +1335,7 @@ const ConsolidatedGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag">V1.1.0 (28-Mar-2025)</p>
+        <p className="version-tag">V2.0.0 (01-Apr-2025)</p>
       </div>
     </div>
   );

@@ -850,7 +850,7 @@ const GenericOffshoreContractorGpCalculator = () => {
             </tbody>
           </table>
         </div>
-        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V1.1.0 (28-Mar-2025)</p>
+        <p className="version-tag" style={{ fontSize: "0.75rem", textAlign: "right", color: "#6b7280", marginTop: "8px" }}>V2.0.0 (01-Apr-2025)</p>
       </div>
     </div>
   );
