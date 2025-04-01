@@ -904,5 +904,315 @@ button:hover {
 }
 
 
+/* Working Days Calculator specific styles */
+.calculator-container.compact {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
 
+.calculator-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.calculator-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.back-button {
+  display: inline-block;
+  text-decoration: none;
+  color: #333;
+  background-color: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+.back-button:hover {
+  background-color: #ddd;
+}
+
+.calculator-form {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.form-section {
+  margin-bottom: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.button-group {
+  display: flex;
+  align-items: flex-end;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-group select,
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  font-weight: normal;
+  font-size: 0.85rem;
+}
+
+.checkbox-label input {
+  margin-right: 6px;
+}
+
+.result {
+  background-color: #a4c639;
+  padding: 15px;
+  border-radius: 5px;
+  color: white;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  align-items: center;
+}
+
+.result-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.result-value {
+  font-weight: 700;
+  padding: 2px 10px;
+  background-color: white;
+  color: #333;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.result-value.highlight {
+  background-color: #fff;
+  color: #333;
+}
+
+.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #f5c6cb;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.loading {
+  padding: 8px;
+  margin: 10px 0;
+  background-color: #e9ecef;
+  border-radius: 5px;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Holidays Sections */
+.holidays-section {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.holidays-section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.note {
+  padding: 8px 12px;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.note p {
+  margin: 0;
+}
+
+.add-holiday-form {
+  margin-bottom: 15px;
+}
+
+.holidays-table-container {
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.holidays-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.holidays-table th,
+.holidays-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.holidays-table th {
+  background-color: #f1f1f1;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.btn-add {
+  padding: 6px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.btn-remove {
+  padding: 3px 6px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-add:hover {
+  background-color: #218838;
+}
+
+.btn-remove:hover {
+  background-color: #c82333;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Add these styles to your existing App.css file for the redesigned home page */
+
+.home-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.home-header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.home-header .subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+}
+
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.category-btn {
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-btn:hover {
+  background-color: #e9e9e9;
+}
+
+.category-btn.active {
+  background-color: #3478f6;
+  color: white;
+  border-color: #3478f6;
+}
 
