@@ -39,7 +39,6 @@ export const AUTHORIZED_USERS = {
   // Users who can access the BDM calculator
   bdmCalculator: [
     "ddallariva@cloudmarc.com.au",
-    "dnewland@cloudmarc.com.au",
     "nathan@cloudmarc.com.au",
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au"
