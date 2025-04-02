@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import BDMCommissionCalculatorV2 from './BDMCommissionCalculatorV2';
-import AusFteGpCalculator from './AusFteGpCalculator';
-import AusContractorGpCalculator from './AusContractorGpCalculator';
-import PhpContractorGpCalculator from './PhpContractorGpCalculator';
-import PhpFteGpCalculator from './PhpFteGpCalculator';
-import ConsolidatedGpCalculator from './ConsolidatedGpCalculator';
-import GenericOffshoreContractorGpCalculator from './GenericOffshoreContractorGpCalculator';
-import AusWorkingDaysCalculator from './AusWorkingDaysCalculator';
+import BDMCommissionCalculatorV2 from '../calculators/BDMCommissionCalculatorV2';
+import AusFteGpCalculator from '../calculators/AusFteGpCalculator';
+import AusContractorGpCalculator from '../calculators/AusContractorGpCalculator';
+import PhpContractorGpCalculator from '../calculators/PhpContractorGpCalculator';
+import PhpFteGpCalculator from '../calculators/PhpFteGpCalculator';
+import ConsolidatedGpCalculator from '../calculators/ConsolidatedGpCalculator';
+import GenericOffshoreContractorGpCalculator from '../calculators/GenericOffshoreContractorGpCalculator';
+import AusWorkingDaysCalculator from '../calculators/AusWorkingDaysCalculator';
 
-import Home from './Home';
-import './App.css';
+import Home from '../pages/Home';
+import '../styles/App.css';
 
 function App() {
   const [authStatus, setAuthStatus] = useState({

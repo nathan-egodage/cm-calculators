@@ -1,27 +1,37 @@
-// AusFteGpCalculator.js
+// PhpContractorGpCalculator.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
+import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
-const AusFteGpCalculator = () => {
+const PhpContractorGpCalculator = () => {
   // State for form inputs and calculated values
-  const [salaryPackage, setSalaryPackage] = useState(110000);
-  const [targetMarginPercent, setTargetMarginPercent] = useState(35);
-  const [dailyClientRate, setDailyClientRate] = useState(1057.95);
+  const [phpRate, setPhpRate] = useState(0.028);
+  const [dailyRate, setDailyRate] = useState(210);
+  const [targetMarginPercent, setTargetMarginPercent] = useState(50);
+  const [dailyClientRate, setDailyClientRate] = useState(266.01);
+  const [phpMonthlySalary, setPhpMonthlySalary] = useState(150000.00);
+  
+  // API status tracking
+  const [apiStatus, setApiStatus] = useState(null);
+  const [isApiLoading, setIsApiLoading] = useState(false);
+  
+  // State for input mode
+  const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'
   
   // State for configuration settings
-  const [payrollTaxApplicable, setPayrollTaxApplicable] = useState('Y');
-  const [workcover, setWorkcover] = useState('Y');
-  const [leaveMovements, setLeaveMovements] = useState('Y');
-  const [lslMovements, setLslMovements] = useState('Y');
+  const [payrollTaxApplicable, setPayrollTaxApplicable] = useState('N');
+  const [workcover, setWorkcover] = useState('N');
+  const [leaveMovements, setLeaveMovements] = useState('N');
+  const [lslMovements, setLslMovements] = useState('N');
   const [workingDays, setWorkingDays] = useState(220);
-  const [extraExpenses, setExtraExpenses] = useState('N');
-  const [additionalExpenses, setAdditionalExpenses] = useState(0);
+  const [extraExpenses, setExtraExpenses] = useState('Y');
+  const [additionalExpenses, setAdditionalExpenses] = useState(100);
   
   // State for calculation mode
-  const [calculationMode, setCalculationMode] = useState('dailyRate');
+  const [calculationMode, setCalculationMode] = useState('dailyRate'); // Options: dailyRate, clientRate, targetMargin
   
   // State for calculated values
+  const [annualIncome, setAnnualIncome] = useState(0);
   const [payrollTax, setPayrollTax] = useState(0);
   const [workCoverAmount, setWorkCoverAmount] = useState(0);
   const [leaveMovementsAmount, setLeaveMovementsAmount] = useState(0);
@@ -39,12 +49,74 @@ const AusFteGpCalculator = () => {
   const WORKCOVER_RATE = 0.0055;
   const LEAVE_MOVEMENTS_RATE = 0.0050;
   const LSL_MOVEMENTS_RATE = 0.0005;
+  const HOURS_PER_MONTH = 160;
+  const DAYS_PER_MONTH = 20;
+
+  // Fetch exchange rate from API when component mounts
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      setIsApiLoading(true);
+      try {
+        const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=PHP');
+        setApiStatus(response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Calculate PHP/AUD rate as 1 / (rate from API)
+          const newRate = 1 / data.rates.PHP;
+          setPhpRate(parseFloat(newRate.toFixed(5)));
+        } else {
+          // If API call fails, use the default rate
+          console.error('API returned error status:', response.status);
+          // Keep the default rate (0.02800)
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        setApiStatus(500);
+        // Keep the default rate (0.02800)
+      } finally {
+        setIsApiLoading(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
+
+  // Effect to handle conversion between daily rate and PHP monthly salary
+  useEffect(() => {
+    if (rateInputMode === 'dailyRate' && phpRate > 0) {
+      // Calculate PHP Monthly Salary based on Daily Rate
+      const calculatedPhpMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
+      setPhpMonthlySalary(calculatedPhpMonthlySalary);
+    } else if (rateInputMode === 'phpSalary' && phpRate > 0) {
+      // Calculate Daily Rate based on PHP Monthly Salary
+      const calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
+      setDailyRate(calculatedDailyRate);
+    }
+  }, [dailyRate, phpMonthlySalary, phpRate, rateInputMode]);
+
+  // Effect to handle PHP rate changes
+  useEffect(() => {
+    if (phpRate > 0) {
+      // When PHP rate changes, recalculate the value that isn't in input mode
+      if (rateInputMode === 'dailyRate') {
+        // Recalculate PHP salary based on current daily rate
+        const calculatedPhpMonthlySalary = (dailyRate * DAYS_PER_MONTH) / phpRate;
+        setPhpMonthlySalary(calculatedPhpMonthlySalary);
+      } else {
+        // Recalculate daily rate based on current PHP salary
+        const calculatedDailyRate = (phpMonthlySalary * phpRate) / DAYS_PER_MONTH;
+        setDailyRate(calculatedDailyRate);
+      }
+    }
+  }, [phpRate]);
 
   // Perform calculations whenever inputs change
   useEffect(() => {
     calculateValues();
   }, [
-    salaryPackage, 
+    phpRate, 
+    dailyRate, 
     targetMarginPercent, 
     dailyClientRate, 
     payrollTaxApplicable, 
@@ -59,20 +131,24 @@ const AusFteGpCalculator = () => {
 
   // Function to handle the main calculations
   const calculateValues = () => {
+    // Calculate annual income
+    const annualIncomeValue = dailyRate * workingDays;
+    setAnnualIncome(annualIncomeValue);
+
     // Calculate payroll tax if applicable
-    const payrollTaxValue = payrollTaxApplicable === 'Y' ? salaryPackage * PAYROLL_TAX_RATE : 0;
+    const payrollTaxValue = payrollTaxApplicable === 'Y' ? annualIncomeValue * PAYROLL_TAX_RATE : 0;
     setPayrollTax(payrollTaxValue);
 
     // Calculate workcover if applicable
-    const workCoverValue = workcover === 'Y' ? salaryPackage * WORKCOVER_RATE : 0;
+    const workCoverValue = workcover === 'Y' ? annualIncomeValue * WORKCOVER_RATE : 0;
     setWorkCoverAmount(workCoverValue);
 
     // Calculate leave movements if applicable
-    const leaveMovementsValue = leaveMovements === 'Y' ? salaryPackage * LEAVE_MOVEMENTS_RATE : 0;
+    const leaveMovementsValue = leaveMovements === 'Y' ? annualIncomeValue * LEAVE_MOVEMENTS_RATE : 0;
     setLeaveMovementsAmount(leaveMovementsValue);
 
     // Calculate LSL movements if applicable
-    const lslMovementsValue = lslMovements === 'Y' ? salaryPackage * LSL_MOVEMENTS_RATE : 0;
+    const lslMovementsValue = lslMovements === 'Y' ? annualIncomeValue * LSL_MOVEMENTS_RATE : 0;
     setLslMovementsAmount(lslMovementsValue);
 
     // Calculate total extra cost percentage
@@ -84,12 +160,12 @@ const AusFteGpCalculator = () => {
     setTotalExtraCostPercent(totalExtraPercent);
 
     // Calculate extra cost
-    const extraCostValue = salaryPackage * totalExtraPercent;
+    const extraCostValue = annualIncomeValue * totalExtraPercent;
     setExtraCost(extraCostValue);
 
     // Calculate total cost
     const extraExpensesAmount = extraExpenses === 'Y' ? additionalExpenses : 0;
-    const totalCostValue = salaryPackage + extraCostValue + extraExpensesAmount;
+    const totalCostValue = annualIncomeValue + extraCostValue + extraExpensesAmount;
     setTotalCost(totalCostValue);
 
     // Calculate daily cost
@@ -98,7 +174,7 @@ const AusFteGpCalculator = () => {
 
     // Perform specific calculations based on the mode
     if (calculationMode === 'dailyRate') {
-      // Calculate daily client rate from salary package and target margin
+      // Calculate daily client rate from daily rate and target margin
       const marginMultiplier = 1 / (1 - targetMarginPercent / 100);
       const calculatedDailyClientRate = dailyCostValue * marginMultiplier;
       setDailyClientRate(calculatedDailyClientRate);
@@ -114,21 +190,42 @@ const AusFteGpCalculator = () => {
       const annualRevenueValue = calculatedDailyClientRate * workingDays;
       setAnnualRevenue(annualRevenueValue);
       
-    } else if (calculationMode === 'salaryPackage') {
-      // Calculate salary package from target margin and daily client rate
+    } else if (calculationMode === 'clientRate') {
+      // Calculate daily rate from target margin and daily client rate
+      // First, calculate what the daily cost would be given the target margin and daily client rate
       const impliedDailyCost = dailyClientRate * (1 - targetMarginPercent / 100);
+      
+      // Then, work backwards to determine what daily rate would result in this daily cost
+      // totalCost = annualIncome * (1 + totalExtraPercent) + extraExpensesAmount
+      // impliedDailyCost = totalCost / workingDays
+      
       const impliedTotalCost = impliedDailyCost * workingDays;
       const extraExpensesAmount = extraExpenses === 'Y' ? additionalExpenses : 0;
       
-      const calculatedSalaryPackage = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent);
+      // Solve for annualIncome:
+      // impliedTotalCost = annualIncome * (1 + totalExtraPercent) + extraExpensesAmount
+      // annualIncome = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent)
+      const calculatedAnnualIncome = (impliedTotalCost - extraExpensesAmount) / (1 + totalExtraPercent);
       
-      if (Math.abs(calculatedSalaryPackage - salaryPackage) > 1) {
-        setSalaryPackage(calculatedSalaryPackage);
+      // Calculate daily rate
+      const calculatedDailyRate = calculatedAnnualIncome / workingDays;
+      
+      // Update state but avoid infinite loop by not updating if very close to current value
+      if (Math.abs(calculatedDailyRate - dailyRate) > 1) {
+        setDailyRate(calculatedDailyRate);
+        
+        // If in phpSalary mode, also update PHP monthly salary
+        if (rateInputMode === 'phpSalary' && phpRate > 0) {
+          const calculatedPhpMonthlySalary = (calculatedDailyRate * DAYS_PER_MONTH) / phpRate;
+          setPhpMonthlySalary(calculatedPhpMonthlySalary);
+        }
       }
       
+      // Calculate target margin amount
       const targetMarginAmountValue = dailyClientRate - impliedDailyCost;
       setTargetMarginAmount(targetMarginAmountValue);
       
+      // Calculate annual profit and revenue
       const annualProfitValue = targetMarginAmountValue * workingDays;
       setAnnualProfit(annualProfitValue);
       
@@ -136,15 +233,20 @@ const AusFteGpCalculator = () => {
       setAnnualRevenue(annualRevenueValue);
       
     } else if (calculationMode === 'targetMargin') {
+      // Calculate target margin from daily rate and daily client rate
+      // targetMargin = (dailyClientRate - dailyCost) / dailyClientRate * 100
       const calculatedTargetMarginPercent = ((dailyClientRate - dailyCostValue) / dailyClientRate) * 100;
       
+      // Update state but avoid infinite loop by not updating if very close to current value
       if (Math.abs(calculatedTargetMarginPercent - targetMarginPercent) > 0.01) {
         setTargetMarginPercent(calculatedTargetMarginPercent);
       }
       
+      // Calculate target margin amount
       const targetMarginAmountValue = dailyClientRate - dailyCostValue;
       setTargetMarginAmount(targetMarginAmountValue);
       
+      // Calculate annual profit and revenue
       const annualProfitValue = targetMarginAmountValue * workingDays;
       setAnnualProfit(annualProfitValue);
       
@@ -153,9 +255,35 @@ const AusFteGpCalculator = () => {
     }
   };
 
+  // Toggle between daily rate and PHP salary as input
+  const toggleRateInputMode = () => {
+    if (rateInputMode === 'dailyRate') {
+      setRateInputMode('phpSalary');
+    } else {
+      setRateInputMode('dailyRate');
+    }
+  };
+
   // Handle mode change
   const handleModeChange = (mode) => {
     setCalculationMode(mode);
+  };
+  
+  // Handle PHP rate change
+  const handlePhpRateChange = (value) => {
+    const rate = parseFloat(value);
+    if (rate > 0) {
+      setPhpRate(rate);
+    } else {
+      setPhpRate(0.02800); // Default fallback
+    }
+  };
+
+  // Get API status indicator to display alongside the exchange rate
+  const getApiStatusIndicator = () => {
+    if (isApiLoading) return '(Loading...)';
+    if (apiStatus === null) return '';
+    return `(API Status: ${apiStatus})`;
   };
 
   // Format currency with AUD$ prefix and 2 decimal points
@@ -163,9 +291,19 @@ const AusFteGpCalculator = () => {
     return `AUD$ ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
+  // Format PHP currency with ₱ prefix and 2 decimal points
+  const formatPhpCurrency = (value) => {
+    return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  };
+
   // Format percentage with 2 decimal points
   const formatPercent = (value) => {
     return `${value.toFixed(2)}%`;
+  };
+
+  // Format input as currency with thousand separator
+  const formatCurrencyInput = (value) => {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   // Handle currency input changes
@@ -177,14 +315,14 @@ const AusFteGpCalculator = () => {
   };
 
   return (
-    <div className="container aus-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
+    <div className="container php-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
         <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
       </div>
       
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>AUS FTE GP Calculator</h1>
+      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>PHP Contractor GP Calculator</h1>
       
-      <div className="calculator-card aus-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
+      <div className="calculator-card php-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
         <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
         <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
           <button 
@@ -200,8 +338,8 @@ const AusFteGpCalculator = () => {
             Calculate Client Rate
           </button>
           <button 
-            onClick={() => handleModeChange('salaryPackage')}
-            className={calculationMode === 'salaryPackage' ? 'active' : ''}
+            onClick={() => handleModeChange('clientRate')}
+            className={calculationMode === 'clientRate' ? 'active' : ''}
             style={{ 
               flex: 1, 
               padding: "8px 0",
@@ -209,7 +347,7 @@ const AusFteGpCalculator = () => {
               cursor: "pointer"
             }}
           >
-            Calculate Salary Package
+            Calculate Contractor Rate
           </button>
           <button 
             onClick={() => handleModeChange('targetMargin')}
@@ -234,6 +372,7 @@ const AusFteGpCalculator = () => {
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Is Payroll Tax applicable?</label>
                 <select 
                   value={payrollTaxApplicable} 
+                  disabled={true}
                   onChange={(e) => setPayrollTaxApplicable(e.target.value)}
                   style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
                 >
@@ -350,26 +489,74 @@ const AusFteGpCalculator = () => {
                 />
               </div>
             )}
+
+            <div style={{ marginBottom: "8px" }}>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                PHP/AUD <span style={{ 
+                  color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
+                }}>{getApiStatusIndicator()}</span>
+              </label>
+              <input
+                type="number"
+                step="0.00001"
+                value={phpRate.toFixed(5)}
+                onChange={(e) => handlePhpRateChange(e.target.value)}
+                style={{ 
+                  padding: "6px", 
+                  fontSize: "0.85rem", 
+                  width: "100%", 
+                  border: "1px solid #d1d5db", 
+                  borderRadius: "4px",
+                  backgroundColor: "white",
+                  color: "black"
+                }}
+              />
+              {isApiLoading && (
+                <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
+                  Fetching latest exchange rate...
+                </div>
+              )}
+            </div>
           </div>
           
           <div style={{ flex: "1 1 50%" }}>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
+            
+            {/* Only show the rate input type switch when not in Calculate Contractor Rate mode */}
+            {calculationMode !== 'clientRate' && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.85rem" }}>Rate Input Type:</span>
+                <button 
+                  onClick={toggleRateInputMode}
+                  style={{ 
+                    padding: "4px 8px",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "0.8rem",
+                    cursor: "pointer"
+                  }}
+                >
+                  Switch to {rateInputMode === 'dailyRate' ? 'PHP Salary' : 'Daily Rate'} input
+                </button>
+              </div>
+            )}
 
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                AUD$ Salary Package (Including Super)
-                {calculationMode === 'salaryPackage' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                AUD$ Daily Rate
+                {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                {rateInputMode === 'phpSalary' && calculationMode !== 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
                 <input
                   type="text"
-                  value={calculationMode === 'salaryPackage' ? 
-                    Math.round(salaryPackage) : 
-                    salaryPackage === 0 ? '' : Math.round(salaryPackage)}
-                  onChange={(e) => handleCurrencyInputChange(e.target.value, setSalaryPackage)}
+                  value={calculationMode === 'clientRate' || rateInputMode === 'phpSalary' ? 
+                    Math.round(dailyRate) : 
+                    dailyRate === 0 ? '' : Math.round(dailyRate)}
+                  onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyRate)}
                   style={{ 
-                    width: "20%", 
+                    width: "25%", 
                     paddingLeft: "45px", 
                     paddingTop: "6px", 
                     paddingBottom: "6px", 
@@ -378,7 +565,36 @@ const AusFteGpCalculator = () => {
                     borderRadius: "4px",
                     fontSize: "0.85rem"
                   }}
-                  disabled={calculationMode === 'salaryPackage'}
+                  disabled={calculationMode === 'clientRate' || rateInputMode === 'phpSalary'}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "8px" }}>
+              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
+                PHP Monthly Salary (160 hours)
+                {rateInputMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+                {calculationMode === 'clientRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
+              </label>
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>₱</div>
+                <input
+                  type="text"
+                  value={rateInputMode === 'dailyRate' || calculationMode === 'clientRate' ? 
+                    Math.round(phpMonthlySalary) : 
+                    phpMonthlySalary === 0 ? '' : Math.round(phpMonthlySalary)}
+                  onChange={(e) => handleCurrencyInputChange(e.target.value, setPhpMonthlySalary)}
+                  style={{ 
+                    width: "25%", 
+                    paddingLeft: "25px", 
+                    paddingTop: "6px", 
+                    paddingBottom: "6px", 
+                    paddingRight: "6px", 
+                    border: "1px solid #d1d5db", 
+                    borderRadius: "4px",
+                    fontSize: "0.85rem"
+                  }}
+                  disabled={rateInputMode === 'dailyRate' || calculationMode === 'clientRate'}
                 />
               </div>
             </div>
@@ -389,7 +605,6 @@ const AusFteGpCalculator = () => {
                 {calculationMode === 'targetMargin' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", right: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}></div>
                 <input
                   type="text"
                   value={calculationMode === 'targetMargin' ? 
@@ -402,7 +617,6 @@ const AusFteGpCalculator = () => {
                   style={{ 
                     width: "20%", 
                     padding: "6px", 
-                    paddingRight: "25px",
                     border: "1px solid #d1d5db", 
                     borderRadius: "4px",
                     fontSize: "0.85rem"
@@ -415,7 +629,7 @@ const AusFteGpCalculator = () => {
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 AUD$ Daily Client Rate
-                {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold"}}>(Calculated)</span>}
+                {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
@@ -443,25 +657,37 @@ const AusFteGpCalculator = () => {
         </div>
       </div>
       
-      <div className="highlight-box aus-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
+      <div className="highlight-box php-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
         <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Results</h2>
         <div className="result-summary">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Payroll Tax ({formatPercent(PAYROLL_TAX_RATE * 100)})</td>
+                <td style={{ padding: "4px 8px" }}>PHP Monthly Salary (160 hours)</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPhpCurrency(phpMonthlySalary)}</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Daily Rate</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyRate)}</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Annual Income</td>
+                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualIncome)}</td>
+              </tr>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ padding: "4px 8px" }}>Payroll Tax ({(PAYROLL_TAX_RATE * 100).toFixed(2)}%)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(payrollTax)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Workcover ({formatPercent(WORKCOVER_RATE * 100)})</td>
+                <td style={{ padding: "4px 8px" }}>Workcover ({(WORKCOVER_RATE * 100).toFixed(2)}%)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(workCoverAmount)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Leave Movements ({formatPercent(LEAVE_MOVEMENTS_RATE * 100)})</td>
+                <td style={{ padding: "4px 8px" }}>Leave Movements ({(LEAVE_MOVEMENTS_RATE * 100).toFixed(2)}%)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(leaveMovementsAmount)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>LSL Movements ({formatPercent(LSL_MOVEMENTS_RATE * 100)})</td>
+                <td style={{ padding: "4px 8px" }}>LSL Movements ({(LSL_MOVEMENTS_RATE * 100).toFixed(2)}%)</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(lslMovementsAmount)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
@@ -515,4 +741,4 @@ const AusFteGpCalculator = () => {
   );
 };
 
-export default AusFteGpCalculator;
+export default PhpContractorGpCalculator;

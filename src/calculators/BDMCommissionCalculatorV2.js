@@ -1,7 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
-import useAuth from "./useAuth";
-import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
+import useAuth from "../hooks/useAuth";
+import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
 const BDMCommissionCalculatorV2 = () => {
   const { user, loaded } = useAuth();

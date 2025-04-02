@@ -1,7 +1,7 @@
 // GenericOffshoreContractorGpCalculator.js
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
+import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
 const GenericOffshoreContractorGpCalculator = () => {
   // State for country and currency

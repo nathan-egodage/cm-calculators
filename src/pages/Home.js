@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import useAuth from "./useAuth";
-import { APP_VERSION, AUTHORIZED_USERS, isUserAuthorized } from "./appConfig";
+import useAuth from "../hooks/useAuth";
+import { APP_VERSION, AUTHORIZED_USERS, isUserAuthorized } from "../config/appConfig";
 
 const Home = () => {
   // Get the authenticated user

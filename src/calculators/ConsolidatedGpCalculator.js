@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
+import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
 // Define theme classes for different calculator types
 const themeClasses = {

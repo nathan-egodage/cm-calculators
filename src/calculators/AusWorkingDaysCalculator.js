@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import './App.css';
-import { APP_VERSION, AUTHORIZED_USERS } from "./appConfig";
+import '../styles/App.css';
+import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
 const AusWorkingDaysCalculator = () => {
   // Initialize start date to today
