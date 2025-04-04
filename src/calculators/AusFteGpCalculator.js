@@ -1,9 +1,14 @@
-// AusFteGpCalculator.js
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
+import { useTheme } from "../contexts/ThemeContext";
+import { Calculator, DollarSign } from "lucide-react";
+import { APP_VERSION } from "../config/appConfig";
+import Button from "../components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../components/ui/Card";
+import { FormGroup, FormLabel, FormInput, FormSelect } from "../components/ui/FormComponents";
 
 const AusFteGpCalculator = () => {
+  const { darkMode } = useTheme();
+  
   // State for form inputs and calculated values
   const [salaryPackage, setSalaryPackage] = useState(110000);
   const [targetMarginPercent, setTargetMarginPercent] = useState(35);
@@ -168,349 +173,301 @@ const AusFteGpCalculator = () => {
     return `${value.toFixed(2)}%`;
   };
 
-  // Handle currency input changes
-  const handleCurrencyInputChange = (value, setter) => {
-    // Remove all non-digit characters except decimal point
-    const numericValue = value.replace(/[^0-9.]/g, '');
-    // Parse to float or default to 0
-    setter(numericValue === '' ? 0 : parseFloat(numericValue));
-  };
-
   return (
-    <div className="container aus-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
-      <div className="nav-buttons" style={{ marginBottom: "8px" }}>
-        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">AUS FTE GP Calculator</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Calculate gross profit for Australian full-time employees</p>
       </div>
       
-      <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>AUS FTE GP Calculator</h1>
+      {/* Calculation Mode Tabs */}
+      <Card className="mb-6 border border-green-100 dark:border-green-900">
+        <CardHeader className="bg-green-50 dark:bg-green-900 pb-2">
+          <CardTitle>Calculation Mode</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={calculationMode === 'dailyRate' ? 'primary' : 'outline'}
+              onClick={() => handleModeChange('dailyRate')}
+              className="flex-1 sm:flex-none"
+            >
+              <Calculator className="mr-2 h-4 w-4" />
+              Calculate Client Rate
+            </Button>
+            <Button
+              variant={calculationMode === 'salaryPackage' ? 'primary' : 'outline'}
+              onClick={() => handleModeChange('salaryPackage')}
+              className="flex-1 sm:flex-none"
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Calculate Salary Package
+            </Button>
+            <Button
+              variant={calculationMode === 'targetMargin' ? 'primary' : 'outline'}
+              onClick={() => handleModeChange('targetMargin')}
+              className="flex-1 sm:flex-none"
+            >
+              <Calculator className="mr-2 h-4 w-4" />
+              Calculate Target Margin
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
-      <div className="calculator-card aus-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px" }}>
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>Calculation Mode</h2>
-        <div className="input-group" style={{ display: 'flex', gap: '5px', marginBottom: "12px" }}>
-          <button 
-            onClick={() => handleModeChange('dailyRate')}
-            className={calculationMode === 'dailyRate' ? 'active' : ''}
-            style={{ 
-              flex: 1, 
-              padding: "8px 0",
-              fontSize: "0.9rem",
-              cursor: "pointer"
-            }}
-          >
-            Calculate Client Rate
-          </button>
-          <button 
-            onClick={() => handleModeChange('salaryPackage')}
-            className={calculationMode === 'salaryPackage' ? 'active' : ''}
-            style={{ 
-              flex: 1, 
-              padding: "8px 0",
-              fontSize: "0.9rem",
-              cursor: "pointer"
-            }}
-          >
-            Calculate Salary Package
-          </button>
-          <button 
-            onClick={() => handleModeChange('targetMargin')}
-            className={calculationMode === 'targetMargin' ? 'active' : ''}
-            style={{ 
-              flex: 1, 
-              padding: "8px 0",
-              fontSize: "0.9rem",
-              cursor: "pointer"
-            }}
-          >
-            Calculate Target Margin
-          </button>
-        </div>
-        
-        <div style={{ display: "flex", gap: "16px" }}>
-          <div style={{ flex: "1 1 50%" }}>
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Configuration</h2>
-            
-            <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Is Payroll Tax applicable?</label>
-                <select 
-                  value={payrollTaxApplicable} 
+      {/* Main Content */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Configuration Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Payroll Tax */}
+              <FormGroup>
+                <FormLabel htmlFor="payroll-tax">Payroll Tax Applicable</FormLabel>
+                <FormSelect
+                  id="payroll-tax"
+                  value={payrollTaxApplicable}
                   onChange={(e) => setPayrollTaxApplicable(e.target.value)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
-                </select>
-              </div>
-              
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Workcover</label>
-                <select 
-                  value={workcover} 
+                </FormSelect>
+              </FormGroup>
+
+              {/* Workcover */}
+              <FormGroup>
+                <FormLabel htmlFor="workcover">Workcover</FormLabel>
+                <FormSelect
+                  id="workcover"
+                  value={workcover}
+                  onChange={(e) => setWorkcover(e.target.value)}
                   disabled={true}
-                  style={{ 
-                    padding: "6px", 
-                    fontSize: "0.85rem", 
-                    width: "100%", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#6b7280"
-                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
-                </select>
-              </div>
-            </div>
-            
-            <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Leave Movements</label>
-                <select 
-                  value={leaveMovements} 
+                </FormSelect>
+              </FormGroup>
+
+              {/* Leave Movements */}
+              <FormGroup>
+                <FormLabel htmlFor="leave-movements">Leave Movements</FormLabel>
+                <FormSelect
+                  id="leave-movements"
+                  value={leaveMovements}
+                  onChange={(e) => setLeaveMovements(e.target.value)}
                   disabled={true}
-                  style={{ 
-                    padding: "6px", 
-                    fontSize: "0.85rem", 
-                    width: "100%", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#6b7280"
-                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
-                </select>
-              </div>
-              
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>LSL Movements</label>
-                <select 
+                </FormSelect>
+              </FormGroup>
+
+              {/* LSL Movements */}
+              <FormGroup>
+                <FormLabel htmlFor="lsl-movements">LSL Movements</FormLabel>
+                <FormSelect
+                  id="lsl-movements"
                   value={lslMovements}
+                  onChange={(e) => setLslMovements(e.target.value)}
                   disabled={true}
-                  style={{ 
-                    padding: "6px", 
-                    fontSize: "0.85rem", 
-                    width: "100%", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#6b7280"
-                  }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
-                </select>
-              </div>
-            </div>
-            
-            <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Working Days</label>
-                <input
+                </FormSelect>
+              </FormGroup>
+
+              {/* Working Days */}
+              <FormGroup>
+                <FormLabel htmlFor="working-days">Working Days</FormLabel>
+                <FormInput
+                  id="working-days"
                   type="number"
                   min="1"
                   max="365"
                   value={workingDays}
+                  onChange={(e) => setWorkingDays(parseInt(e.target.value) || 220)}
                   disabled={true}
-                  style={{ 
-                    padding: "6px", 
-                    fontSize: "0.85rem", 
-                    width: "100%", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#6b7280"
-                  }}
                 />
-              </div>
-              
-              <div style={{ flex: "1 1 50%" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses</label>
-                <select 
-                  value={extraExpenses} 
+              </FormGroup>
+
+              {/* Extra Expenses */}
+              <FormGroup>
+                <FormLabel htmlFor="extra-expenses">Extra Expenses</FormLabel>
+                <FormSelect
+                  id="extra-expenses"
+                  value={extraExpenses}
                   onChange={(e) => setExtraExpenses(e.target.value)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
                 >
                   <option value="Y">Yes</option>
                   <option value="N">No</option>
-                </select>
-              </div>
+                </FormSelect>
+              </FormGroup>
+
+              {/* Additional Expenses Amount */}
+              {extraExpenses === 'Y' && (
+                <FormGroup className="sm:col-span-2">
+                  <FormLabel htmlFor="additional-expenses">Extra Expenses Amount ($)</FormLabel>
+                  <FormInput
+                    id="additional-expenses"
+                    type="number"
+                    value={additionalExpenses}
+                    onChange={(e) => setAdditionalExpenses(parseFloat(e.target.value) || 0)}
+                    prefix="$"
+                  />
+                </FormGroup>
+              )}
             </div>
-            
-            {extraExpenses === 'Y' && (
-              <div style={{ marginBottom: "8px" }}>
-                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Extra Expenses Amount ($)</label>
-                <input
+          </CardContent>
+        </Card>
+
+        {/* Calculation Inputs Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Calculation Inputs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4">
+              {/* Salary Package */}
+              <FormGroup>
+                <FormLabel htmlFor="salary-package">
+                  AUD$ Salary Package (Including Super)
+                  {calculationMode === 'salaryPackage' && 
+                    <span className="ml-2 text-red-500 font-semibold">(Calculated)</span>
+                  }
+                </FormLabel>
+                <FormInput
+                  id="salary-package"
                   type="number"
-                  value={additionalExpenses}
-                  onChange={(e) => setAdditionalExpenses(parseFloat(e.target.value) || 0)}
-                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
-                />
-              </div>
-            )}
-          </div>
-          
-          <div style={{ flex: "1 1 50%" }}>
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Calculation Inputs</h2>
-
-            <div style={{ marginBottom: "8px" }}>
-              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                AUD$ Salary Package (Including Super)
-                {calculationMode === 'salaryPackage' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
-              </label>
-              <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
-                <input
-                  type="text"
-                  value={calculationMode === 'salaryPackage' ? 
-                    Math.round(salaryPackage) : 
-                    salaryPackage === 0 ? '' : Math.round(salaryPackage)}
-                  onChange={(e) => handleCurrencyInputChange(e.target.value, setSalaryPackage)}
-                  style={{ 
-                    width: "20%", 
-                    paddingLeft: "45px", 
-                    paddingTop: "6px", 
-                    paddingBottom: "6px", 
-                    paddingRight: "6px", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    fontSize: "0.85rem"
-                  }}
+                  step="0.01"
+                  value={salaryPackage}
+                  onChange={(e) => setSalaryPackage(parseFloat(e.target.value) || 0)}
                   disabled={calculationMode === 'salaryPackage'}
+                  prefix="AUD$"
                 />
-              </div>
-            </div>
+              </FormGroup>
 
-            <div style={{ marginBottom: "8px" }}>
-              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                Target Margin %
-                {calculationMode === 'targetMargin' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold" }}>(Calculated)</span>}
-              </label>
-              <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", right: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}></div>
-                <input
-                  type="text"
-                  value={calculationMode === 'targetMargin' ? 
-                    Math.round(targetMarginPercent) : 
-                    targetMarginPercent === 0 ? '' : Math.round(targetMarginPercent)}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.]/g, '');
-                    setTargetMarginPercent(value === '' ? 0 : parseFloat(value));
-                  }}
-                  style={{ 
-                    width: "20%", 
-                    padding: "6px", 
-                    paddingRight: "25px",
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    fontSize: "0.85rem"
-                  }}
+              {/* Target Margin */}
+              <FormGroup>
+                <FormLabel htmlFor="target-margin">
+                  Target Margin %
+                  {calculationMode === 'targetMargin' && 
+                    <span className="ml-2 text-red-500 font-semibold">(Calculated)</span>
+                  }
+                </FormLabel>
+                <FormInput
+                  id="target-margin"
+                  type="number"
+                  step="0.01"
+                  value={targetMarginPercent}
+                  onChange={(e) => setTargetMarginPercent(parseFloat(e.target.value) || 0)}
                   disabled={calculationMode === 'targetMargin'}
                 />
-              </div>
-            </div>
+              </FormGroup>
 
-            <div style={{ marginBottom: "8px" }}>
-              <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
-                AUD$ Daily Client Rate
-                {calculationMode === 'dailyRate' && <span style={{ marginLeft: "4px", color: "#dc2626", fontWeight: "bold"}}>(Calculated)</span>}
-              </label>
-              <div style={{ position: "relative" }}>
-                <div style={{ position: "absolute", left: "8px", top: "6px", color: "#6b7280", fontSize: "0.85rem" }}>AUD$</div>
-                <input
-                  type="text"
-                  value={calculationMode === 'dailyRate' ? 
-                    Math.round(dailyClientRate) : 
-                    dailyClientRate === 0 ? '' : Math.round(dailyClientRate)}
-                  onChange={(e) => handleCurrencyInputChange(e.target.value, setDailyClientRate)}
-                  style={{ 
-                    width: "20%", 
-                    paddingLeft: "45px", 
-                    paddingTop: "6px", 
-                    paddingBottom: "6px", 
-                    paddingRight: "6px", 
-                    border: "1px solid #d1d5db", 
-                    borderRadius: "4px",
-                    fontSize: "0.85rem"
-                  }}
+              {/* Daily Client Rate */}
+              <FormGroup>
+                <FormLabel htmlFor="daily-client-rate">
+                  AUD$ Daily Client Rate
+                  {calculationMode === 'dailyRate' && 
+                    <span className="ml-2 text-red-500 font-semibold">(Calculated)</span>
+                  }
+                </FormLabel>
+                <FormInput
+                  id="daily-client-rate"
+                  type="number"
+                  step="0.01"
+                  value={dailyClientRate}
+                  onChange={(e) => setDailyClientRate(parseFloat(e.target.value) || 0)}
                   disabled={calculationMode === 'dailyRate'}
+                  prefix="AUD$"
                 />
-              </div>
+              </FormGroup>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Results Section */}
+      <Card className="mt-6 border border-green-100 dark:border-green-900">
+        <CardHeader className="bg-green-50 dark:bg-green-900">
+          <CardTitle>Results</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <tbody>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Salary Package (Including Super)</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(salaryPackage)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Payroll Tax ({formatPercent(PAYROLL_TAX_RATE * 100)})</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(payrollTax)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Workcover ({formatPercent(WORKCOVER_RATE * 100)})</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(workCoverAmount)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Leave Movements ({formatPercent(LEAVE_MOVEMENTS_RATE * 100)})</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(leaveMovementsAmount)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">LSL Movements ({formatPercent(LSL_MOVEMENTS_RATE * 100)})</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(lslMovementsAmount)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Total Extra Cost %</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatPercent(totalExtraCostPercent * 100)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Extra Cost</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(extraCost)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Extra Expenses</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(extraExpenses === 'Y' ? additionalExpenses : 0)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-green-50'} font-bold`}>
+                  <td className="px-4 py-3 text-sm">Total Cost</td>
+                  <td className="px-4 py-3 text-right">{formatCurrency(totalCost)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Daily Cost</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(dailyCost)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-green-50'} font-bold`}>
+                  <td className="px-4 py-3 text-sm">Target Margin %</td>
+                  <td className="px-4 py-3 text-right">{formatPercent(targetMarginPercent)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Target Margin $</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(targetMarginAmount)}</td>
+                </tr>
+                <tr className={`${darkMode ? 'bg-green-900' : 'bg-green-600 text-white'} font-bold`}>
+                  <td className="px-4 py-3 text-sm">Daily Client Rate</td>
+                  <td className="px-4 py-3 text-right">{formatCurrency(dailyClientRate)}</td>
+                </tr>
+                <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Annual Profit</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(annualProfit)}</td>
+                </tr>
+                <tr className={`${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <td className="px-4 py-3 text-sm">Annual Revenue</td>
+                  <td className="px-4 py-3 text-right font-medium">{formatCurrency(annualRevenue)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
-      
-      <div className="highlight-box aus-theme" style={{ marginBottom: "12px", border: "1px solid #e5e7eb", borderRadius: "4px", padding: "12px", backgroundColor: "#f9fafb" }}>
-        <h2 style={{ fontSize: "1.1rem", marginBottom: "8px" }}>Results</h2>
-        <div className="result-summary">
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-            <tbody>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Payroll Tax ({formatPercent(PAYROLL_TAX_RATE * 100)})</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(payrollTax)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Workcover ({formatPercent(WORKCOVER_RATE * 100)})</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(workCoverAmount)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Leave Movements ({formatPercent(LEAVE_MOVEMENTS_RATE * 100)})</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(leaveMovementsAmount)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>LSL Movements ({formatPercent(LSL_MOVEMENTS_RATE * 100)})</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(lslMovementsAmount)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Total Extra Cost %</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(totalExtraCostPercent * 100)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Extra Cost</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(extraCost)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Extra Expenses</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(extraExpenses === 'Y' ? additionalExpenses : 0)}</td>
-              </tr>
-              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
-                <td style={{ padding: "4px 8px" }}>Total Cost</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(totalCost)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Daily Cost</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyCost)}</td>
-              </tr>
-              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", fontWeight: "bold" }}>
-                <td style={{ padding: "4px 8px" }}>Target Margin %</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatPercent(targetMarginPercent)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Target Margin $</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(targetMarginAmount)}</td>
-              </tr>
-              <tr className="result-highlight" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "#e5e7eb", fontWeight: "bold" }}>
-                <td style={{ padding: "4px 8px" }}>Daily Client Rate</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(dailyClientRate)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Annual Profit</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualProfit)}</td>
-              </tr>
-              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Annual Revenue</td>
-                <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(annualRevenue)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="section">
-         <p className="version-tag">{APP_VERSION.number} ({APP_VERSION.date})</p>
-        </div>
-      </div>
+        </CardContent>
+        <CardFooter className="flex justify-end text-sm text-gray-500">
+          <p>Version: {APP_VERSION.number} ({APP_VERSION.date})</p>
+        </CardFooter>
+      </Card>
     </div>
   );
 };
