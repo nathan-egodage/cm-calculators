@@ -5,6 +5,8 @@ import useAuth from '../hooks/useAuth';
 import HelloSignService from '../services/HelloSignService';
 import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
+const AUTH_HEADER = `Basic ${process.env.HELLOSIGN_API_KEY}`;
+
 const HelloSignDocuments = () => {
   // Get the authenticated user
   const { user, loaded } = useAuth();

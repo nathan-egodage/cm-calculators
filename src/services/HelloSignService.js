@@ -11,7 +11,7 @@ class HelloSignService {
     try {
       console.log('Attempting to fetch HelloSign signature requests...');
       
-      const AUTH_HEADER = 'Basic NTkxNzc2ZDY4MDU1OTNmOTgxOTFmNzM3ZGExZGVlNWM1ZGI4NDM1MDAwNTgzNTRmYjdiZWUxMjBlYmY1NGViNDo=';
+      const AUTH_HEADER = process.env.REACT_APP_HELLOSIGN_API_KEY;
       
       const response = await axios.get('https://api.hellosign.com/v3/signature_request/list', {
         headers: {
