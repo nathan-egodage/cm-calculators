@@ -341,7 +341,7 @@ const GenericOffshoreContractorGpCalculator = () => {
     <div className="container india-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
         <Link to="/" className="back-button">
-          ← Back to All Calculators
+          ← Back to Home
         </Link>
       </div>
 

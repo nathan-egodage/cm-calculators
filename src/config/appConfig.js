@@ -2,8 +2,8 @@
 
 // Version information
 export const APP_VERSION = {
-  number: "V2.0.1", 
-  date: "01-Apr-2025",
+  number: "V3.0.0", 
+  date: "10-Apr-2025",
   owner: "Nathan Egodage",
   repository: "https://github.com/nathan-egodage/cm-calculators.git"
 };
@@ -14,7 +14,9 @@ export const ENV_CONFIG = {
     // Example - not used in current application
     holidayApi: "https://date.nager.at/api/v3/PublicHolidays",
     // HelloSign API endpoint
-    helloSignApi: "https://api.hellosign.com/v3"
+    helloSignApi: "https://api.hellosign.com/v3",
+    // Client API endpoint
+    clientApi: "https://api.cloudmarc.com.au/clients"
   }
 };
 
@@ -56,6 +58,25 @@ export const AUTHORIZED_USERS = {
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au",
     "sbrownbill@cloudmarc.com.au"
+  ],
+  
+  // Users who can create new hire requests
+  newHireRequestCreators: [
+    "ddallariva@cloudmarc.com.au",
+    "dscanlon@cloudmarc.com.au",
+    "jgregory@cloudmarc.com.au",
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au",
+    "sbrownbill@cloudmarc.com.au"
+  ],
+  
+  // Users who can approve new hire requests
+  newHireRequestApprovers: [
+    "ddallariva@cloudmarc.com.au",
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au"
   ]
 };
 

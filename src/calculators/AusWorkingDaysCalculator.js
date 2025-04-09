@@ -457,7 +457,7 @@ const AusWorkingDaysCalculator = () => {
   return (
     <div className="calculator-container compact aus-calculator">
       <div className="calculator-header">
-        <Link to="/" className="back-button">← Back to All Calculators</Link>
+        <Link to="/" className="back-button">← Back to Home</Link>
         <h2>Australian Working Days Calculator</h2>
       </div>
       
