@@ -40,6 +40,15 @@ const Home = () => {
   // Base calculator data with added category and icon properties
   const baseCalculators = [
     {
+      id: "hello-sign-documents",
+      title: "HelloSign Document Status",
+      description: "View and manage HelloSign document statuses",
+      path: "/hello-sign-documents",
+      category: ["tools", "documents"],
+      theme: "cloudmarc-theme",
+      icon: "📝"
+    },
+    {
       id: "all-cals",
       title: "All GP Calculators",
       description: "Combined view with all GP calculators (AU,PH,LK,IN,VN,NZ)",
@@ -123,6 +132,7 @@ const Home = () => {
   // Category definitions for filtering
   const categories = [
     { id: "all", label: "All" },
+    { id: "documents", label: "Documents" },
     { id: "australia", label: "AU" },
     { id: "philippines", label: "PH" },
     { id: "offshore", label: "Offshore" },
@@ -143,7 +153,7 @@ const Home = () => {
   return (
     <div className="container compact-home">
       <div className="compact-header">
-        <h1>CloudMarc Calculators</h1>
+        <h1>CloudMarc Calculators & Tools</h1>
         
         <div className="compact-category-filter">
           {categories.map(category => (

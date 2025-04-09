@@ -12,7 +12,9 @@ export const APP_VERSION = {
 export const ENV_CONFIG = {
   apiEndpoints: {
     // Example - not used in current application
-    holidayApi: "https://date.nager.at/api/v3/PublicHolidays"
+    holidayApi: "https://date.nager.at/api/v3/PublicHolidays",
+    // HelloSign API endpoint
+    helloSignApi: "https://api.hellosign.com/v3"
   }
 };
 
@@ -42,6 +44,18 @@ export const AUTHORIZED_USERS = {
     "nathan@cloudmarc.com.au",
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au"
+  ],
+  
+  // Users who can access the HelloSign document status
+  helloSignDocuments: [
+    "ddallariva@cloudmarc.com.au",
+    "dnewland@cloudmarc.com.au",
+    "dscanlon@cloudmarc.com.au",
+    "jgregory@cloudmarc.com.au",
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au",
+    "sbrownbill@cloudmarc.com.au"
   ]
 };
 

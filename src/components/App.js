@@ -8,9 +8,11 @@ import PhpFteGpCalculator from '../calculators/PhpFteGpCalculator';
 import ConsolidatedGpCalculator from '../calculators/ConsolidatedGpCalculator';
 import GenericOffshoreContractorGpCalculator from '../calculators/GenericOffshoreContractorGpCalculator';
 import AusWorkingDaysCalculator from '../calculators/AusWorkingDaysCalculator';
+import HelloSignDocuments from '../pages/HelloSignDocuments';
 
 import Home from '../pages/Home';
 import '../styles/App.css';
+import '../styles/HelloSignStyles.css';
 
 function App() {
   const [authStatus, setAuthStatus] = useState({
@@ -126,7 +128,11 @@ function App() {
         } />
 
         <Route path="/aus-working-days-cal" element={
-          authStatus.isAuthorized ? <AusWorkingDaysCalculator/> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-working-days-cal' }} replace />
+          authStatus.isAuthorized ? <AusWorkingDaysCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-working-days-cal' }} replace />
+        } />
+        
+        <Route path="/hello-sign-documents" element={
+          authStatus.isAuthorized ? <HelloSignDocuments /> : <Navigate to="/.auth/login/aad" state={{ from: '/hello-sign-documents' }} replace />
         } />
 
         <Route path="*" element={
