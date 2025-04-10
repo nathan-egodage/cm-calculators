@@ -9,7 +9,7 @@
         },
         "userDetailsClaim": "preferred_username",
         "validate": {
-          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"],
+          "allowedAudiences": ["your_client_id"],
           "allowedPrincipals": {
             "identities": [
               "nathan@cloudmarc.com.au",
@@ -23,48 +23,22 @@
   },
   "routes": [
     {
-      "route": "/.auth/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/assets/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/error",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/new-hire-requests-list",
-      "allowedRoles": ["authenticated"]
+      "allowedRoles": ["authenticated"],
+      "rewrite": "/index.html"
     },
     {
       "route": "/*",
-      "allowedRoles": ["authenticated"],
-      "rules": [
-        {
-          "match": "roles",
-          "principals": [
-            "nathan@cloudmarc.com.au",
-            "ddallariva@cloudmarc.com.au",
-            "rocket@cloudmarc.com.au"
-          ],
-          "requireAllRoles": false
-        }
-      ]
+      "allowedRoles": ["authenticated"]
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*", "/css/*", "/js/*", "/assets/*", "/.auth/*"]
+    "exclude": ["/images/*", "/css/*", "/js/*", "/.auth/*"]
   },
   "responseOverrides": {
     "401": {
       "redirect": "/.auth/login/aad",
-      "statusCode": 302
-    },
-    "403": {
-      "redirect": "/error?code=403",
       "statusCode": 302
     }
   }
