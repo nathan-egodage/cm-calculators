@@ -6,17 +6,9 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { AUTHORIZED_USERS } from '../config/appConfig';
 
-const msGraphConfig = {
-  // Production values from environment variables
-  clientId: process.env.REACT_APP_AAD_CLIENT_ID,
-  authority: process.env.REACT_APP_MSAL_AUTHORITY,
-  redirectUri: window.location.origin,
-  scopes: ['user.read', 'Sites.Read.All', 'Sites.ReadWrite.All']
-};
-
 class MSListService {
   constructor() {
-    this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
+    this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
     this.siteId = MS_GRAPH_CONFIG.siteId;
     this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
@@ -38,19 +30,19 @@ class MSListService {
 
     try {
       // Production initialization
-      if (!msGraphConfig.clientId || !msGraphConfig.authority) {
+      if (!MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.authority) {
         console.error('Missing configuration:', { 
-          clientId: msGraphConfig.clientId, 
-          authority: msGraphConfig.authority 
+          clientId: MS_GRAPH_CONFIG.clientId, 
+          authority: MS_GRAPH_CONFIG.authority 
         });
         throw new Error('MS Graph configuration is missing required values');
       }
 
       this.msalInstance = new PublicClientApplication({
         auth: {
-          clientId: msGraphConfig.clientId,
-          authority: msGraphConfig.authority,
-          redirectUri: msGraphConfig.redirectUri,
+          clientId: MS_GRAPH_CONFIG.clientId,
+          authority: MS_GRAPH_CONFIG.authority,
+          redirectUri: MS_GRAPH_CONFIG.redirectUri,
         },
         cache: {
           cacheLocation: 'sessionStorage',
@@ -61,22 +53,12 @@ class MSListService {
       // Initialize MSAL
       await this.msalInstance.initialize();
 
-      // Define scopes without .default
-      const scopes = [
-        'Mail.Send',
-        'Sites.ReadWrite.All',
-        'User.Read',
-        'openid',
-        'profile',
-        'offline_access'
-      ];
-
       // Get the active account
       const accounts = this.msalInstance.getAllAccounts();
       if (accounts.length === 0) {
         // If no account is signed in, prompt the user to sign in
         const loginResponse = await this.msalInstance.loginPopup({
-          scopes: scopes
+          scopes: MS_GRAPH_CONFIG.scopes
         });
         if (loginResponse.account) {
           this.msalInstance.setActiveAccount(loginResponse.account);
@@ -90,7 +72,7 @@ class MSListService {
         this.msalInstance,
         {
           account: this.msalInstance.getActiveAccount(),
-          scopes: scopes,
+          scopes: MS_GRAPH_CONFIG.scopes,
           interactionType: 'popup'
         }
       );
