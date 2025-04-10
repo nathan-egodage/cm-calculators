@@ -5,23 +5,33 @@
         "registration": {
           "clientIdSettingName": "AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET",
-          "openIdIssuer": "https://login.microsoftonline.com/your_tenant_id/v2.0"
+          "openIdIssuer": "https://login.microsoftonline.com/5feffca4-2086-4129-8680-29c2207d0edb/v2.0"
         },
-        "userDetailsClaim": "preferred_username",
-        "validate": {
-          "allowedAudiences": ["your_client_id"],
-          "allowedPrincipals": {
-            "identities": [
-              "nathan@cloudmarc.com.au",
-              "ddallariva@cloudmarc.com.au",
-              "rocket@cloudmarc.com.au"
-            ]
-          }
-        }
+        "userDetailsClaim": "preferred_username"
       }
     }
   },
   "routes": [
+    {
+      "route": "/.auth/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/assets/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/static/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/manifest.json",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/favicon.ico",
+      "allowedRoles": ["anonymous"]
+    },
     {
       "route": "/new-hire-requests-list",
       "allowedRoles": ["authenticated"],
@@ -40,6 +50,15 @@
     "401": {
       "redirect": "/.auth/login/aad",
       "statusCode": 302
+    },
+    "403": {
+      "rewrite": "/error.html"
     }
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'"
+  },
+  "mimeTypes": {
+    ".json": "text/json"
   }
 }
