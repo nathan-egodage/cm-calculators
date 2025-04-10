@@ -7,6 +7,8 @@ const NewHireRequestsList = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
   useEffect(() => {
     let isMounted = true;
@@ -16,15 +18,8 @@ const NewHireRequestsList = () => {
         setLoading(true);
         setError(null);
         
-        const url = 'https://graph.microsoft.com/v1.0/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/4ac9d268-cbfc-455a-8b9b-cf09547e8bd4/items?$expand=fields';
-        
-        console.log('Fetching from URL:', url);
-        
-        // Use the getNewHireRequests method directly from MSListService
-        // instead of making our own fetch call
         const data = await msListService.getNewHireRequests();
         
-        // Only update state if the component is still mounted
         if (isMounted) {
           setRequests(data);
           setLoading(false);
@@ -32,13 +27,8 @@ const NewHireRequestsList = () => {
       } catch (err) {
         console.error('Failed to fetch new hire requests:', err);
         
-        // Only update state if the component is still mounted
         if (isMounted) {
-          if (err.errorCode === 'interaction_in_progress') {
-            setError('Authentication is in progress. Please try again in a moment.');
-          } else {
-            setError(`Failed to fetch new hire requests: ${err.message}`);
-          }
+          setError(`Failed to fetch new hire requests: ${err.message}`);
           setLoading(false);
         }
       }
@@ -46,7 +36,6 @@ const NewHireRequestsList = () => {
 
     fetchRequests();
     
-    // Cleanup function
     return () => {
       isMounted = false;
     };
@@ -58,9 +47,6 @@ const NewHireRequestsList = () => {
       const currentUserEmail = accounts.length > 0 ? accounts[0]?.username : null;
       const isLocalhost = window.location.hostname === 'localhost';
       
-      console.log('Current user:', currentUserEmail);
-      console.log('Is localhost:', isLocalhost);
-      
       return isLocalhost || 
         (currentUserEmail && AUTHORIZED_USERS.newHireRequestCreators.includes(currentUserEmail));
     } catch (error) {
@@ -69,7 +55,6 @@ const NewHireRequestsList = () => {
     }
   };
 
-  // Format date string
   const formatDate = (dateString) => {
     if (!dateString || dateString === 'N/A') return 'N/A';
     try {
@@ -82,6 +67,38 @@ const NewHireRequestsList = () => {
       return dateString;
     }
   };
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedRequests = React.useMemo(() => {
+    let sortableRequests = [...requests];
+    if (sortConfig.key !== null) {
+      sortableRequests.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableRequests;
+  }, [requests, sortConfig]);
+
+  const filteredRequests = sortedRequests.filter(request => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return Object.values(request).some(value =>
+      value && value.toString().toLowerCase().includes(term)
+    );
+  });
 
   if (!userHasAccess()) {
     return (
@@ -99,7 +116,7 @@ const NewHireRequestsList = () => {
       <div className="nav-buttons">
         <Link to="/" className="back-button">&#8592; Back to Home</Link>
       </div>
-      <h1>New Hire Requests</h1>
+      <h1>View Hire Requests</h1>
       
       {error && (
         <div className="error-message">
@@ -112,58 +129,70 @@ const NewHireRequestsList = () => {
         </div>
       )}
       
+      <div className="filters-section">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Loading new hire requests...</p>
         </div>
-      ) : requests.length > 0 ? (
+      ) : filteredRequests.length > 0 ? (
         <div className="requests-table-container">
           <table className="requests-table">
             <thead>
               <tr>
-                <th>Approval Status</th>
-                <th>Created By</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Personal Email</th>
-                <th>Mobile</th>
-                <th>Position</th>
-                <th>Client Name</th>
-                <th>Package/Rate</th>
-                <th>Gross Profit Margin</th>
-                <th>Contract End Date</th>
-                <th>Is Laptop Required</th>
-                <th>Notes</th>
-                <th>Billing Rate</th>
-                <th>New Client Legal Name</th>
+                <th onClick={() => handleSort('field_8')}>Status</th>
+                <th onClick={() => handleSort('field_30')}>Created By</th>
+                <th onClick={() => handleSort('field_29')}>Created Date</th>
+                <th onClick={() => handleSort('field_1')}>First Name</th>
+                <th onClick={() => handleSort('field_2')}>Last Name</th>
+                <th onClick={() => handleSort('field_7')}>Client Name</th>
+                <th onClick={() => handleSort('field_24')}>New Client Name</th>
+                <th onClick={() => handleSort('field_12')}>GP Margin %</th>
+                <th onClick={() => handleSort('field_23')}>Billing Rate</th>
+                <th onClick={() => handleSort('field_10')}>Start Date</th>
+                <th onClick={() => handleSort('field_11')}>Package/Rate</th>
+                <th onClick={() => handleSort('field_14')}>Laptop Required</th>
+                <th onClick={() => handleSort('field_35')}>Rehire</th>
+                <th onClick={() => handleSort('field_33')}>Employee Type</th>
+                <th onClick={() => handleSort('field_6')}>Position</th>
+                <th onClick={() => handleSort('field_3')}>Personal Email</th>
+                <th onClick={() => handleSort('field_4')}>Mobile</th>
+                <th onClick={() => handleSort('field_13')}>Contract Term</th>
+                <th onClick={() => handleSort('field_17')}>Notes</th>
                 
-                <th>Employee Type</th>
-                <th>Start Date</th>
-                <th>Created Date</th>
               </tr>
             </thead>
             <tbody>
-              {requests.map((request) => (
+              {filteredRequests.map((request) => (
                 <tr key={request.id}>
-                  <td>{request.field_8}</td>
+                  <td><span className={`status-badge ${request.field_8.toLowerCase()}`}>{request.field_8}</span></td>
                   <td>{request.field_30}</td>
+                  <td>{formatDate(request.field_29)}</td>
                   <td>{request.field_1}</td>
                   <td>{request.field_2}</td>
+                  <td>{request.field_7}</td>
+                  <td>{request.field_24}</td>
+                  <td><span className={`status-badge ${parseFloat(request.field_12) < 35 ? 'gp-margin-low' : 'gp-margin-high'}`}>{request.field_12}%</span></td>
+                  <td>${request.field_23}</td>
+                  <td>{formatDate(request.field_10)}</td>
+                  <td>${request.field_11}</td>
+                  <td><span className={`status-badge ${request.field_14 === 'Yes' ? 'laptop-required-yes' : 'laptop-required-no'}`}>{request.field_14}</span></td>
+                  <td><span className={`status-badge ${request.field_16 === 'Yes' ? 'rehire-yes' : 'rehire-no'}`}>{request.field_16}</span></td>
+                  <td>{request.field_33}</td>
+                  <td>{request.field_6}</td>
                   <td>{request.field_3}</td>
                   <td>{request.field_4}</td>
-                  <td>{request.field_6}</td>
-                  <td>{request.field_7}</td>
-                  <td>{request.field_11}</td>
-                  <td>{request.field_12}</td>
-                  <td>{formatDate(request.field_13)}</td>
-                  <td>{request.field_14}</td>
+                  <td>{request.field_13}</td>
                   <td>{request.field_17}</td>
-                  <td>{request.field_23}</td>
-                  <td>{request.field_24}</td>
-                  <td>{request.field_33}</td>
-                  <td>{formatDate(request.field_10)}</td>
-                  <td>{formatDate(request.field_29)}</td>
                 </tr>
               ))}
             </tbody>

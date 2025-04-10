@@ -270,7 +270,13 @@ const NewHireRequest = () => {
       { name: 'SignByDate', label: 'Sign By Date' },
       { name: 'StartDate', label: 'Start Date' },
       { name: 'PackageOrRate', label: 'Package/Rate' },
-      { name: 'Office', label: 'Office' }
+      { name: 'Office', label: 'Office' },
+      { name: 'GrossProfitMargin', label: 'Profit Margin %' },
+      { name: 'Address', label: 'Address' },
+      { name: 'ResourceLevelCode', label: 'Resource Level' },
+      { name: 'ClientLegalName', label: 'Client Legal Name' },
+      { name: 'LegalEntityName', label: 'Legal Entity Name' },
+      { name: 'ClientEmail', label: 'Client Email' }
     ];
     
     // Add ABN fields if ABN contractor
@@ -296,6 +302,12 @@ const NewHireRequest = () => {
     // Check email format
     if (formData.PersonalEmail && !validateEmail(formData.PersonalEmail)) {
       newErrors.PersonalEmail = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Check Client Email format
+    if (formData.ClientEmail && !validateEmail(formData.ClientEmail)) {
+      newErrors.ClientEmail = 'Please enter a valid client email address';
       isValid = false;
     }
 
@@ -480,6 +492,25 @@ const NewHireRequest = () => {
       const response = await MSListService.createNewHireRequest(testData);
       console.log('Test connection response:', response);
       
+      // Test email functionality
+      if (user?.userDetails) {
+        const testEmailSubject = 'Test Email - MS List Connection';
+        const testEmailContent = `
+          <h2>Test Email - MS List Connection</h2>
+          <p>This is a test email to verify that the email notification system is working correctly.</p>
+          <p>If you received this email, it means:</p>
+          <ul>
+            <li>The MS List connection is working</li>
+            <li>The email notification system is functioning</li>
+            <li>You have the necessary permissions to send emails</li>
+          </ul>
+          <p>This is an automated test message. No action is required.</p>
+        `;
+        
+        await MSListService.sendEmail([user.userDetails], testEmailSubject, testEmailContent);
+        console.log('Test email sent successfully');
+      }
+      
       setTestSuccess(true);
       setTimeout(() => {
         setTestSuccess(false);
@@ -566,666 +597,540 @@ const NewHireRequest = () => {
       )}
       
       <form onSubmit={handleSubmit} className="new-hire-form">
-        {/* Progress Indicator */}
-        <div className="progress-indicator">
-          <div 
-            className={`progress-step ${activeTab === 'candidate' ? 'active' : ''} ${tabsCompleted.candidate ? 'completed' : ''}`}
-            onClick={() => setActiveTab('candidate')}
-          >
-            <div className="step-indicator">
-              {tabsCompleted.candidate ? <span className="check-icon">✓</span> : '1'}
+        <div className="form-section">
+          <h3 className="section-title">Employment Information</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="EmployeeType" className="required-field">Employee Type</label>
+              <select 
+                id="EmployeeType" 
+                name="EmployeeType" 
+                value={employeeType} 
+                onChange={handleEmployeeTypeChange} 
+                required
+                className={validationErrors.EmployeeType ? 'error' : ''}
+              >
+                <option value="">Select Employee Type</option>
+                {/* Group employee types by category */}
+                <optgroup label="Australia">
+                  {employeeTypeOptions
+                    .filter(type => type.category === 'Australia')
+                    .map((type, index) => (
+                      <option key={index} value={type.value}>{type.label}</option>
+                    ))
+                  }
+                </optgroup>
+                <optgroup label="Philippines">
+                  {employeeTypeOptions
+                    .filter(type => type.category === 'Philippines')
+                    .map((type, index) => (
+                      <option key={index} value={type.value}>{type.label}</option>
+                    ))
+                  }
+                </optgroup>
+                <optgroup label="Other">
+                  {employeeTypeOptions
+                    .filter(type => type.category === 'Other')
+                    .map((type, index) => (
+                      <option key={index} value={type.value}>{type.label}</option>
+                    ))
+                  }
+                </optgroup>
+              </select>
+              {validationErrors.EmployeeType && <div className="error-text">{validationErrors.EmployeeType}</div>}
             </div>
-            <span>Candidate Information</span>
-          </div>
-          <div className="progress-line"></div>
-          <div 
-            className={`progress-step ${activeTab === 'clientEngagement' ? 'active' : ''} ${tabsCompleted.clientEngagement ? 'completed' : ''}`}
-            onClick={() => tabsCompleted.candidate && setActiveTab('clientEngagement')}
-          >
-            <div className="step-indicator">
-              {tabsCompleted.clientEngagement ? <span className="check-icon">✓</span> : '2'}
+            
+            <div className="form-group">
+              <label htmlFor="AccountManager">Account Manager</label>
+              <select 
+                id="AccountManager" 
+                name="AccountManager" 
+                value={formData.AccountManager} 
+                onChange={handleInputChange}
+                className={validationErrors.AccountManager ? 'error' : ''}
+              >
+                {accountManagers.map((manager, index) => (
+                  <option key={index} value={manager.value}>{manager.label}</option>
+                ))}
+              </select>
+              {validationErrors.AccountManager && <div className="error-text">{validationErrors.AccountManager}</div>}
             </div>
-            <span>Client & Engagement</span>
           </div>
         </div>
         
-        {/* Tabs Navigation - More compact alternative to the progress indicator */}
-        <div className="form-tabs">
-          <div 
-            className={`tab-item ${activeTab === 'candidate' ? 'active' : ''} ${tabsCompleted.candidate ? 'completed' : ''}`}
-            onClick={() => setActiveTab('candidate')}
-          >
-            <span className="tab-number">{tabsCompleted.candidate ? '✓' : '1'}</span>
-            Candidate Information
-          </div>
-          <div 
-            className={`tab-item ${activeTab === 'clientEngagement' ? 'active' : ''} ${tabsCompleted.clientEngagement ? 'completed' : ''}`}
-            onClick={() => tabsCompleted.candidate && setActiveTab('clientEngagement')}
-          >
-            <span className="tab-number">{tabsCompleted.clientEngagement ? '✓' : '2'}</span>
-            Client & Engagement Details
+        <div className="form-section">
+          <h3 className="section-title">Candidate Details</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="FirstName" className="required-field">First Name</label>
+              <input 
+                type="text" 
+                id="FirstName" 
+                name="FirstName" 
+                value={formData.FirstName} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.FirstName ? 'error' : ''}
+                placeholder="Enter first name"
+                required 
+              />
+              {validationErrors.FirstName && <div className="error-text">{validationErrors.FirstName}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="LastName" className="required-field">Last Name</label>
+              <input 
+                type="text" 
+                id="LastName" 
+                name="LastName" 
+                value={formData.LastName} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.LastName ? 'error' : ''}
+                placeholder="Enter last name"
+                required 
+              />
+              {validationErrors.LastName && <div className="error-text">{validationErrors.LastName}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="PersonalEmail" className="required-field">Email</label>
+              <input 
+                type="email" 
+                id="PersonalEmail" 
+                name="PersonalEmail" 
+                value={formData.PersonalEmail} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.PersonalEmail ? 'error' : ''}
+                placeholder="email@example.com"
+                required 
+              />
+              {validationErrors.PersonalEmail && <div className="error-text">{validationErrors.PersonalEmail}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="Mobile" className="required-field">Mobile</label>
+              <input 
+                type="tel" 
+                id="Mobile" 
+                name="Mobile" 
+                value={formData.Mobile} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.Mobile ? 'error' : ''}
+                placeholder="+61412345678"
+                required 
+              />
+              {validationErrors.Mobile && <div className="error-text">{validationErrors.Mobile}</div>}
+              {!validationErrors.Mobile && (
+                <div className="hint-text">International format with country code (e.g., +61412345678)</div>
+              )}
+            </div>
+            
+            <div className="form-group span-2">
+              <label htmlFor="Address" className="required-field">Address</label>
+              <textarea 
+                id="Address" 
+                name="Address" 
+                value={formData.Address} 
+                onChange={handleInputChange}
+                className={validationErrors.Address ? 'error' : ''}
+                placeholder="Enter full address"
+                rows="2" 
+              />
+              {validationErrors.Address && <div className="error-text">{validationErrors.Address}</div>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="Office" className="required-field">Office</label>
+              <select 
+                id="Office" 
+                name="Office" 
+                value={formData.Office} 
+                onChange={handleInputChange}
+                className={validationErrors.Office ? 'error' : ''}
+                required
+              >
+                <option value="">Select Office</option>
+                {officeLocations.map((office, index) => (
+                  <option key={index} value={office}>{office}</option>
+                ))}
+              </select>
+              {validationErrors.Office && <div className="error-text">{validationErrors.Office}</div>}
+            </div>
+
+            <div className="form-group">
+              <label>Laptop Required</label>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="IsLaptopRequired"
+                    value="Yes"
+                    checked={formData.IsLaptopRequired === 'Yes'}
+                    onChange={handleInputChange}
+                  />
+                  Yes
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="IsLaptopRequired"
+                    value="No"
+                    checked={formData.IsLaptopRequired === 'No'}
+                    onChange={handleInputChange}
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label>Rehire (Previous Staff)</label>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="Rehire"
+                    value="Yes"
+                    checked={formData.Rehire === 'Yes'}
+                    onChange={handleInputChange}
+                  />
+                  Yes
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="Rehire"
+                    value="No"
+                    checked={formData.Rehire === 'No'}
+                    onChange={handleInputChange}
+                  />
+                  No
+                </label>
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Candidate Information Tab */}
-        <div className={`tab-content ${activeTab === 'candidate' ? 'active' : ''}`}>
-          <div className="form-section">
-            <h3 className="section-title">Employment Information</h3>
+        <div className="form-section">
+          <h3 className="section-title">Position Details</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="Position" className="required-field">Position</label>
+              <input 
+                type="text" 
+                id="Position" 
+                name="Position" 
+                value={formData.Position} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.Position ? 'error' : ''}
+                placeholder="e.g. Senior Developer"
+                required 
+              />
+              {validationErrors.Position && <div className="error-text">{validationErrors.Position}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="ResourceLevelCode" className="required-field">Resource Level</label>
+              <select 
+                id="ResourceLevelCode" 
+                name="ResourceLevelCode" 
+                value={formData.ResourceLevelCode} 
+                onChange={handleInputChange}
+                className={validationErrors.ResourceLevelCode ? 'error' : ''}
+              >
+                {resourceLevels.map((level, index) => (
+                  <option key={index} value={level.value}>
+                    {level.label}
+                    {level.description && ` - ${level.description}`}
+                  </option>
+                ))}
+              </select>
+              {validationErrors.ResourceLevelCode && <div className="error-text">{validationErrors.ResourceLevelCode}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="SignByDate" className="required-field">Sign By Date</label>
+              <input 
+                type="date" 
+                id="SignByDate" 
+                name="SignByDate" 
+                value={formData.SignByDate} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.SignByDate ? 'error' : ''}
+                min={today}
+                required 
+              />
+              {validationErrors.SignByDate && <div className="error-text">{validationErrors.SignByDate}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="StartDate" className="required-field">Start Date</label>
+              <input 
+                type="date" 
+                id="StartDate" 
+                name="StartDate" 
+                value={formData.StartDate} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.StartDate ? 'error' : ''}
+                min={formData.SignByDate || today}
+                required 
+              />
+              {validationErrors.StartDate && <div className="error-text">{validationErrors.StartDate}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="ContractEndDate">Contract Term</label>
+              <input 
+                type="text" 
+                id="ContractEndDate" 
+                name="ContractEndDate" 
+                value={formData.ContractEndDate} 
+                onChange={handleInputChange}
+                className={validationErrors.ContractEndDate ? 'error' : ''}
+                placeholder="Enter contract term"
+              />
+              {validationErrors.ContractEndDate && <div className="error-text">{validationErrors.ContractEndDate}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="PackageOrRate" className="required-field">Package/Rate</label>
+              <input 
+                type="text" 
+                id="PackageOrRate" 
+                name="PackageOrRate" 
+                value={formData.PackageOrRate} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.PackageOrRate ? 'error' : ''}
+                placeholder="$XXX/day or $XXX,XXX PA"
+                required 
+              />
+              {validationErrors.PackageOrRate && <div className="error-text">{validationErrors.PackageOrRate}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="GrossProfitMargin" className="required-field">Profit Margin %</label>
+              <div className="input-with-icon">
+                <input 
+                  type="text" 
+                  id="GrossProfitMargin" 
+                  name="GrossProfitMargin" 
+                  value={formData.GrossProfitMargin} 
+                  onChange={handleInputChange}
+                  className={validationErrors.GrossProfitMargin ? 'error' : ''}
+                  placeholder="XX"
+                />
+                <span className="input-icon">%</span>
+              </div>
+              {validationErrors.GrossProfitMargin && <div className="error-text">{validationErrors.GrossProfitMargin}</div>}
+            </div>
+          </div>
+        </div>
+        
+        <div className="form-section">
+          <h3 className="section-title">Client Information</h3>
+          <div className="client-type-selector">
+            <label>Client Type:</label>
+            <div className="toggle-buttons">
+              <button
+                type="button"
+                className={!isNewClient ? 'active' : ''}
+                onClick={() => handleClientTypeChange({ target: { value: 'existing' } })}
+              >
+                Existing Client
+              </button>
+              <button
+                type="button"
+                className={isNewClient ? 'active' : ''}
+                onClick={() => handleClientTypeChange({ target: { value: 'new' } })}
+              >
+                New Client
+              </button>
+            </div>
+          </div>
+          {!isNewClient ? (
+            <div className="form-group client-select-group">
+              <label htmlFor="ClientSelect" className="required-field">Select Existing Client</label>
+              <select 
+                id="ClientSelect" 
+                onChange={handleClientSelect} 
+                value={selectedClient}
+                disabled={clientLoading}
+                className={validationErrors.ClientSelect ? 'error' : ''}
+                required
+              >
+                <option value="">Select a client</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+              {clientLoading && <span className="loading-indicator">Loading client data...</span>}
+              {validationErrors.ClientSelect && <div className="error-text">{validationErrors.ClientSelect}</div>}
+              
+              {selectedClient && (
+                <div className="selected-client-info">
+                  <div className="info-item">
+                    <span className="info-label">Legal Name:</span>
+                    <span className="info-value">{formData.NewClientLegalName || 'N/A'}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Address:</span>
+                    <span className="info-value">{formData.NewClientAddress || 'N/A'}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Email:</span>
+                    <span className="info-value">{formData.NewClientEmailAddress || 'N/A'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
             <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="EmployeeType" className="required-field">Employee Type</label>
-                <select 
-                  id="EmployeeType" 
-                  name="EmployeeType" 
-                  value={employeeType} 
-                  onChange={handleEmployeeTypeChange} 
+                <label htmlFor="ClientName" className="required-field">Client Name</label>
+                <input 
+                  type="text" 
+                  id="ClientName" 
+                  name="ClientName" 
+                  value={formData.ClientName} 
+                  onChange={handleInputChange}
+                  className={validationErrors.ClientName ? 'error' : ''}
+                  placeholder="Client Business Name"
+                  required={isNewClient}
+                />
+                {validationErrors.ClientName && <div className="error-text">{validationErrors.ClientName}</div>}
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="NewClientLegalName" className="required-field">Client Legal Name</label>
+                <input 
+                  type="text" 
+                  id="NewClientLegalName" 
+                  name="NewClientLegalName" 
+                  value={formData.NewClientLegalName} 
+                  onChange={handleInputChange}
+                  className={validationErrors.NewClientLegalName ? 'error' : ''}
+                  placeholder="Legal Entity Name"
                   required
-                  className={validationErrors.EmployeeType ? 'error' : ''}
-                >
-                  <option value="">Select Employee Type</option>
-                  {/* Group employee types by category */}
-                  <optgroup label="Australia">
-                    {employeeTypeOptions
-                      .filter(type => type.category === 'Australia')
-                      .map((type, index) => (
-                        <option key={index} value={type.value}>{type.label}</option>
-                      ))
-                    }
-                  </optgroup>
-                  <optgroup label="Philippines">
-                    {employeeTypeOptions
-                      .filter(type => type.category === 'Philippines')
-                      .map((type, index) => (
-                        <option key={index} value={type.value}>{type.label}</option>
-                      ))
-                    }
-                  </optgroup>
-                  <optgroup label="Other">
-                    {employeeTypeOptions
-                      .filter(type => type.category === 'Other')
-                      .map((type, index) => (
-                        <option key={index} value={type.value}>{type.label}</option>
-                      ))
-                    }
-                  </optgroup>
-                </select>
-                {validationErrors.EmployeeType && <div className="error-text">{validationErrors.EmployeeType}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="AccountManager">Account Manager</label>
-                <select 
-                  id="AccountManager" 
-                  name="AccountManager" 
-                  value={formData.AccountManager} 
-                  onChange={handleInputChange}
-                  className={validationErrors.AccountManager ? 'error' : ''}
-                >
-                  {accountManagers.map((manager, index) => (
-                    <option key={index} value={manager.value}>{manager.label}</option>
-                  ))}
-                </select>
-                {validationErrors.AccountManager && <div className="error-text">{validationErrors.AccountManager}</div>}
-              </div>
-            </div>
-          </div>
-          
-          <div className="form-section">
-            <h3 className="section-title">Candidate Details</h3>
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="FirstName" className="required-field">First Name</label>
-                <input 
-                  type="text" 
-                  id="FirstName" 
-                  name="FirstName" 
-                  value={formData.FirstName} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.FirstName ? 'error' : ''}
-                  placeholder="Enter first name"
-                  required 
                 />
-                {validationErrors.FirstName && <div className="error-text">{validationErrors.FirstName}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="LastName" className="required-field">Last Name</label>
-                <input 
-                  type="text" 
-                  id="LastName" 
-                  name="LastName" 
-                  value={formData.LastName} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.LastName ? 'error' : ''}
-                  placeholder="Enter last name"
-                  required 
-                />
-                {validationErrors.LastName && <div className="error-text">{validationErrors.LastName}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="PersonalEmail" className="required-field">Email</label>
-                <input 
-                  type="email" 
-                  id="PersonalEmail" 
-                  name="PersonalEmail" 
-                  value={formData.PersonalEmail} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.PersonalEmail ? 'error' : ''}
-                  placeholder="email@example.com"
-                  required 
-                />
-                {validationErrors.PersonalEmail && <div className="error-text">{validationErrors.PersonalEmail}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="Mobile" className="required-field">Mobile</label>
-                <input 
-                  type="tel" 
-                  id="Mobile" 
-                  name="Mobile" 
-                  value={formData.Mobile} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.Mobile ? 'error' : ''}
-                  placeholder="+61412345678"
-                  required 
-                />
-                {validationErrors.Mobile && <div className="error-text">{validationErrors.Mobile}</div>}
-                {!validationErrors.Mobile && (
-                  <div className="hint-text">International format with country code (e.g., +61412345678)</div>
-                )}
+                {validationErrors.NewClientLegalName && <div className="error-text">{validationErrors.NewClientLegalName}</div>}
               </div>
               
               <div className="form-group span-2">
-                <label htmlFor="Address">Address</label>
+                <label htmlFor="NewClientAddress" className="required-field">Client Address</label>
                 <textarea 
-                  id="Address" 
-                  name="Address" 
-                  value={formData.Address} 
+                  id="NewClientAddress" 
+                  name="NewClientAddress" 
+                  value={formData.NewClientAddress} 
                   onChange={handleInputChange}
-                  className={validationErrors.Address ? 'error' : ''}
-                  placeholder="Enter full address"
-                  rows="2" 
+                  className={validationErrors.NewClientAddress ? 'error' : ''}
+                  placeholder="Client's business address"
+                  rows="2"
                 />
-                {validationErrors.Address && <div className="error-text">{validationErrors.Address}</div>}
+                {validationErrors.NewClientAddress && <div className="error-text">{validationErrors.NewClientAddress}</div>}
               </div>
-            </div>
-          </div>
-          
-          <div className="form-section">
-            <h3 className="section-title">Position Details</h3>
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="Position" className="required-field">Position</label>
+              
+              <div className="form-group span-2">
+                <label htmlFor="NewClientEmailAddress" className="required-field">Client Email</label>
                 <input 
-                  type="text" 
-                  id="Position" 
-                  name="Position" 
-                  value={formData.Position} 
+                  type="email" 
+                  id="NewClientEmailAddress" 
+                  name="NewClientEmailAddress" 
+                  value={formData.NewClientEmailAddress} 
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  className={validationErrors.Position ? 'error' : ''}
-                  placeholder="e.g. Senior Developer"
-                  required 
-                />
-                {validationErrors.Position && <div className="error-text">{validationErrors.Position}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="ResourceLevelCode">Resource Level</label>
-                <select 
-                  id="ResourceLevelCode" 
-                  name="ResourceLevelCode" 
-                  value={formData.ResourceLevelCode} 
-                  onChange={handleInputChange}
-                  className={validationErrors.ResourceLevelCode ? 'error' : ''}
-                >
-                  {resourceLevels.map((level, index) => (
-                    <option key={index} value={level.value}>
-                      {level.label}
-                      {level.description && ` - ${level.description}`}
-                    </option>
-                  ))}
-                </select>
-                {validationErrors.ResourceLevelCode && <div className="error-text">{validationErrors.ResourceLevelCode}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="SignByDate" className="required-field">Sign By Date</label>
-                <input 
-                  type="date" 
-                  id="SignByDate" 
-                  name="SignByDate" 
-                  value={formData.SignByDate} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.SignByDate ? 'error' : ''}
-                  min={today}
-                  required 
-                />
-                {validationErrors.SignByDate && <div className="error-text">{validationErrors.SignByDate}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="StartDate" className="required-field">Start Date</label>
-                <input 
-                  type="date" 
-                  id="StartDate" 
-                  name="StartDate" 
-                  value={formData.StartDate} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.StartDate ? 'error' : ''}
-                  min={formData.SignByDate || today}
-                  required 
-                />
-                {validationErrors.StartDate && <div className="error-text">{validationErrors.StartDate}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="ContractEndDate">End Date</label>
-                <input 
-                  type="date" 
-                  id="ContractEndDate" 
-                  name="ContractEndDate" 
-                  value={formData.ContractEndDate} 
-                  onChange={handleInputChange}
-                  className={validationErrors.ContractEndDate ? 'error' : ''}
-                  min={formData.StartDate || formData.SignByDate || today}
-                />
-                {validationErrors.ContractEndDate && <div className="error-text">{validationErrors.ContractEndDate}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="PackageOrRate" className="required-field">Package/Rate</label>
-                <input 
-                  type="text" 
-                  id="PackageOrRate" 
-                  name="PackageOrRate" 
-                  value={formData.PackageOrRate} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.PackageOrRate ? 'error' : ''}
-                  placeholder="$XXX/day or $XXX,XXX PA"
-                  required 
-                />
-                {validationErrors.PackageOrRate && <div className="error-text">{validationErrors.PackageOrRate}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="GrossProfitMargin">Profit Margin %</label>
-                <div className="input-with-icon">
-                  <input 
-                    type="text" 
-                    id="GrossProfitMargin" 
-                    name="GrossProfitMargin" 
-                    value={formData.GrossProfitMargin} 
-                    onChange={handleInputChange}
-                    className={validationErrors.GrossProfitMargin ? 'error' : ''}
-                    placeholder="XX"
-                  />
-                  <span className="input-icon">%</span>
-                </div>
-                {validationErrors.GrossProfitMargin && <div className="error-text">{validationErrors.GrossProfitMargin}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="Office" className="required-field">Office</label>
-                <select 
-                  id="Office" 
-                  name="Office" 
-                  value={formData.Office} 
-                  onChange={handleInputChange}
-                  className={validationErrors.Office ? 'error' : ''}
+                  className={validationErrors.NewClientEmailAddress ? 'error' : ''}
+                  placeholder="client@example.com"
                   required
-                >
-                  <option value="">Select Office</option>
-                  {officeLocations.map((office, index) => (
-                    <option key={index} value={office}>{office}</option>
-                  ))}
-                </select>
-                {validationErrors.Office && <div className="error-text">{validationErrors.Office}</div>}
-              </div>
-            </div>
-          </div>
-          
-          <div className="form-section">
-            <h3 className="section-title">Additional Options</h3>
-            <div className="form-grid">
-              <div className="form-group">
-                <label>Laptop Required</label>
-                <div className="toggle-buttons">
-                  <button
-                    type="button"
-                    className={formData.IsLaptopRequired === 'Yes' ? 'active' : ''}
-                    onClick={() => setFormData({...formData, IsLaptopRequired: 'Yes'})}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    className={formData.IsLaptopRequired === 'No' ? 'active' : ''}
-                    onClick={() => setFormData({...formData, IsLaptopRequired: 'No'})}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label>Rehire (Previous Staff)</label>
-                <div className="toggle-buttons">
-                  <button
-                    type="button"
-                    className={formData.Rehire === 'Yes' ? 'active' : ''}
-                    onClick={() => setFormData({...formData, Rehire: 'Yes'})}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    className={formData.Rehire === 'No' ? 'active' : ''}
-                    onClick={() => setFormData({...formData, Rehire: 'No'})}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ABN Information Fields */}
-          {employeeType === "AU ABN Contractor" && (
-            <div className="form-section">
-              <h3 className="section-title">ABN Information</h3>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="ABNName" className="required-field">ABN Name</label>
-                  <input 
-                    type="text" 
-                    id="ABNName" 
-                    name="ABNName" 
-                    value={formData.ABNName} 
-                    onChange={handleInputChange}
-                    className={validationErrors.ABNName ? 'error' : ''}
-                    placeholder="Business/Entity Name"
-                    required={employeeType === "AU ABN Contractor"}
-                  />
-                  {validationErrors.ABNName && <div className="error-text">{validationErrors.ABNName}</div>}
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="ABNNumber" className="required-field">ABN Number</label>
-                  <input 
-                    type="text" 
-                    id="ABNNumber" 
-                    name="ABNNumber" 
-                    value={formData.ABNNumber} 
-                    onChange={handleInputChange}
-                    className={validationErrors.ABNNumber ? 'error' : ''}
-                    placeholder="XX XXX XXX XXX"
-                    required={employeeType === "AU ABN Contractor"}
-                  />
-                  {validationErrors.ABNNumber && <div className="error-text">{validationErrors.ABNNumber}</div>}
-                </div>
-                
-                <div className="form-group span-2">
-                  <label htmlFor="ABNAddress" className="required-field">ABN Address</label>
-                  <textarea 
-                    id="ABNAddress" 
-                    name="ABNAddress" 
-                    value={formData.ABNAddress} 
-                    onChange={handleInputChange}
-                    className={validationErrors.ABNAddress ? 'error' : ''}
-                    placeholder="Enter business address"
-                    rows="2"
-                    required={employeeType === "AU ABN Contractor"}
-                  />
-                  {validationErrors.ABNAddress && <div className="error-text">{validationErrors.ABNAddress}</div>}
-                </div>
+                />
+                {validationErrors.NewClientEmailAddress && <div className="error-text">{validationErrors.NewClientEmailAddress}</div>}
               </div>
             </div>
           )}
-
-          <div className="form-section">
-            <h3 className="section-title">Additional Notes</h3>
-            <div className="form-grid">
-              <div className="form-group span-2">
-                <label htmlFor="Notes">Notes</label>
-                <textarea 
-                  id="Notes" 
-                  name="Notes" 
-                  value={formData.Notes} 
-                  onChange={handleInputChange}
-                  className={validationErrors.Notes ? 'error' : ''}
-                  placeholder="Any additional information, special requirements, or context..."
-                  rows="3"
-                />
-                {validationErrors.Notes && <div className="error-text">{validationErrors.Notes}</div>}
-              </div>
+        </div>
+        
+        <div className="form-section">
+          <h3 className="section-title">Engagement Details</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="EngagementName" className="required-field">Engagement Name</label>
+              <input 
+                type="text" 
+                id="EngagementName" 
+                name="EngagementName" 
+                value={formData.EngagementName} 
+                onChange={handleInputChange}
+                className={validationErrors.EngagementName ? 'error' : ''}
+                placeholder="Project or engagement name"
+                required
+              />
+              {validationErrors.EngagementName && <div className="error-text">{validationErrors.EngagementName}</div>}
             </div>
-          </div>
-          
-          <div className="form-actions">
-            <button
-              type="button"
-              className="next-button"
-              onClick={() => {
-                if (validateCandidateInfo()) {
-                  setActiveTab('clientEngagement');
-                }
-              }}
-            >
-              Next <span className="button-icon">→</span>
-            </button>
+            
+            <div className="form-group">
+              <label htmlFor="TaskName" className="required-field">Task Name</label>
+              <input 
+                type="text" 
+                id="TaskName" 
+                name="TaskName" 
+                value={formData.TaskName} 
+                onChange={handleInputChange}
+                className={validationErrors.TaskName ? 'error' : ''}
+                placeholder="Specific role or task"
+                required
+              />
+              {validationErrors.TaskName && <div className="error-text">{validationErrors.TaskName}</div>}
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="BillingRate" className="required-field">Client Billing Rate</label>
+              <input 
+                type="text" 
+                id="BillingRate" 
+                name="BillingRate" 
+                value={formData.BillingRate} 
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={validationErrors.BillingRate ? 'error' : ''}
+                placeholder="$XXX/day"
+                required
+              />
+              {validationErrors.BillingRate && <div className="error-text">{validationErrors.BillingRate}</div>}
+            </div>
           </div>
         </div>
         
-        {/* Client & Engagement Details Tab */}
-        <div className={`tab-content ${activeTab === 'clientEngagement' ? 'active' : ''}`}>
-          <div className="form-section">
-            <h3 className="section-title">Client Information</h3>
-            
-            <div className="client-type-selector">
-              <label>Client Type:</label>
-              <div className="toggle-buttons">
-                <button
-                  type="button"
-                  className={!isNewClient ? 'active' : ''}
-                  onClick={() => handleClientTypeChange({ target: { value: 'existing' } })}
-                >
-                  Existing Client
-                </button>
-                <button
-                  type="button"
-                  className={isNewClient ? 'active' : ''}
-                  onClick={() => handleClientTypeChange({ target: { value: 'new' } })}
-                >
-                  New Client
-                </button>
-              </div>
-            </div>
-            
-            {!isNewClient ? (
-              <div className="form-group client-select-group">
-                <label htmlFor="ClientSelect" className="required-field">Select Existing Client</label>
-                <select 
-                  id="ClientSelect" 
-                  onChange={handleClientSelect} 
-                  value={selectedClient}
-                  disabled={clientLoading}
-                  className={validationErrors.ClientSelect ? 'error' : ''}
-                  required
-                >
-                  <option value="">Select a client</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-                {clientLoading && <span className="loading-indicator">Loading client data...</span>}
-                {validationErrors.ClientSelect && <div className="error-text">{validationErrors.ClientSelect}</div>}
-                
-                {selectedClient && (
-                  <div className="selected-client-info">
-                    <div className="info-item">
-                      <span className="info-label">Legal Name:</span>
-                      <span className="info-value">{formData.NewClientLegalName || 'N/A'}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">Address:</span>
-                      <span className="info-value">{formData.NewClientAddress || 'N/A'}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-label">Email:</span>
-                      <span className="info-value">{formData.NewClientEmailAddress || 'N/A'}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="ClientName" className="required-field">Client Name</label>
-                  <input 
-                    type="text" 
-                    id="ClientName" 
-                    name="ClientName" 
-                    value={formData.ClientName} 
-                    onChange={handleInputChange}
-                    className={validationErrors.ClientName ? 'error' : ''}
-                    placeholder="Client Business Name"
-                    required={isNewClient}
-                  />
-                  {validationErrors.ClientName && <div className="error-text">{validationErrors.ClientName}</div>}
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="NewClientLegalName">Client Legal Name</label>
-                  <input 
-                    type="text" 
-                    id="NewClientLegalName" 
-                    name="NewClientLegalName" 
-                    value={formData.NewClientLegalName} 
-                    onChange={handleInputChange}
-                    className={validationErrors.NewClientLegalName ? 'error' : ''}
-                    placeholder="Legal Entity Name"
-                  />
-                  {validationErrors.NewClientLegalName && <div className="error-text">{validationErrors.NewClientLegalName}</div>}
-                </div>
-                
-                <div className="form-group span-2">
-                  <label htmlFor="NewClientAddress">Client Address</label>
-                  <textarea 
-                    id="NewClientAddress" 
-                    name="NewClientAddress" 
-                    value={formData.NewClientAddress} 
-                    onChange={handleInputChange}
-                    className={validationErrors.NewClientAddress ? 'error' : ''}
-                    placeholder="Client's business address"
-                    rows="2"
-                  />
-                  {validationErrors.NewClientAddress && <div className="error-text">{validationErrors.NewClientAddress}</div>}
-                </div>
-                
-                <div className="form-group span-2">
-                  <label htmlFor="NewClientEmailAddress">Client Email</label>
-                  <input 
-                    type="email" 
-                    id="NewClientEmailAddress" 
-                    name="NewClientEmailAddress" 
-                    value={formData.NewClientEmailAddress} 
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className={validationErrors.NewClientEmailAddress ? 'error' : ''}
-                    placeholder="client@example.com"
-                  />
-                  {validationErrors.NewClientEmailAddress && <div className="error-text">{validationErrors.NewClientEmailAddress}</div>}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="form-section">
-            <h3 className="section-title">Engagement Details</h3>
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="EngagementName" className="required-field">Engagement Name</label>
-                <input 
-                  type="text" 
-                  id="EngagementName" 
-                  name="EngagementName" 
-                  value={formData.EngagementName} 
-                  onChange={handleInputChange}
-                  className={validationErrors.EngagementName ? 'error' : ''}
-                  placeholder="Project or engagement name"
-                  required
-                />
-                {validationErrors.EngagementName && <div className="error-text">{validationErrors.EngagementName}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="TaskName" className="required-field">Task Name</label>
-                <input 
-                  type="text" 
-                  id="TaskName" 
-                  name="TaskName" 
-                  value={formData.TaskName} 
-                  onChange={handleInputChange}
-                  className={validationErrors.TaskName ? 'error' : ''}
-                  placeholder="Specific role or task"
-                  required
-                />
-                {validationErrors.TaskName && <div className="error-text">{validationErrors.TaskName}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="BillingRate" className="required-field">Client Billing Rate</label>
-                <input 
-                  type="text" 
-                  id="BillingRate" 
-                  name="BillingRate" 
-                  value={formData.BillingRate} 
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={validationErrors.BillingRate ? 'error' : ''}
-                  placeholder="$XXX/day"
-                  required
-                />
-                {validationErrors.BillingRate && <div className="error-text">{validationErrors.BillingRate}</div>}
-              </div>
+        <div className="form-section">
+          <h3 className="section-title">Additional Notes</h3>
+          <div className="form-grid">
+            <div className="form-group span-2">
+              <label htmlFor="Notes">Notes</label>
+              <textarea 
+                id="Notes" 
+                name="Notes" 
+                value={formData.Notes} 
+                onChange={handleInputChange}
+                className={validationErrors.Notes ? 'error' : ''}
+                placeholder="Any additional information, special requirements, or context..."
+                rows="3"
+              />
+              {validationErrors.Notes && <div className="error-text">{validationErrors.Notes}</div>}
             </div>
           </div>
-          
-          <div className="form-actions">
-            <button
-              type="button"
-              className="back-button"
-              onClick={() => setActiveTab('candidate')}
-            >
-              <span className="button-icon">←</span> Back
-            </button>
-            
-            <button 
-              type="submit" 
-              className="submit-button" 
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="loading-spinner-button"></span>
-                  Submitting...
-                </>
-              ) : (
-                'Submit Request'
-              )}
-            </button>
-          </div>
+        </div>
+        
+        <div className="form-actions">
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? 'Submitting...' : 'Submit Request'}
+          </button>
         </div>
       </form>
       

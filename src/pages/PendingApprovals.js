@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 import MSListService from '../services/MSListService';
+import '../styles/App.css';
 import '../styles/PendingApprovals.css';
 
 const PendingApprovals = () => {
