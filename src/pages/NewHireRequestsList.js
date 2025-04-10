@@ -43,6 +43,11 @@ const NewHireRequestsList = () => {
 
   const userHasAccess = () => {
     try {
+      if (!msListService.msalInstance) {
+        console.log('MSAL instance not initialized');
+        return false;
+      }
+      
       const accounts = msListService.msalInstance.getAllAccounts();
       const currentUserEmail = accounts.length > 0 ? accounts[0]?.username : null;
       const isLocalhost = window.location.hostname === 'localhost';
