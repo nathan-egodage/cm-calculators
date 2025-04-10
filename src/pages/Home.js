@@ -147,11 +147,20 @@ const Home = () => {
     {
       id: "new-hire-request",
       title: "New Hire Request",
-      description: "Create a new hire request for approval",
+      description: "Create a new hire request",
       path: "/new-hire-request",
       category: ["hr", "tools"],
       theme: "cloudmarc-theme",
       icon: "👤"
+    },
+    {
+      id: "new-hire-requests-list",
+      title: "New Hire Requests List",
+      description: "View all hire requests",
+      path: "/new-hire-requests-list",
+      category: ["hr", "tools"],
+      theme: "cloudmarc-theme",
+      icon: "📋"
     },
     {
       id: "pending-approvals",
@@ -161,15 +170,6 @@ const Home = () => {
       category: ["hr", "tools"],
       theme: "cloudmarc-theme",
       icon: "✅"
-    },
-    {
-      id: "new-hire-requests-list",
-      title: "New Hire Requests List",
-      description: "View all new hire requests",
-      path: "/new-hire-requests-list",
-      category: ["hr", "tools"],
-      theme: "cloudmarc-theme",
-      icon: "📋"
     }
   ];
   
@@ -180,8 +180,7 @@ const Home = () => {
     allTools = [bdmCalculator, ...allTools];
   }
   
-  // Temporarily comment out HR tools for production deployment
-  /*
+ 
   if (canCreateHireRequests) {
     allTools.push(newHireRequestTools[0]);
     allTools.push(newHireRequestTools[2]);
@@ -190,7 +189,7 @@ const Home = () => {
   if (canApproveHireRequests) {
     allTools.push(newHireRequestTools[1]);
   }
-  */
+
 
   // Category definitions for filtering
   const categories = [

@@ -4,57 +4,98 @@ import { MS_GRAPH_CONFIG } from '../config/msGraphConfig';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
+import { AUTHORIZED_USERS } from '../config/appConfig';
 
 class MSListService {
   constructor() {
     this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
-    // Use the /sites endpoint for team sites
-    this.baseUrl = `${this.graphApiUrl}/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/${process.env.REACT_APP_LIST_ID}`;
+    this.siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
+    this.listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+    this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
     
-    // Initialize MSAL
-    this.msalConfig = {
-      auth: {
-        clientId: process.env.REACT_APP_CLIENT_ID,
-        authority: `https://login.microsoftonline.com/${process.env.REACT_APP_TENANT_ID}`,
-        redirectUri: window.location.origin,
-      },
-      cache: {
-        cacheLocation: 'sessionStorage',
-        storeAuthStateInCookie: false,
-      }
-    };
-    
-    this.msalInstance = new PublicClientApplication(this.msalConfig);
-    this.initialized = false;
-
-    // Initialize graphClient
-    const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(this.msalInstance, {
-      account: this.msalInstance.getAllAccounts()[0],
-      scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All']
-    });
-
-    this.graphClient = Client.initWithMiddleware({
-      authProvider
-    });
+    this.msalInstance = null;
+    this.graphClient = null;
   }
 
   async initialize() {
-    if (!this.initialized) {
+    if (this.msalInstance) return;
+
+    try {
+      // Ensure MS_GRAPH_CONFIG is properly imported and has values
+      if (!MS_GRAPH_CONFIG || !MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.tenantId) {
+        throw new Error('MS Graph configuration is missing required values');
+      }
+
+      this.msalInstance = new PublicClientApplication({
+        auth: {
+          clientId: MS_GRAPH_CONFIG.clientId,
+          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
+          redirectUri: window.location.origin,
+        },
+        cache: {
+          cacheLocation: 'sessionStorage',
+          storeAuthStateInCookie: false,
+        },
+      });
+
+      // Initialize MSAL
       await this.msalInstance.initialize();
-      this.initialized = true;
+
+      // Define scopes without .default
+      const scopes = [
+        'Mail.Send',
+        'Sites.ReadWrite.All',
+        'User.Read',
+        'openid',
+        'profile',
+        'offline_access'
+      ];
+
+      // Get the active account
+      const accounts = this.msalInstance.getAllAccounts();
+      if (accounts.length === 0) {
+        // If no account is signed in, prompt the user to sign in
+        const loginResponse = await this.msalInstance.loginPopup({
+          scopes: scopes
+        });
+        if (loginResponse.account) {
+          this.msalInstance.setActiveAccount(loginResponse.account);
+        }
+      } else {
+        // Use the first account
+        this.msalInstance.setActiveAccount(accounts[0]);
+      }
+
+      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+        this.msalInstance,
+        {
+          account: this.msalInstance.getActiveAccount(),
+          scopes: scopes,
+          interactionType: 'popup'
+        }
+      );
+
+      this.graphClient = Client.initWithMiddleware({ authProvider });
+      console.log('MSAL and Graph client initialized successfully');
+    } catch (error) {
+      console.error('Error initializing MSAL:', error);
+      throw error;
     }
   }
 
   async getAccessToken() {
     try {
-      console.log('Attempting to get access token...');
-      
       // Ensure MSAL is initialized
       await this.initialize();
       
       const request = {
         scopes: [
-          'https://graph.microsoft.com/Sites.ReadWrite.All'
+          'Mail.Send',
+          'Sites.ReadWrite.All',
+          'User.Read',
+          'openid',
+          'profile',
+          'offline_access'
         ]
       };
 
@@ -71,6 +112,37 @@ class MSListService {
     } catch (error) {
       console.error('Error getting access token:', error);
       throw error;
+    }
+  }
+
+  // Send email using Microsoft Graph API
+  async sendEmail(to, subject, body) {
+    try {
+      await this.refreshTokenIfNeeded();
+
+      const message = {
+        message: {
+          subject: subject,
+          body: {
+            contentType: "HTML",
+            content: body
+          },
+          toRecipients: to.map(email => ({
+            emailAddress: {
+              address: email
+            }
+          }))
+        }
+      };
+
+      await this.graphClient
+        .api('/me/sendMail')
+        .post(message);
+
+      return true;
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return false;
     }
   }
 
@@ -127,35 +199,132 @@ class MSListService {
       
       console.log('Sending request to:', `${this.baseUrl}/items`);
       console.log('Request data:', requestData);
-      
-      const response = await fetch(`${this.baseUrl}/items`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-      });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('List request failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorData: errorData
-        });
-        throw new Error(`List request failed: ${response.status} ${response.statusText} - ${errorData}`);
+      const response = await this.graphClient
+        .api(`${this.baseUrl}/items`)
+        .post(requestData);
+
+      // Send email notifications after successful creation
+      if (response && response.id) {
+        // Get the list of approvers from AUTHORIZED_USERS
+        const approvers = AUTHORIZED_USERS.newHireRequestApprovers || [];
+        
+        // Prepare email content
+        const subject = `New Hire Request Created: ${data.FirstName} ${data.LastName}`;
+        
+        const creatorEmailContent = `
+          <h2>New Hire Request Confirmation</h2>
+          <p>Your new hire request has been successfully created and is pending approval.</p>
+          <h3>Request Details:</h3>
+          <ul>
+            <li><strong>Submitted By:</strong> ${user?.userDetails}</li>
+            <li><strong>Submission Date:</strong> ${new Date().toLocaleDateString()}</li>
+            <li><strong>Candidate Name:</strong> ${data.FirstName} ${data.LastName}</li>
+            <li><strong>Personal Email:</strong> ${data.PersonalEmail}</li>
+            <li><strong>Mobile:</strong> ${data.Mobile}</li>
+            <li><strong>Address:</strong> ${data.Address}</li>
+            <li><strong>Position:</strong> ${data.Position}</li>
+            <li><strong>Employee Type:</strong> ${data.EmployeeType || 'AU PAYG Contractor'}</li>
+            <li><strong>Client Name:</strong> ${data.ClientName}</li>
+            <li><strong>Status:</strong> ${data.Status || 'Pending'}</li>
+            <li><strong>Sign By Date:</strong> ${data.SignByDate}</li>
+            <li><strong>Start Date:</strong> ${data.StartDate}</li>
+            <li><strong>Package/Rate:</strong> ${data.PackageOrRate}</li>
+            <li><strong>Gross Profit Margin:</strong> ${data.GrossProfitMargin}</li>
+            <li><strong>Contract End Date:</strong> ${data.ContractEndDate}</li>
+            <li><strong>Laptop Required:</strong> ${data.IsLaptopRequired || 'No'}</li>
+            <li><strong>Office:</strong> ${data.Office}</li>
+            <li><strong>Rehire:</strong> ${data.Rehire || 'No'}</li>
+            ${data.ABNName ? `<li><strong>ABN Name:</strong> ${data.ABNName}</li>` : ''}
+            ${data.ABNNumber ? `<li><strong>ABN Number:</strong> ${data.ABNNumber}</li>` : ''}
+            ${data.ABNAddress ? `<li><strong>ABN Address:</strong> ${data.ABNAddress}</li>` : ''}
+            <li><strong>Engagement Name:</strong> ${data.EngagementName}</li>
+            <li><strong>Task Name:</strong> ${data.TaskName}</li>
+            <li><strong>Billing Rate:</strong> ${data.BillingRate}</li>
+            ${data.NewClientLegalName ? `<li><strong>New Client Legal Name:</strong> ${data.NewClientLegalName}</li>` : ''}
+            ${data.NewClientAddress ? `<li><strong>New Client Address:</strong> ${data.NewClientAddress}</li>` : ''}
+            ${data.NewClientEmailAddress ? `<li><strong>New Client Email:</strong> ${data.NewClientEmailAddress}</li>` : ''}
+            <li><strong>Resource Level Code:</strong> ${data.ResourceLevelCode}</li>
+            ${data.Notes ? `<li><strong>Notes:</strong> ${data.Notes}</li>` : ''}
+          </ul>
+          <p>You will be notified once the request is approved or if any additional information is required.</p>
+        `;
+
+        const approverEmailContent = `
+          <h2>New Hire Request Pending Approval</h2>
+          <p>A new hire request has been submitted and requires your approval.</p>
+          <h3>Request Details:</h3>
+          <ul>
+            <li><strong>Submitted By:</strong> ${user?.userDetails}</li>
+            <li><strong>Submission Date:</strong> ${new Date().toLocaleDateString()}</li>
+            <li><strong>Candidate Name:</strong> ${data.FirstName} ${data.LastName}</li>
+            <li><strong>Personal Email:</strong> ${data.PersonalEmail}</li>
+            <li><strong>Mobile:</strong> ${data.Mobile}</li>
+            <li><strong>Address:</strong> ${data.Address}</li>
+            <li><strong>Position:</strong> ${data.Position}</li>
+            <li><strong>Employee Type:</strong> ${data.EmployeeType || 'AU PAYG Contractor'}</li>
+            <li><strong>Client Name:</strong> ${data.ClientName}</li>
+            <li><strong>Status:</strong> ${data.Status || 'Pending'}</li>
+            <li><strong>Sign By Date:</strong> ${data.SignByDate}</li>
+            <li><strong>Start Date:</strong> ${data.StartDate}</li>
+            <li><strong>Package/Rate:</strong> ${data.PackageOrRate}</li>
+            <li><strong>Gross Profit Margin:</strong> ${data.GrossProfitMargin}</li>
+            <li><strong>Contract End Date:</strong> ${data.ContractEndDate}</li>
+            <li><strong>Laptop Required:</strong> ${data.IsLaptopRequired || 'No'}</li>
+            <li><strong>Office:</strong> ${data.Office}</li>
+            <li><strong>Rehire:</strong> ${data.Rehire || 'No'}</li>
+            ${data.ABNName ? `<li><strong>ABN Name:</strong> ${data.ABNName}</li>` : ''}
+            ${data.ABNNumber ? `<li><strong>ABN Number:</strong> ${data.ABNNumber}</li>` : ''}
+            ${data.ABNAddress ? `<li><strong>ABN Address:</strong> ${data.ABNAddress}</li>` : ''}
+            <li><strong>Engagement Name:</strong> ${data.EngagementName}</li>
+            <li><strong>Task Name:</strong> ${data.TaskName}</li>
+            <li><strong>Billing Rate:</strong> ${data.BillingRate}</li>
+            ${data.NewClientLegalName ? `<li><strong>New Client Legal Name:</strong> ${data.NewClientLegalName}</li>` : ''}
+            ${data.NewClientAddress ? `<li><strong>New Client Address:</strong> ${data.NewClientAddress}</li>` : ''}
+            ${data.NewClientEmailAddress ? `<li><strong>New Client Email:</strong> ${data.NewClientEmailAddress}</li>` : ''}
+            <li><strong>Resource Level Code:</strong> ${data.ResourceLevelCode}</li>
+            ${data.Notes ? `<li><strong>Notes:</strong> ${data.Notes}</li>` : ''}
+          </ul>
+          
+          <div style="margin: 20px 0; text-align: center;">
+            <p>You can quickly approve or reject this request by clicking one of the buttons below:</p>
+            <div style="margin: 20px 0;">
+              <a href="${window.location.origin}/approve-request/${response.id}" 
+                 style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-right: 10px; display: inline-block;">
+                Approve Request
+              </a>
+              <a href="${window.location.origin}/reject-request/${response.id}" 
+                 style="background-color: #f44336; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                Reject Request
+              </a>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+              Or you can review the request in detail by visiting the application at 
+              <a href="${window.location.origin}/pending-approvals">${window.location.origin}/pending-approvals</a>
+            </p>
+          </div>
+          
+          <p>Please review and approve the request at your earliest convenience.</p>
+        `;
+
+        // Send email to creator
+        if (user?.userDetails) {
+          await this.sendEmail([user.userDetails], subject, creatorEmailContent);
+        }
+
+        // Send email to approvers
+        if (approvers.length > 0) {
+          await this.sendEmail(approvers, subject, approverEmailContent);
+        }
       }
 
-      const responseData = await response.json();
-      console.log('New hire request created successfully:', responseData);
-      return responseData;
+      return response;
     } catch (error) {
-      console.error('Detailed error in createNewHireRequest:', error);
+      console.error('Error creating new hire request:', error);
       throw error;
     }
   }
-
+  
   // Get all new hire requests
   async getNewHireRequests() {
     try {
@@ -214,10 +383,11 @@ class MSListService {
   async approveNewHireRequest(itemId, approverEmail) {
     try {
       await this.refreshTokenIfNeeded();
-
-      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
-
+      
+      // First get the request details to get the creator's email
+      const request = await this.getNewHireRequestById(itemId);
+      const creatorEmail = request.field_30; // CreateBy field contains the creator's email
+      
       const updateData = {
         fields: {
           field_8: 'Approved', // ApprovalStatus
@@ -226,9 +396,58 @@ class MSListService {
         }
       };
 
+      console.log('Approving request with URL:', `${this.baseUrl}/items/${itemId}?$expand=fields`);
+      console.log('Update data:', updateData);
+
       const response = await this.graphClient
-        .api(`/sites/${siteId}/lists/${listId}/items/${itemId}`)
+        .api(`${this.baseUrl}/items/${itemId}?$expand=fields`)
         .update(updateData);
+
+      // Send confirmation email to the creator
+      if (creatorEmail) {
+        console.log('Sending approval email to:', creatorEmail);
+        const subject = 'New Hire Request Approved';
+        const content = `
+          <h2>Your New Hire Request Has Been Approved</h2>
+          <p>Your new hire request has been approved by ${approverEmail}.</p>
+          <h3>Request Details:</h3>
+          <ul>
+            <li><strong>Candidate Name:</strong> ${request.field_1} ${request.field_2}</li>
+            <li><strong>Position:</strong> ${request.field_6}</li>
+            <li><strong>Client Name:</strong> ${request.field_7}</li>
+            <li><strong>Personal Email:</strong> ${request.field_3}</li>
+            <li><strong>Mobile:</strong> ${request.field_4}</li>
+            <li><strong>Address:</strong> ${request.field_5}</li>
+            <li><strong>Employee Type:</strong> ${request.field_33}</li>
+            <li><strong>Status:</strong> ${request.field_8}</li>
+            <li><strong>Sign By Date:</strong> ${request.field_9}</li>
+            <li><strong>Start Date:</strong> ${request.field_10}</li>
+            <li><strong>Package/Rate:</strong> ${request.field_11}</li>
+            <li><strong>Gross Profit Margin:</strong> ${request.field_12}</li>
+            <li><strong>Contract End Date:</strong> ${request.field_13}</li>
+            <li><strong>Laptop Required:</strong> ${request.field_14}</li>
+            <li><strong>Office:</strong> ${request.field_15}</li>
+            <li><strong>Rehire:</strong> ${request.field_16}</li>
+            ${request.field_18 ? `<li><strong>ABN Name:</strong> ${request.field_18}</li>` : ''}
+            ${request.field_19 ? `<li><strong>ABN Number:</strong> ${request.field_19}</li>` : ''}
+            ${request.field_20 ? `<li><strong>ABN Address:</strong> ${request.field_20}</li>` : ''}
+            <li><strong>Engagement Name:</strong> ${request.field_21}</li>
+            <li><strong>Task Name:</strong> ${request.field_22}</li>
+            <li><strong>Billing Rate:</strong> ${request.field_23}</li>
+            ${request.field_24 ? `<li><strong>New Client Legal Name:</strong> ${request.field_24}</li>` : ''}
+            ${request.field_25 ? `<li><strong>New Client Address:</strong> ${request.field_25}</li>` : ''}
+            ${request.field_26 ? `<li><strong>New Client Email:</strong> ${request.field_26}</li>` : ''}
+            <li><strong>Resource Level Code:</strong> ${request.field_27}</li>
+            ${request.field_17 ? `<li><strong>Notes:</strong> ${request.field_17}</li>` : ''}
+            </br><li><strong>Approved By:</strong> ${approverEmail}</li>
+            <li><strong>Approval Date:</strong> ${new Date().toLocaleDateString()}</li>
+          </ul>
+          <p>You can view the full details of this request in the application.</p>
+        `;
+        await this.sendEmail([creatorEmail], subject, content);
+      } else {
+        console.log('No creator email found, skipping email sending.');
+      }
 
       return response;
     } catch (error) {
@@ -241,10 +460,11 @@ class MSListService {
   async rejectNewHireRequest(itemId, approverEmail, rejectionReason) {
     try {
       await this.refreshTokenIfNeeded();
-
-      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
-
+      
+      // First get the request details to get the creator's email
+      const request = await this.getNewHireRequestById(itemId);
+      const creatorEmail = request.field_30; // CreateBy field contains the creator's email
+      
       const updateData = {
         fields: {
           field_8: 'Rejected', // ApprovalStatus
@@ -254,9 +474,59 @@ class MSListService {
         }
       };
 
+      console.log('Rejecting request with URL:', `${this.baseUrl}/items/${itemId}?$expand=fields`);
+      console.log('Update data:', updateData);
+
       const response = await this.graphClient
-        .api(`/sites/${siteId}/lists/${listId}/items/${itemId}`)
+        .api(`${this.baseUrl}/items/${itemId}?$expand=fields`)
         .update(updateData);
+
+      // Send rejection email to the creator
+      if (creatorEmail) {
+        console.log('Sending rejection email to:', creatorEmail);
+        const subject = 'New Hire Request Rejected';
+        const content = `
+          <h2>Your New Hire Request Has Been Rejected</h2>
+          <p>Your new hire request has been rejected by ${approverEmail}.</p>
+          <h3>Request Details:</h3>
+          <ul>
+            <li><strong>Candidate Name:</strong> ${request.field_1} ${request.field_2}</li>
+            <li><strong>Position:</strong> ${request.field_6}</li>
+            <li><strong>Client Name:</strong> ${request.field_7}</li>
+            <li><strong>Personal Email:</strong> ${request.field_3}</li>
+            <li><strong>Mobile:</strong> ${request.field_4}</li>
+            <li><strong>Address:</strong> ${request.field_5}</li>
+            <li><strong>Employee Type:</strong> ${request.field_33}</li>
+            <li><strong>Status:</strong> ${request.field_8}</li>
+            <li><strong>Sign By Date:</strong> ${request.field_9}</li>
+            <li><strong>Start Date:</strong> ${request.field_10}</li>
+            <li><strong>Package/Rate:</strong> ${request.field_11}</li>
+            <li><strong>Gross Profit Margin:</strong> ${request.field_12}</li>
+            <li><strong>Contract End Date:</strong> ${request.field_13}</li>
+            <li><strong>Laptop Required:</strong> ${request.field_14}</li>
+            <li><strong>Office:</strong> ${request.field_15}</li>
+            <li><strong>Rehire:</strong> ${request.field_16}</li>
+            ${request.field_18 ? `<li><strong>ABN Name:</strong> ${request.field_18}</li>` : ''}
+            ${request.field_19 ? `<li><strong>ABN Number:</strong> ${request.field_19}</li>` : ''}
+            ${request.field_20 ? `<li><strong>ABN Address:</strong> ${request.field_20}</li>` : ''}
+            <li><strong>Engagement Name:</strong> ${request.field_21}</li>
+            <li><strong>Task Name:</strong> ${request.field_22}</li>
+            <li><strong>Billing Rate:</strong> ${request.field_23}</li>
+            ${request.field_24 ? `<li><strong>New Client Legal Name:</strong> ${request.field_24}</li>` : ''}
+            ${request.field_25 ? `<li><strong>New Client Address:</strong> ${request.field_25}</li>` : ''}
+            ${request.field_26 ? `<li><strong>New Client Email:</strong> ${request.field_26}</li>` : ''}
+            <li><strong>Resource Level Code:</strong> ${request.field_27}</li>
+            ${request.field_17 ? `<li><strong>Notes:</strong> ${request.field_17}</li>` : ''}
+            </br><li><strong>Rejected By:</strong> ${approverEmail}</li>
+            <li><strong>Rejection Date:</strong> ${new Date().toLocaleDateString()}</li>
+            <li><strong>Reason for Rejection:</strong> ${rejectionReason}</li>
+          </ul>
+          <p>You can view the full details of this request in the application.</p>
+        `;
+        await this.sendEmail([creatorEmail], subject, content);
+      } else {
+        console.log('No creator email found, skipping email sending.');
+      }
 
       return response;
     } catch (error) {

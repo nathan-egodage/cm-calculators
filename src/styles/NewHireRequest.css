@@ -106,12 +106,15 @@
 /* Compact Form Layout */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  align-items: start;
 }
 
 .form-group {
-  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .form-group.span-2 {
@@ -119,17 +122,33 @@
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #4b5563;
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 10px;
+  color: #555;
+}
+
+.form-group div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.form-group input[type="radio"] {
+  margin-right: 5px;
+  transform: scale(0.7);
+}
+
+.form-group label span {
+  margin-left: 0;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
+  box-sizing: border-box;
   padding: 6px 8px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -224,15 +243,13 @@
 }
 
 .toggle-buttons button {
-  flex: 1;
-  padding: 6px 8px;
-  background-color: white;
-  border: none;
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #4b5563;
-  transition: all 0.2s ease;
+  transition: background-color 0.3s ease;
 }
 
 .toggle-buttons button:not(:last-child) {
@@ -245,7 +262,7 @@
 }
 
 .toggle-buttons button:hover:not(.active) {
-  background-color: #f3f4f6;
+  background-color: #e0e0e0;
 }
 
 /* Input with icon */
@@ -263,7 +280,7 @@
 }
 
 .input-with-icon input {
-  padding-right: 24px;
+  padding-right: 30px;
 }
 
 /* Form actions - Compact */
@@ -293,28 +310,35 @@
   height: 32px;
 }
 
-.next-button {
-  background-color: #4b5563;
-  color: white;
+.next-button, .back-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.next-button:hover {
-  background-color: #374151;
+.next-button:hover, .back-button:hover {
+  background-color: #e0e0e0;
 }
 
-.back-button {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-.back-button:hover {
-  background-color: #e5e7eb;
+.next-button:focus, .back-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button {
   background-color: #4b5563;
   color: white;
-  position: relative;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .submit-button:hover {
@@ -448,4 +472,162 @@
 /* Progress Indicator - Simplified (optional)  */
 .progress-indicator {
   display: none; /* Hide by default, use tabs instead for compactness */
+}
+
+/* General Styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f7f9fc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+h1 {
+  font-size: 2em;
+  color: #2C3E50;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 1.5em;
+  color: #34495E;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.form-section {
+  margin-bottom: 30px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.9em;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: red;
+}
+
+.error-text {
+  color: red;
+  font-size: 0.8em;
+  margin-top: 3px;
+}
+
+.hint-text {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 3px;
+}
+
+.button-icon {
+  margin-left: 5px;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-buttons button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #ddd;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.toggle-buttons button.active {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.toggle-buttons button:hover {
+  background-color: #ccc;
+  transform: translateY(-2px);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.submit-button {
+  background-color: #4b5563;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #374151;
+}
+
+.back-button, .next-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover, .next-button:hover {
+  background-color: #e0e0e0;
+}
+
+.back-button, .next-button {
+  min-width: 80px;
+  height: 32px;
+}
+
+.form-group label.required-field::after {
+  content: '*';
+  color: red;
+  margin-left: 2px;
 }

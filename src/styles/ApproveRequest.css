@@ -1,5 +1,25 @@
 /* src/styles/ApproveRequest.css */
 
+/* Updated color theme */
+:root {
+  --primary-color: #2C3E50;
+  --secondary-color: #18BC9C;
+  --background-color: #ECF0F1;
+  --text-color: #2C3E50;
+  --button-color: #18BC9C;
+  --button-hover-color: #16A085;
+}
+
+.container {
+  padding: 10px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.nav-buttons .back-button {
+  color: var(--primary-color);
+}
+
 .approval-container {
   background-color: #ffffff;
   border-radius: 8px;
@@ -38,7 +58,6 @@
 }
 
 .status-badge {
-  display: inline-block;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -65,7 +84,7 @@
 }
 
 .detail-section {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .detail-section h3 {
@@ -83,15 +102,14 @@
 }
 
 .detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  padding: 4px 0;
+  font-size: 0.85rem;
 }
 
 .detail-item label {
   font-weight: 600;
   color: #555;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .detail-item span {
@@ -112,38 +130,36 @@
   margin-top: 30px;
 }
 
-.approve-button,
-.reject-button {
-  padding: 10px 20px;
+.approval-actions .approve-button {
+  background-color: #28a745; /* Green background */
+  color: white; /* White text */
   border: none;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: 10px 20px; /* Larger padding */
+  border-radius: 5px; /* Slightly larger border radius */
+  font-size: 1rem; /* Larger font size */
+  font-weight: bold; /* Bold text */
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s;
 }
 
-.approve-button {
-  background-color: #10b981;
-  color: white;
+.approval-actions .approve-button:hover {
+  background-color: #218838; /* Darker green on hover */
 }
 
-.approve-button:hover {
-  background-color: #059669;
+.approval-actions .reject-button {
+  background-color: #dc3545; /* Red background */
+  color: white; /* White text */
+  border: none;
+  padding: 10px 20px; /* Larger padding */
+  border-radius: 5px; /* Slightly larger border radius */
+  font-size: 1rem; /* Larger font size */
+  font-weight: bold; /* Bold text */
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-.reject-button {
-  background-color: #ef4444;
-  color: white;
-}
-
-.reject-button:hover {
-  background-color: #dc2626;
-}
-
-.approve-button:disabled,
-.reject-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.approval-actions .reject-button:hover {
+  background-color: #c82333; /* Darker red on hover */
 }
 
 /* Modal styles */
@@ -161,11 +177,12 @@
 }
 
 .modal-container {
+  padding: 16px;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 500px;
+  max-width: 450px;
   overflow: hidden;
 }
 

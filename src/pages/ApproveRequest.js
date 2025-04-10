@@ -18,11 +18,12 @@ const ApproveRequest = () => {
   
   // Check if user is authorized to approve requests
   const isAuthorized = () => {
-    if (!user) return false;
+    if (!user || !user.userDetails) return false;
     
-    return AUTHORIZED_USERS.newHireRequestApprovers.some(email => 
-      email.toLowerCase() === user.userDetails.toLowerCase()
-    );
+    const userEmail = user.userDetails.toLowerCase();
+    return AUTHORIZED_USERS?.newHireRequestApprovers?.some(email => 
+      email?.toLowerCase() === userEmail
+    ) || false;
   };
   
   // Fetch request details when component mounts
@@ -49,7 +50,7 @@ const ApproveRequest = () => {
   
   // Handle approve action
   const handleApprove = async () => {
-    if (!isAuthorized() || !requestId) {
+    if (!isAuthorized() || !requestId || !user?.userDetails) {
       setError('You are not authorized to approve this request.');
       return;
     }
@@ -71,12 +72,12 @@ const ApproveRequest = () => {
   
   // Handle reject action
   const handleReject = async () => {
-    if (!isAuthorized() || !requestId) {
+    if (!isAuthorized() || !requestId || !user?.userDetails) {
       setError('You are not authorized to reject this request.');
       return;
     }
     
-    if (!rejectionReason.trim()) {
+    if (!rejectionReason?.trim()) {
       setError('Please provide a reason for rejection.');
       return;
     }
@@ -113,12 +114,17 @@ const ApproveRequest = () => {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-AU', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'N/A';
+    }
   };
   
   // Loading state
@@ -186,12 +192,12 @@ const ApproveRequest = () => {
       {!loading && !actionSuccess && requestData && (
         <div className="approval-container">
           <div className="request-header">
-            <h2>{requestData.FirstName} {requestData.LastName}</h2>
+            <h2>{requestData.FirstName || ''} {requestData.LastName || ''}</h2>
             <div className="request-meta">
               <div className="meta-item">
                 <span className="meta-label">Status:</span>
-                <span className={`status-badge ${requestData.ApprovalStatus.toLowerCase()}`}>
-                  {requestData.ApprovalStatus}
+                <span className={`status-badge ${requestData.ApprovalStatus?.toLowerCase() || 'pending'}`}>
+                  {requestData.ApprovalStatus || 'Pending'}
                 </span>
               </div>
               <div className="meta-item">
@@ -372,7 +378,7 @@ const ApproveRequest = () => {
               <button 
                 className="confirm-reject-button" 
                 onClick={handleReject}
-                disabled={!rejectionReason.trim() || loading}
+                disabled={!rejectionReason?.trim() || loading}
               >
                 {loading ? 'Rejecting...' : 'Confirm Rejection'}
               </button>

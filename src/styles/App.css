@@ -445,21 +445,23 @@ button:hover {
   margin-bottom: 10px;
 }
 
-/* Button styling */
+
 .cloudmarc-theme button {
   background-color: var(--primary-color);
   color: var(--text-on-primary);
 }
 
+/* Active button styling 
 .cloudmarc-theme button:hover {
   background-color: var(--primary-hover);
 }
 
-/* Active button styling */
+
 .cloudmarc-theme button.active {
   background-color: var(--secondary-color);
   color: var(--text-on-secondary);
 }
+*/
 
 /* Result styling */
 .cloudmarc-theme .result-summary {
@@ -501,14 +503,6 @@ button:hover {
   border-bottom: 4px solid var(--secondary-color);
 }
 
-.cloudmarc-theme button {
-  background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  color: white;
-}
-
-.cloudmarc-theme button:hover {
-  background: linear-gradient(90deg, var(--primary-hover) 0%, #FF5722 100%);
-}
 
 .cloudmarc-theme .result-table tr:nth-child(even) {
   background-color: rgba(26, 74, 141, 0.05); /* Light blue */
@@ -1403,4 +1397,36 @@ button:hover {
     width: 100%;
     margin-bottom: 5px;
   }
+}
+
+.container .requests-table .approve-button {
+  background-color: #28a745 !important; /* Green background */
+  color: white !important; /* White text */
+  border: none !important;
+  padding: 10px 20px !important; /* Larger padding */
+  border-radius: 5px !important; /* Slightly larger border radius */
+  font-size: 1rem !important; /* Larger font size */
+  font-weight: bold !important; /* Bold text */
+  cursor: pointer !important;
+  transition: background-color 0.3s !important;
+}
+
+.container .requests-table .approve-button:hover {
+  background-color: #218838 !important; /* Darker green on hover */
+}
+
+.container .requests-table .reject-button {
+  background-color: #dc3545 !important; /* Red background */
+  color: white !important; /* White text */
+  border: none !important;
+  padding: 10px 20px !important; /* Larger padding */
+  border-radius: 5px !important; /* Slightly larger border radius */
+  font-size: 1rem !important; /* Larger font size */
+  font-weight: bold !important; /* Bold text */
+  cursor: pointer !important;
+  transition: background-color 0.3s !important;
+}
+
+.container .requests-table .reject-button:hover {
+  background-color: #c82333 !important; /* Darker red on hover */
 }
