@@ -8,8 +8,8 @@ import { AUTHORIZED_USERS } from '../config/appConfig';
 
 const msGraphConfig = {
   // Production values from environment variables
-  clientId: process.env.REACT_APP_AAD_CLIENT_ID || '5feffca4-2086-4129-8680-29c2207d0edb',
-  authority: process.env.REACT_APP_MSAL_AUTHORITY || 'https://login.microsoftonline.com/5feffca4-2086-4129-8680-29c2207d0edb',
+  clientId: process.env.REACT_APP_AAD_CLIENT_ID,
+  authority: `https://login.microsoftonline.com/${process.env.REACT_APP_AAD_CLIENT_ID}`,
   redirectUri: window.location.origin,
   scopes: ['user.read', 'Sites.Read.All', 'Sites.ReadWrite.All']
 };
