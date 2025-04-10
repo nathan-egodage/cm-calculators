@@ -66,7 +66,11 @@ export const AUTHORIZED_USERS = {
     "nathan@cloudmarc.com.au",
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au",
-    "sbrownbill@cloudmarc.com.au"
+    "sbrownbill@cloudmarc.com.au",
+    "avorster@cloudmarc.com.au",
+    "ralinas@cloudmarc.com.au",
+    "accounts@cloudmarc.com.au",
+    "skalpani@cloudmarc.com.au"
   ],
   
   // Users who can approve new hire requests
