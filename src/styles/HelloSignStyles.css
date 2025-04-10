@@ -1,0 +1,320 @@
+/* src/styles/HelloSignStyles.css */
+
+.filters-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  background-color: #f9fafb;
+  padding: 15px 20px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  flex-wrap: nowrap;
+}
+
+/* Status filter - left side */
+.filters-section .filter-group:first-child {
+  flex: 0 0 200px;
+  min-width: 200px;
+  margin-right: auto;
+}
+
+/* Search filter - right side */
+.filters-section .filter-group:last-child {
+  flex: 0 0 auto;
+  margin-left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.filter-group .search-input {
+  width: 350px;
+  min-width: unset;
+  padding-right: 30px;
+}
+
+.filter-group select:hover,
+.filter-group input:hover {
+  border-color: #9ca3af;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.search-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.document-table-container {
+  margin-top: 10px;
+  overflow-x: auto;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+}
+
+.document-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  table-layout: fixed;
+}
+
+.document-table th {
+  background-color: #f3f4f6;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.document-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  text-align: left;
+  white-space: normal;
+  word-wrap: break-word;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column width optimizations */
+.document-table th:nth-child(1), /* Name */
+.document-table td:nth-child(1) {
+  width: 10%;
+}
+
+.document-table th:nth-child(2), /* Document Title */
+.document-table td:nth-child(2) {
+  width: 20%;
+}
+
+.document-table th:nth-child(3), /* Status */
+.document-table td:nth-child(3) {
+  width: 8%;
+}
+
+.document-table th:nth-child(4), /* Signed At */
+.document-table td:nth-child(4) {
+  width: 10%;
+}
+
+.document-table th:nth-child(5), /* Job Title */
+.document-table td:nth-child(5) {
+  width: 12%;
+}
+
+.document-table th:nth-child(6), /* Rate Per Day */
+.document-table td:nth-child(6) {
+  width: 8%;
+}
+
+.document-table th:nth-child(7), /* Start Date */
+.document-table td:nth-child(7) {
+  width: 8%;
+}
+
+.document-table th:nth-child(8), /* Sign By Date */
+.document-table td:nth-child(8) {
+  width: 8%;
+}
+
+.document-table th:nth-child(9), /* Signer Email */
+.document-table td:nth-child(9) {
+  width: 16%;
+  word-break: break-all;
+}
+
+/* Remove the previous td:last-child style since we're handling columns individually */
+.document-table td:last-child {
+  text-align: left;
+}
+
+/* Adjust container width */
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.awaiting_signature {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.signed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.declined {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.no-results {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+/* New styles for development controls */
+.dev-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #fffbeb;
+  border: 1px dashed #f59e0b;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.mock-data-toggle {
+  padding: 6px 10px;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.mock-data-toggle:hover {
+  background-color: #d97706;
+}
+
+.data-source-indicator {
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.use-mock-data-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.use-mock-data-btn:hover {
+  background-color: #0284c7;
+}
+
+/* Row styling based on status */
+.status-awaiting_signature {
+  background-color: #fffbeb;
+}
+
+.status-signed {
+  background-color: #f0fdf4;
+}
+
+.status-declined {
+  background-color: #fef2f2;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-section .filter-group:first-child,
+  .filters-section .filter-group:last-child {
+    flex: 1 0 auto;
+    width: 100%;
+    margin: 0;
+  }
+  
+  .filter-group .search-input {
+    width: 100%;
+  }
+}

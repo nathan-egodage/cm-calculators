@@ -2,8 +2,8 @@
 
 // Version information
 export const APP_VERSION = {
-  number: "V2.0.1", 
-  date: "01-Apr-2025",
+  number: "V3.0.0", 
+  date: "10-Apr-2025",
   owner: "Nathan Egodage",
   repository: "https://github.com/nathan-egodage/cm-calculators.git"
 };
@@ -12,7 +12,11 @@ export const APP_VERSION = {
 export const ENV_CONFIG = {
   apiEndpoints: {
     // Example - not used in current application
-    holidayApi: "https://date.nager.at/api/v3/PublicHolidays"
+    holidayApi: "https://date.nager.at/api/v3/PublicHolidays",
+    // HelloSign API endpoint
+    helloSignApi: "https://api.hellosign.com/v3",
+    // Client API endpoint
+    clientApi: "https://api.cloudmarc.com.au/clients"
   }
 };
 
@@ -27,7 +31,6 @@ export const AUTHORIZED_USERS = {
   // Users who can access the home page
   homeAccess: [
     "ddallariva@cloudmarc.com.au",
-    "dnewland@cloudmarc.com.au",
     "dscanlon@cloudmarc.com.au",
     "jgregory@cloudmarc.com.au",
     "nathan@cloudmarc.com.au",
@@ -42,6 +45,38 @@ export const AUTHORIZED_USERS = {
     "nathan@cloudmarc.com.au",
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au"
+  ],
+  
+  // Users who can access the HelloSign document status
+  helloSignDocuments: [
+    "ddallariva@cloudmarc.com.au",
+    "dscanlon@cloudmarc.com.au",
+    "jgregory@cloudmarc.com.au",
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au",
+    "sbrownbill@cloudmarc.com.au"
+  ],
+  
+  // Users who can create new hire requests
+  newHireRequestCreators: [
+    "ddallariva@cloudmarc.com.au",
+    "dscanlon@cloudmarc.com.au",
+    "jgregory@cloudmarc.com.au",
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au",
+    "sbrownbill@cloudmarc.com.au",
+    "avorster@cloudmarc.com.au",
+    "ralinas@cloudmarc.com.au",
+    "accounts@cloudmarc.com.au",
+    "skalpani@cloudmarc.com.au"
+  ],
+  
+  // Users who can approve new hire requests
+  newHireRequestApprovers: [
+    "nathan@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
   ]
 };
 

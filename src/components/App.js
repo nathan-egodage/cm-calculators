@@ -8,9 +8,18 @@ import PhpFteGpCalculator from '../calculators/PhpFteGpCalculator';
 import ConsolidatedGpCalculator from '../calculators/ConsolidatedGpCalculator';
 import GenericOffshoreContractorGpCalculator from '../calculators/GenericOffshoreContractorGpCalculator';
 import AusWorkingDaysCalculator from '../calculators/AusWorkingDaysCalculator';
+import HelloSignDocuments from '../pages/HelloSignDocuments';
+import NewHireRequest from '../pages/NewHireRequest';
+import PendingApprovals from '../pages/PendingApprovals';
+import ApproveRequest from '../pages/ApproveRequest';
+import NewHireRequestsList from '../pages/NewHireRequestsList';
 
 import Home from '../pages/Home';
 import '../styles/App.css';
+import '../styles/HelloSignStyles.css';
+import '../styles/NewHireRequest.css';
+import '../styles/ApproveRequest.css';
+import '../styles/PendingApprovals.css';
 
 function App() {
   const [authStatus, setAuthStatus] = useState({
@@ -126,7 +135,28 @@ function App() {
         } />
 
         <Route path="/aus-working-days-cal" element={
-          authStatus.isAuthorized ? <AusWorkingDaysCalculator/> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-working-days-cal' }} replace />
+          authStatus.isAuthorized ? <AusWorkingDaysCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-working-days-cal' }} replace />
+        } />
+        
+        <Route path="/hello-sign-documents" element={
+          authStatus.isAuthorized ? <HelloSignDocuments /> : <Navigate to="/.auth/login/aad" state={{ from: '/hello-sign-documents' }} replace />
+        } />
+        
+        {/* New Hire Request Routes */}
+        <Route path="/new-hire-request" element={
+          authStatus.isAuthorized ? <NewHireRequest /> : <Navigate to="/.auth/login/aad" state={{ from: '/new-hire-request' }} replace />
+        } />
+        
+        <Route path="/pending-approvals" element={
+          authStatus.isAuthorized ? <PendingApprovals /> : <Navigate to="/.auth/login/aad" state={{ from: '/pending-approvals' }} replace />
+        } />
+        
+        <Route path="/approve-request/:requestId" element={
+          authStatus.isAuthorized ? <ApproveRequest /> : <Navigate to="/.auth/login/aad" state={{ from: '/approve-request' }} replace />
+        } />
+
+        <Route path="/new-hire-requests-list" element={
+          authStatus.isAuthorized ? <NewHireRequestsList /> : <Navigate to="/.auth/login/aad" state={{ from: '/new-hire-requests-list' }} replace />
         } />
 
         <Route path="*" element={
