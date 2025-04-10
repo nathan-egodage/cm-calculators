@@ -7,8 +7,8 @@ export const MS_GRAPH_CONFIG = {
   
   // Azure AD App Registration details
   clientId: process.env.REACT_APP_AAD_CLIENT_ID,
-  tenantId: process.env.REACT_APP_AAD_CLIENT_ID,
-  authority: `https://login.microsoftonline.com/${process.env.REACT_APP_AAD_CLIENT_ID}`,
+  tenantId: process.env.REACT_APP_AAD_CLIENT_ID,  // Use client ID as tenant ID
+  authority: process.env.REACT_APP_MSAL_AUTHORITY,
   redirectUri: window.location.origin,
   scopes: [
     'Mail.Send',
@@ -20,10 +20,10 @@ export const MS_GRAPH_CONFIG = {
   ],
   
   // SharePoint site ID where the lists are stored
-  siteId: 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38',
+  siteId: process.env.REACT_APP_SITE_ID,
   
   // List ID for the New Hire Requests
-  newHireListId: '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4',
+  newHireListId: process.env.REACT_APP_LIST_ID,
   
   // URL for the Power Automate flow that handles approvals
   approvalFlowUrl: process.env.REACT_APP_APPROVAL_FLOW_URL || '',

@@ -9,7 +9,7 @@ import { AUTHORIZED_USERS } from '../config/appConfig';
 const msGraphConfig = {
   // Production values from environment variables
   clientId: process.env.REACT_APP_AAD_CLIENT_ID,
-  authority: `https://login.microsoftonline.com/${process.env.REACT_APP_AAD_CLIENT_ID}`,
+  authority: process.env.REACT_APP_MSAL_AUTHORITY,
   redirectUri: window.location.origin,
   scopes: ['user.read', 'Sites.Read.All', 'Sites.ReadWrite.All']
 };
@@ -17,8 +17,8 @@ const msGraphConfig = {
 class MSListService {
   constructor() {
     this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
-    this.siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-    this.listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+    this.siteId = MS_GRAPH_CONFIG.siteId;
+    this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
     
     this.msalInstance = null;
@@ -39,6 +39,10 @@ class MSListService {
     try {
       // Production initialization
       if (!msGraphConfig.clientId || !msGraphConfig.authority) {
+        console.error('Missing configuration:', { 
+          clientId: msGraphConfig.clientId, 
+          authority: msGraphConfig.authority 
+        });
         throw new Error('MS Graph configuration is missing required values');
       }
 
