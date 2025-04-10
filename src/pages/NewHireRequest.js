@@ -49,7 +49,6 @@ const NewHireRequest = () => {
     NewClientAddress: '',
     NewClientEmailAddress: '',
     ResourceLevelCode: '',
-    ApprovalStatus: 'Pending',
     CreateDate: new Date().toISOString(),
     CreateBy: user?.userDetails || '',
     ApprovedBy: '',
@@ -198,6 +197,11 @@ const NewHireRequest = () => {
       return;
     }
     
+    // Validate form data
+    if (!validateCandidateInfo()) {
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -206,11 +210,16 @@ const NewHireRequest = () => {
       const submissionData = {
         ...formData,
         CreateDate: new Date().toISOString(),
-        CreateBy: user.userDetails
+        CreateBy: user.userDetails,
+        EmployeeType: employeeType
       };
       
-      // Submit to Microsoft List
-      await MSListService.createNewHireRequest(submissionData);
+      console.log('Starting submission process...');
+      console.log('Submission data:', submissionData);
+      
+      // Submit to Microsoft List with user parameter
+      const response = await MSListService.createNewHireRequest(submissionData, user);
+      console.log('Submission response:', response);
       
       // Reset form and show success message
       setFormData({
@@ -251,8 +260,9 @@ const NewHireRequest = () => {
       }, 5000);
       
     } catch (err) {
-      console.error('Failed to submit new hire request:', err);
-      setError('Failed to submit new hire request. Please try again later.');
+      console.error('Detailed error in form submission:', err);
+      const errorMessage = err?.message || err?.toString() || 'Unknown error occurred';
+      setError(`Failed to submit new hire request: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -292,6 +302,35 @@ const NewHireRequest = () => {
     return true;
   };
   
+  // Add new test function
+  const testMSListConnection = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Test data
+      const testData = {
+        Title: 'test@test.com'
+      };
+      
+      // Test the connection
+      const response = await MSListService.createNewHireRequest(testData);
+      console.log('Test connection response:', response);
+      
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 5000);
+      
+    } catch (err) {
+      console.error('MS List Connection Test Failed:', err);
+      const errorMessage = err?.message || err?.toString() || 'Unknown error occurred';
+      setError(`Failed to connect to Microsoft Lists. Error: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Loading state
   if (!loaded) {
     return (
@@ -323,9 +362,28 @@ const NewHireRequest = () => {
       
       <h1>New Hire Request</h1>
       
+      {/* Add test button */}
+      <div className="test-connection-section" style={{ marginBottom: '20px' }}>
+        <button 
+          onClick={testMSListConnection}
+          className="test-button"
+          disabled={loading}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {loading ? 'Testing...' : 'Test MS List Connection'}
+        </button>
+      </div>
+      
       {submitSuccess && (
         <div className="success-message">
-          <p>New hire request submitted successfully! It has been sent for approval.</p>
+          <p>Connection test successful!</p>
         </div>
       )}
       
@@ -366,7 +424,15 @@ const NewHireRequest = () => {
             </div>
             <div className="form-group">
               <label htmlFor="AccountManager">Account Manager</label>
-              <input type="text" id="AccountManager" name="AccountManager" value={formData.AccountManager} onChange={handleInputChange} />
+              <select id="AccountManager" name="AccountManager" value={formData.AccountManager} onChange={handleInputChange}>
+                <option value="">Select an Account Manager</option>
+                <option value="Darren Dalla Riva">Darren Dalla Riva</option>
+                <option value="David Scanlon">David Scanlon</option>
+                <option value="James Gregory">James Gregory</option>
+                <option value="Nathan Egodage">Nathan Egodage</option>
+                <option value="Rocket Ilukpitiya">Rocket Ilukpitiya</option>
+                <option value="Simon Brownbill">Simon Brownbill</option>
+              </select>
             </div>
             <div className="form-group">
               <label htmlFor="FirstName" className="required-field">First Name</label>

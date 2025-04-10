@@ -44,6 +44,34 @@ const PendingApprovals = () => {
     fetchPendingApprovals();
   }, [loaded, user]);
   
+  // Approve request
+  const approveRequest = async (requestId) => {
+    try {
+      setLoading(true);
+      await MSListService.approveNewHireRequest(requestId, user.userDetails);
+      setPendingRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+    } catch (err) {
+      console.error('Failed to approve request:', err);
+      setError('Failed to approve request. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reject request
+  const rejectRequest = async (requestId) => {
+    try {
+      setLoading(true);
+      await MSListService.rejectNewHireRequest(requestId, user.userDetails, 'Rejection reason');
+      setPendingRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+    } catch (err) {
+      console.error('Failed to reject request:', err);
+      setError('Failed to reject request. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter requests based on search term
   const filteredRequests = pendingRequests.filter(request => {
     if (!searchTerm) return true;
@@ -161,32 +189,49 @@ const PendingApprovals = () => {
           <table className="requests-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Client</th>
-                <th>Created By</th>
-                <th>Start Date</th>
-                <th>Created Date</th>
                 <th>Actions</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Personal Email</th>
+                <th>Mobile</th>
+                <th>Position</th>
+                <th>Client Name</th>
+                <th>Package/Rate</th>
+                <th>Gross Profit Margin</th>
+                <th>Contract End Date</th>
+                <th>Is Laptop Required</th>
+                <th>Notes</th>
+                <th>Billing Rate</th>
+                <th>New Client Legal Name</th>
+                <th>Approval Status</th>
+                <th>Created By</th>
+                <th>Employee Type</th>
               </tr>
             </thead>
             <tbody>
               {filteredRequests.map((request) => (
                 <tr key={request.id}>
-                  <td>{request.FirstName} {request.LastName}</td>
-                  <td>{request.Position || 'N/A'}</td>
-                  <td>{request.ClientName || 'N/A'}</td>
-                  <td>{request.CreateBy || 'N/A'}</td>
-                  <td>{formatDate(request.StartDate)}</td>
-                  <td>{formatDate(request.CreateDate)}</td>
                   <td>
-                    <Link 
-                      to={`/approve-request/${request.id}`}
-                      className="view-button"
-                    >
-                      Review
-                    </Link>
+                    <button onClick={() => approveRequest(request.id)} className="approve-button">Approve</button>
+                    <button onClick={() => rejectRequest(request.id)} className="reject-button">Reject</button>
                   </td>
+                  <td>{request.FirstName}</td>
+                  <td>{request.LastName}</td>
+                  <td>{request.PersonalEmail}</td>
+                  <td>{request.Mobile}</td>
+                  <td>{request.Position}</td>
+                  <td>{request.ClientName}</td>
+                  <td>{request.PackageOrRate}</td>
+                  <td>{request.GrossProfitMargin}</td>
+                  <td>{request.ContractEndDate}</td>
+                  <td>{request.IsLaptopRequired}</td>
+                  <td>{request.Notes}</td>
+                  <td>{request.BillingRate}</td>
+                  <td>{request.NewClientLegalName}</td>
+                  <td>{request.ApprovalStatus}</td>
+                  <td>{request.CreateBy}</td>
+                  <td>{request.EmployeeType}</td>
+
                 </tr>
               ))}
             </tbody>

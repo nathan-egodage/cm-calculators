@@ -154,6 +154,15 @@ const Home = () => {
       category: ["hr", "tools"],
       theme: "cloudmarc-theme",
       icon: "✅"
+    },
+    {
+      id: "new-hire-requests-list",
+      title: "New Hire Requests List",
+      description: "View all new hire requests",
+      path: "/new-hire-requests-list",
+      category: ["hr", "tools"],
+      theme: "cloudmarc-theme",
+      icon: "📋"
     }
   ];
 
@@ -166,6 +175,7 @@ const Home = () => {
   
   if (canCreateHireRequests) {
     allTools.push(newHireRequestTools[0]);
+    allTools.push(newHireRequestTools[2]);
   }
   
   if (canApproveHireRequests) {

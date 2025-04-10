@@ -12,6 +12,7 @@ import HelloSignDocuments from '../pages/HelloSignDocuments';
 import NewHireRequest from '../pages/NewHireRequest';
 import PendingApprovals from '../pages/PendingApprovals';
 import ApproveRequest from '../pages/ApproveRequest';
+import NewHireRequestsList from '../pages/NewHireRequestsList';
 
 import Home from '../pages/Home';
 import '../styles/App.css';
@@ -152,6 +153,10 @@ function App() {
         
         <Route path="/approve-request/:requestId" element={
           authStatus.isAuthorized ? <ApproveRequest /> : <Navigate to="/.auth/login/aad" state={{ from: '/approve-request' }} replace />
+        } />
+
+        <Route path="/new-hire-requests-list" element={
+          authStatus.isAuthorized ? <NewHireRequestsList /> : <Navigate to="/.auth/login/aad" state={{ from: '/new-hire-requests-list' }} replace />
         } />
 
         <Route path="*" element={

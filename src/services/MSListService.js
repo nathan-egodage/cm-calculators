@@ -1,76 +1,171 @@
 // src/services/MSListService.js
 import axios from 'axios';
 import { MS_GRAPH_CONFIG } from '../config/msGraphConfig';
+import { PublicClientApplication } from '@azure/msal-browser';
+import { Client } from '@microsoft/microsoft-graph-client';
+import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 
 class MSListService {
   constructor() {
-    this.graphClient = axios.create({
-      baseURL: MS_GRAPH_CONFIG.baseUrl,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
+    // Use the /sites endpoint for team sites
+    this.baseUrl = `${this.graphApiUrl}/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/${process.env.REACT_APP_LIST_ID}`;
     
-    // Initialize auth - will be called before any request
-    this.initializeAuth();
-  }
-  
-  // Initialize authentication token
-  async initializeAuth() {
-    try {
-      // For development on localhost, using a stored token
-      if (process.env.NODE_ENV === 'development' || 
-          window.location.hostname === 'localhost') {
-        console.log('Development mode - using stored token');
-        this.token = localStorage.getItem('ms_graph_token') || '';
-        return;
+    // Initialize MSAL
+    this.msalConfig = {
+      auth: {
+        clientId: process.env.REACT_APP_CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${process.env.REACT_APP_TENANT_ID}`,
+        redirectUri: window.location.origin,
+      },
+      cache: {
+        cacheLocation: 'sessionStorage',
+        storeAuthStateInCookie: false,
       }
+    };
+    
+    this.msalInstance = new PublicClientApplication(this.msalConfig);
+    this.initialized = false;
+
+    // Initialize graphClient
+    const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(this.msalInstance, {
+      account: this.msalInstance.getAllAccounts()[0],
+      scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All']
+    });
+
+    this.graphClient = Client.initWithMiddleware({
+      authProvider
+    });
+  }
+
+  async initialize() {
+    if (!this.initialized) {
+      await this.msalInstance.initialize();
+      this.initialized = true;
+    }
+  }
+
+  async getAccessToken() {
+    try {
+      console.log('Attempting to get access token...');
       
-      // For production, get token from Azure Functions or SWA Auth
-      const response = await fetch('/.auth/me');
-      const authData = await response.json();
+      // Ensure MSAL is initialized
+      await this.initialize();
       
-      if (authData && authData.clientPrincipal) {
-        // Use Azure AD token if available
-        this.token = authData.clientPrincipal.idToken || '';
-        
-        // Set token in Authorization header for future requests
-        if (this.token) {
-          this.graphClient.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-        }
+      const request = {
+        scopes: [
+          'https://graph.microsoft.com/Sites.ReadWrite.All'
+        ]
+      };
+
+      // Try silent token acquisition first
+      try {
+        const response = await this.msalInstance.acquireTokenSilent(request);
+        return response.accessToken;
+      } catch (silentError) {
+        // If silent acquisition fails, fall back to interactive method
+        console.log('Silent token acquisition failed, trying interactive...');
+        const response = await this.msalInstance.acquireTokenPopup(request);
+        return response.accessToken;
       }
     } catch (error) {
-      console.error('Failed to initialize authentication for MS Graph API:', error);
+      console.error('Error getting access token:', error);
+      throw error;
     }
   }
-  
-  // Get token for MS Graph API requests
-  async getToken() {
-    // If no token is available, try to initialize auth again
-    if (!this.token) {
-      await this.initializeAuth();
+
+  async createNewHireRequest(data, user) {
+    try {
+      console.log('Initializing MSAL...');
+      // Ensure MSAL is initialized before any operation
+      await this.initialize();
+      
+      console.log('Getting access token...');
+      const token = await this.getAccessToken();
+      if (!token) {
+        throw new Error('Failed to get access token');
+      }
+      
+      console.log('Preparing request data...');
+      const requestData = {
+        fields: {
+          Title: data.AccountManager || user?.userDetails || '',
+          field_1: data.FirstName,
+          field_2: data.LastName,
+          field_3: data.PersonalEmail,
+          field_4: data.Mobile,
+          field_5: data.Address,
+          field_6: data.Position,
+          field_7: data.ClientName,
+          field_8: data.Status || 'Pending',
+          field_9: data.SignByDate,
+          field_10: data.StartDate,
+          field_11: data.PackageOrRate,
+          field_12: data.GrossProfitMargin,
+          field_13: data.ContractEndDate,
+          field_14: data.IsLaptopRequired || 'No',
+          field_15: data.Office,
+          field_16: data.Rehire || 'No',
+          field_17: data.Notes,
+          field_18: data.ABNName,
+          field_19: data.ABNNumber,
+          field_20: data.ABNAddress,
+          field_21: data.EngagementName,
+          field_22: data.TaskName,
+          field_23: data.BillingRate,
+          field_24: data.NewClientLegalName,
+          field_25: data.NewClientAddress,
+          field_26: data.NewClientEmailAddress,
+          field_27: data.ResourceLevelCode,
+          field_29: new Date().toISOString(),
+          field_30: user?.userDetails || '',
+          field_31: data.ApprovedBy || '',
+          field_32: data.ApprovedDate || '',
+          field_33: data.EmployeeType || 'AU PAYG Contractor'
+        }
+      };
+      
+      console.log('Sending request to:', `${this.baseUrl}/items`);
+      console.log('Request data:', requestData);
+      
+      const response = await fetch(`${this.baseUrl}/items`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('List request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData
+        });
+        throw new Error(`List request failed: ${response.status} ${response.statusText} - ${errorData}`);
+      }
+
+      const responseData = await response.json();
+      console.log('New hire request created successfully:', responseData);
+      return responseData;
+    } catch (error) {
+      console.error('Detailed error in createNewHireRequest:', error);
+      throw error;
     }
-    
-    return this.token;
   }
-  
-  // Refresh token if expired
-  async refreshTokenIfNeeded() {
-    // In real implementation, check token expiration and refresh if needed
-    // For simplicity, we'll just re-initialize auth
-    await this.initializeAuth();
-  }
-  
+
   // Get all new hire requests
   async getNewHireRequests() {
     try {
       await this.refreshTokenIfNeeded();
       
-      const response = await this.graphClient.get(
-        `/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items?expand=fields`
-      );
+      const response = await this.graphClient
+        .api('/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/4ac9d268-cbfc-455a-8b9b-cf09547e8bd4/items?$expand=fields')
+        .get();
       
-      return response.data.value.map(item => item.fields);
+      return response.value.map(item => item.fields);
     } catch (error) {
       console.error('Error fetching new hire requests:', error);
       throw error;
@@ -82,70 +177,14 @@ class MSListService {
     try {
       await this.refreshTokenIfNeeded();
       
-      const response = await this.graphClient.get(
-        `/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}?expand=fields`
-      );
+      const response = await this.graphClient
+        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .expand('fields')
+        .get();
       
-      return response.data.fields;
+      return response.fields;
     } catch (error) {
       console.error(`Error fetching new hire request with ID ${id}:`, error);
-      throw error;
-    }
-  }
-  
-  // Create new hire request
-  async createNewHireRequest(requestData) {
-    try {
-      await this.refreshTokenIfNeeded();
-      
-      // Convert the data format to match MS List expectations
-      const fieldsToSubmit = {
-        fields: {
-          Title: `${requestData.FirstName} ${requestData.LastName}`,
-          AccountManager: requestData.AccountManager,
-          FirstName: requestData.FirstName,
-          LastName: requestData.LastName,
-          PersonalEmail: requestData.PersonalEmail,
-          Mobile: requestData.Mobile.toString(),
-          Address: requestData.Address,
-          Position: requestData.Position,
-          ClientName: requestData.ClientName,
-          Status: 'Pending',
-          SignByDate: requestData.SignByDate ? new Date(requestData.SignByDate).toISOString() : null,
-          StartDate: requestData.StartDate ? new Date(requestData.StartDate).toISOString() : null,
-          PackageOrRate: requestData.PackageOrRate,
-          GrossProfitMargin: requestData.GrossProfitMargin,
-          ContractEndDate: requestData.ContractEndDate ? new Date(requestData.ContractEndDate).toISOString() : null,
-          IsLaptopRequired: requestData.IsLaptopRequired,
-          Rehire: requestData.Rehire,
-          Notes: requestData.Notes,
-          ABNName: requestData.ABNName,
-          ABNNumber: requestData.ABNNumber ? requestData.ABNNumber.toString() : '',
-          ABNAddress: requestData.ABNAddress,
-          EngagementName: requestData.EngagementName,
-          TaskName: requestData.TaskName,
-          BillingRate: requestData.BillingRate,
-          NewClientLegalName: requestData.NewClientLegalName,
-          NewClientAddress: requestData.NewClientAddress,
-          NewClientEmailAddress: requestData.NewClientEmailAddress,
-          ResourceLevelCode: requestData.ResourceLevelCode,
-          ApprovalStatus: 'Pending',
-          CreateDate: new Date().toISOString(),
-          CreateBy: requestData.CreateBy
-        }
-      };
-      
-      const response = await this.graphClient.post(
-        `/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items`,
-        fieldsToSubmit
-      );
-      
-      // After creating the item, trigger the approval workflow
-      await this.triggerApprovalWorkflow(response.data.id);
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error creating new hire request:', error);
       throw error;
     }
   }
@@ -160,12 +199,11 @@ class MSListService {
         fields: { ...updateData }
       };
       
-      const response = await this.graphClient.patch(
-        `/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`,
-        fieldsToUpdate
-      );
+      const response = await this.graphClient
+        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .update(fieldsToUpdate);
       
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error updating new hire request with ID ${id}:`, error);
       throw error;
@@ -173,40 +211,56 @@ class MSListService {
   }
   
   // Approve new hire request
-  async approveNewHireRequest(id, approverEmail) {
+  async approveNewHireRequest(itemId, approverEmail) {
     try {
       await this.refreshTokenIfNeeded();
-      
+
+      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
+      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+
       const updateData = {
-        ApprovalStatus: 'Approved',
-        ApprovedBy: approverEmail,
-        ApprovedDate: new Date().toISOString(),
-        Status: 'Approved'
+        fields: {
+          field_8: 'Approved', // ApprovalStatus
+          field_31: approverEmail, // ApprovedBy
+          field_32: new Date().toISOString() // ApprovedDate
+        }
       };
-      
-      return await this.updateNewHireRequest(id, updateData);
+
+      const response = await this.graphClient
+        .api(`/sites/${siteId}/lists/${listId}/items/${itemId}`)
+        .update(updateData);
+
+      return response;
     } catch (error) {
-      console.error(`Error approving new hire request with ID ${id}:`, error);
+      console.error(`Error approving request with ID ${itemId}:`, error);
       throw error;
     }
   }
   
   // Reject new hire request
-  async rejectNewHireRequest(id, approverEmail, rejectionReason) {
+  async rejectNewHireRequest(itemId, approverEmail, rejectionReason) {
     try {
       await this.refreshTokenIfNeeded();
-      
+
+      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
+      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+
       const updateData = {
-        ApprovalStatus: 'Rejected',
-        ApprovedBy: approverEmail,
-        ApprovedDate: new Date().toISOString(),
-        Status: 'Rejected',
-        Notes: rejectionReason
+        fields: {
+          field_8: 'Rejected', // ApprovalStatus
+          field_31: approverEmail, // ApprovedBy
+          field_32: new Date().toISOString(), // ApprovedDate
+          field_17: rejectionReason // Notes
+        }
       };
-      
-      return await this.updateNewHireRequest(id, updateData);
+
+      const response = await this.graphClient
+        .api(`/sites/${siteId}/lists/${listId}/items/${itemId}`)
+        .update(updateData);
+
+      return response;
     } catch (error) {
-      console.error(`Error rejecting new hire request with ID ${id}:`, error);
+      console.error(`Error rejecting request with ID ${itemId}:`, error);
       throw error;
     }
   }
@@ -249,14 +303,64 @@ class MSListService {
     try {
       await this.refreshTokenIfNeeded();
       
-      // Filter the list for items where ApprovalStatus is 'Pending'
-      const response = await this.graphClient.get(
-        `/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items?expand=fields&$filter=fields/ApprovalStatus eq 'Pending'`
-      );
+      console.log('Fetching pending approvals for user:', userEmail);
       
-      return response.data.value.map(item => item.fields);
+      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
+      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+
+      const response = await this.graphClient
+        .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$filter=fields/field_8 eq 'Pending'`)
+        .header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
+        .get();
+      
+      return response.value.map(item => ({
+        AccountManager: item.fields.Title,
+        FirstName: item.fields.field_1,
+        LastName: item.fields.field_2,
+        PersonalEmail: item.fields.field_3,
+        Mobile: item.fields.field_4,
+        Position: item.fields.field_6,
+        ClientName: item.fields.field_7,
+        PackageOrRate: item.fields.field_11,
+        GrossProfitMargin: item.fields.field_12,
+        ContractEndDate: item.fields.field_13,
+        IsLaptopRequired: item.fields.field_14,
+        Notes: item.fields.field_17,
+        BillingRate: item.fields.field_23,
+        NewClientLegalName: item.fields.field_24,
+        ApprovalStatus: item.fields.field_8,
+        CreateBy: item.fields.field_30,
+        EmployeeType: item.fields.field_33,
+        id: item.id // Ensure the ID is included for actions like approving/rejecting
+      }));
     } catch (error) {
       console.error(`Error fetching pending approvals for user ${userEmail}:`, error);
+      throw error;
+    }
+  }
+
+  async refreshTokenIfNeeded() {
+    try {
+      // Ensure MSAL is initialized
+      await this.initialize();
+
+      const accounts = this.msalInstance.getAllAccounts();
+      if (accounts.length === 0) {
+        // Prompt user to log in
+        await this.msalInstance.loginPopup({
+          scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All']
+        });
+      }
+
+      const request = {
+        scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All'],
+        account: this.msalInstance.getAllAccounts()[0]
+      };
+
+      // Attempt to acquire a token silently
+      await this.msalInstance.acquireTokenSilent(request);
+    } catch (error) {
+      console.error('Error refreshing token:', error);
       throw error;
     }
   }
