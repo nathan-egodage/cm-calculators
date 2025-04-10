@@ -6,6 +6,14 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { AUTHORIZED_USERS } from '../config/appConfig';
 
+const msGraphConfig = {
+  // Production values from environment variables
+  clientId: process.env.REACT_APP_AAD_CLIENT_ID || '5feffca4-2086-4129-8680-29c2207d0edb',
+  authority: process.env.REACT_APP_MSAL_AUTHORITY || 'https://login.microsoftonline.com/5feffca4-2086-4129-8680-29c2207d0edb',
+  redirectUri: window.location.origin,
+  scopes: ['user.read', 'Sites.Read.All', 'Sites.ReadWrite.All']
+};
+
 class MSListService {
   constructor() {
     this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
@@ -18,19 +26,27 @@ class MSListService {
   }
 
   async initialize() {
-    if (this.msalInstance) return;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalhost) {
+      console.log('Running in localhost mode - using mock data');
+      return Promise.resolve({
+        success: true,
+        message: 'Initialized with mock data for local development'
+      });
+    }
 
     try {
-      // Ensure MS_GRAPH_CONFIG is properly imported and has values
-      if (!MS_GRAPH_CONFIG || !MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.tenantId) {
+      // Production initialization
+      if (!msGraphConfig.clientId || !msGraphConfig.authority) {
         throw new Error('MS Graph configuration is missing required values');
       }
 
       this.msalInstance = new PublicClientApplication({
         auth: {
-          clientId: MS_GRAPH_CONFIG.clientId,
-          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
-          redirectUri: window.location.origin,
+          clientId: msGraphConfig.clientId,
+          authority: msGraphConfig.authority,
+          redirectUri: msGraphConfig.redirectUri,
         },
         cache: {
           cacheLocation: 'sessionStorage',
@@ -328,6 +344,30 @@ class MSListService {
   // Get all new hire requests
   async getNewHireRequests() {
     try {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isLocalhost) {
+        // Return mock data for local development
+        return [
+          {
+            id: '1',
+            field_1: 'John',
+            field_2: 'Doe',
+            field_3: 'john@example.com',
+            field_4: '+61412345678',
+            field_6: 'Developer',
+            field_7: 'Client A',
+            field_8: 'Pending',
+            field_10: '2024-03-20',
+            field_11: '$800/day',
+            field_12: '40',
+            // Add other fields as needed
+          },
+          // Add more mock entries if needed
+        ];
+      }
+
+      // Production code
       await this.refreshTokenIfNeeded();
       
       const response = await this.graphClient
@@ -570,16 +610,61 @@ class MSListService {
   
   // Get pending approvals for a user
   async getPendingApprovalsForUser(userEmail) {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalhost) {
+      console.log('Returning mock pending approvals data for localhost');
+      return [
+        {
+          id: '1',
+          AccountManager: 'John Manager',
+          FirstName: 'Alice',
+          LastName: 'Smith',
+          PersonalEmail: 'alice.smith@example.com',
+          Mobile: '+61412345678',
+          Position: 'Senior Developer',
+          ClientName: 'Tech Corp',
+          PackageOrRate: '$800/day',
+          GrossProfitMargin: '35',
+          ContractEndDate: '2024-12-31',
+          IsLaptopRequired: 'Yes',
+          Notes: 'Urgent hire needed',
+          BillingRate: '$1000/day',
+          NewClientLegalName: 'Tech Corporation Pty Ltd',
+          ApprovalStatus: 'Pending',
+          CreateBy: 'john.doe@example.com',
+          EmployeeType: 'AU PAYG Contractor'
+        },
+        {
+          id: '2',
+          AccountManager: 'Jane Manager',
+          FirstName: 'Bob',
+          LastName: 'Johnson',
+          PersonalEmail: 'bob.johnson@example.com',
+          Mobile: '+61423456789',
+          Position: 'Business Analyst',
+          ClientName: 'Finance Co',
+          PackageOrRate: '$700/day',
+          GrossProfitMargin: '40',
+          ContractEndDate: '2024-11-30',
+          IsLaptopRequired: 'No',
+          Notes: 'Starting next month',
+          BillingRate: '$900/day',
+          NewClientLegalName: 'Finance Co Ltd',
+          ApprovalStatus: 'Pending',
+          CreateBy: 'jane.smith@example.com',
+          EmployeeType: 'AU FTE'
+        }
+      ];
+    }
+
     try {
       await this.refreshTokenIfNeeded();
       
       console.log('Fetching pending approvals for user:', userEmail);
       
-      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
-
       const response = await this.graphClient
-        .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$filter=fields/field_8 eq 'Pending'`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items?$expand=fields&$filter=fields/field_8 eq 'Pending'`)
         .header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
         .get();
       
@@ -601,7 +686,7 @@ class MSListService {
         ApprovalStatus: item.fields.field_8,
         CreateBy: item.fields.field_30,
         EmployeeType: item.fields.field_33,
-        id: item.id // Ensure the ID is included for actions like approving/rejecting
+        id: item.id
       }));
     } catch (error) {
       console.error(`Error fetching pending approvals for user ${userEmail}:`, error);

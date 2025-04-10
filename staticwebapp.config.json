@@ -3,7 +3,7 @@
     "identityProviders": {
       "azureActiveDirectory": {
         "registration": {
-          "clientIdSettingName": "AAD_CLIENT_ID",
+          "clientIdSettingName": "REACT_APP_AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET",
           "openIdIssuer": "https://login.microsoftonline.com/5feffca4-2086-4129-8680-29c2207d0edb/v2.0"
         },
@@ -34,8 +34,7 @@
     },
     {
       "route": "/new-hire-requests-list",
-      "allowedRoles": ["authenticated"],
-      "rewrite": "/index.html"
+      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/*",
@@ -60,5 +59,8 @@
   },
   "mimeTypes": {
     ".json": "text/json"
+  },
+  "platform": {
+    "apiRuntime": "node:16"
   }
 }
