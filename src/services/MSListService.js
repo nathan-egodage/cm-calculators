@@ -1,11 +1,10 @@
 // src/services/MSListService.js
 import axios from 'axios';
 import MS_GRAPH_CONFIG from '../config/msGraphConfig';
-import { PublicClientApplication, BrowserCacheLocation } from '@azure/msal-browser';
+import { PublicClientApplication, BrowserCacheLocation, InteractionType, LogLevel } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { AUTHORIZED_USERS } from '../config/appConfig';
-import { LogLevel } from '@azure/msal-browser';
 
 class MSListService {
   constructor() {
@@ -18,6 +17,61 @@ class MSListService {
     this.siteId = MS_GRAPH_CONFIG.siteId;
     this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
+    
+    // Initialize MSAL immediately
+    this.initializePromise = this.initialize();
+  }
+
+  getMsalConfig() {
+    const redirectUri = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:63892'  // Use the actual port your app is running on
+      : window.location.origin;
+
+    return {
+      auth: {
+        clientId: MS_GRAPH_CONFIG.clientId,
+        authority: MS_GRAPH_CONFIG.authority,
+        redirectUri: redirectUri,
+        navigateToLoginRequestUrl: true,
+        postLogoutRedirectUri: redirectUri
+      },
+      cache: {
+        cacheLocation: BrowserCacheLocation.SessionStorage,
+        storeAuthStateInCookie: true,
+        secureCookies: process.env.NODE_ENV !== 'development'
+      },
+      system: {
+        allowNativeBroker: false,
+        windowHashTimeout: 60000,
+        iframeHashTimeout: 6000,
+        loadFrameTimeout: 0,
+        loggerOptions: {
+          loggerCallback: (level, message, containsPii) => {
+            if (containsPii) {
+              return;
+            }
+            switch (level) {
+              case LogLevel.Error:
+                console.error('MSAL:', message);
+                break;
+              case LogLevel.Info:
+                console.info('MSAL:', message);
+                break;
+              case LogLevel.Verbose:
+                console.debug('MSAL:', message);
+                break;
+              case LogLevel.Warning:
+                console.warn('MSAL:', message);
+                break;
+              default:
+                console.log('MSAL:', message);
+            }
+          },
+          piiLoggingEnabled: false,
+          logLevel: LogLevel.Verbose
+        }
+      }
+    };
   }
 
   async initialize() {
@@ -27,58 +81,24 @@ class MSListService {
 
     try {
       console.log('Initializing MSAL...');
-      
-      // Create MSAL instance with validated config
-      const msalConfig = {
-        auth: {
-          clientId: MS_GRAPH_CONFIG.clientId,
-          authority: MS_GRAPH_CONFIG.authority,
-          redirectUri: window.location.origin,
-          navigateToLoginRequestUrl: false,
-          postLogoutRedirectUri: window.location.origin
-        },
-        cache: {
-          cacheLocation: BrowserCacheLocation.SessionStorage,
-          storeAuthStateInCookie: true,
-          secureCookies: true
-        },
-        system: {
-          allowRedirectInIframe: true,
-          windowHashTimeout: 60000,
-          iframeHashTimeout: 6000,
-          loadFrameTimeout: 0,
-          loggerOptions: {
-            loggerCallback: (level, message, containsPii) => {
-              if (containsPii) {
-                return;
-              }
-              switch (level) {
-                case LogLevel.Error:
-                  console.error('MSAL:', message);
-                  break;
-                case LogLevel.Info:
-                  console.info('MSAL:', message);
-                  break;
-                case LogLevel.Verbose:
-                  console.debug('MSAL:', message);
-                  break;
-                case LogLevel.Warning:
-                  console.warn('MSAL:', message);
-                  break;
-                default:
-                  console.log('MSAL:', message);
-              }
-            },
-            piiLoggingEnabled: false,
-            logLevel: LogLevel.Verbose
-          }
-        }
-      };
 
-      if (!this.msalInstance) {
-        this.msalInstance = new PublicClientApplication(msalConfig);
-        await this.msalInstance.initialize();
-        console.log('MSAL instance initialized successfully');
+      // Ensure environment variables are loaded
+      if (!window.__env__) {
+        throw new Error('Environment variables not loaded. Make sure env.js is loaded before the application.');
+      }
+
+      // Create and initialize MSAL instance
+      const msalConfig = this.getMsalConfig();
+      this.msalInstance = new PublicClientApplication(msalConfig);
+      await this.msalInstance.initialize();
+      
+      console.log('MSAL instance initialized');
+
+      // Handle redirect response if present
+      const response = await this.msalInstance.handleRedirectPromise();
+      if (response) {
+        console.log('Redirect response received:', response);
+        this.msalInstance.setActiveAccount(response.account);
       }
 
       // Get active account or login
@@ -89,12 +109,13 @@ class MSListService {
         console.log('No active account found, initiating login...');
         const loginRequest = {
           scopes: MS_GRAPH_CONFIG.scopes,
-          prompt: 'select_account',
-          redirectStartPage: window.location.href
+          prompt: 'select_account'
         };
-        
-        const loginResponse = await this.msalInstance.loginPopup(loginRequest);
-        account = loginResponse.account;
+
+        // Always use redirect for login
+        console.log('Starting redirect login flow...');
+        await this.msalInstance.loginRedirect(loginRequest);
+        return false; // Function will be called again after redirect
       }
 
       this.msalInstance.setActiveAccount(account);
@@ -106,7 +127,7 @@ class MSListService {
         {
           account: account,
           scopes: MS_GRAPH_CONFIG.scopes,
-          interactionType: 'popup'
+          interactionType: InteractionType.Redirect // Change to redirect-based interaction
         }
       );
 
@@ -118,6 +139,7 @@ class MSListService {
       return true;
     } catch (error) {
       console.error('Failed to initialize MSListService:', error);
+      this.initialized = false;
       throw error;
     }
   }
@@ -155,12 +177,11 @@ class MSListService {
 
   async createNewHireRequest(data) {
     try {
-      if (!this.initialized) {
-        await this.initialize();
-      }
+      // Wait for initialization to complete
+      await this.initializePromise;
 
-      if (!this.graphClient) {
-        throw new Error('Graph client is not initialized');
+      if (!this.initialized || !this.graphClient) {
+        throw new Error('Service not properly initialized');
       }
 
       const response = await this.graphClient
@@ -509,10 +530,11 @@ class MSListService {
 
       const accounts = this.msalInstance.getAllAccounts();
       if (accounts.length === 0) {
-        // Prompt user to log in
-        await this.msalInstance.loginPopup({
+        // Use redirect for login
+        await this.msalInstance.loginRedirect({
           scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All']
         });
+        return; // Function will be called again after redirect
       }
 
       const request = {
@@ -520,8 +542,13 @@ class MSListService {
         account: this.msalInstance.getAllAccounts()[0]
       };
 
-      // Attempt to acquire a token silently
-      await this.msalInstance.acquireTokenSilent(request);
+      try {
+        // Try silent token acquisition first
+        await this.msalInstance.acquireTokenSilent(request);
+      } catch (error) {
+        console.log('Silent token acquisition failed, using redirect:', error);
+        await this.msalInstance.acquireTokenRedirect(request);
+      }
     } catch (error) {
       console.error('Error refreshing token:', error);
       throw error;
