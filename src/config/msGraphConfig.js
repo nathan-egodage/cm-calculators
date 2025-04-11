@@ -39,6 +39,13 @@ const getEnvVar = (name) => {
   return value || '';
 };
 
+// Construct the authority URL
+const constructAuthorityUrl = () => {
+  const tenantId = getEnvVar('REACT_APP_TENANT_ID');
+  if (!tenantId) return '';
+  return `https://login.microsoftonline.com/${tenantId}`;
+};
+
 export const MS_GRAPH_CONFIG = {
   // Microsoft Graph API base URL
   baseUrl: 'https://graph.microsoft.com/v1.0',
@@ -47,7 +54,7 @@ export const MS_GRAPH_CONFIG = {
   clientId: getEnvVar('REACT_APP_CLIENT_ID'),
   clientSecret: getEnvVar('REACT_APP_CLIENT_SECRET'),
   tenantId: getEnvVar('REACT_APP_TENANT_ID'),
-  authority: getEnvVar('REACT_APP_MSAL_AUTHORITY'),
+  authority: constructAuthorityUrl(),
   redirectUri: window.location.origin,
   
   // Required scopes for the application
@@ -88,7 +95,6 @@ const validateConfig = () => {
   const requiredVars = [
     'REACT_APP_CLIENT_ID',
     'REACT_APP_TENANT_ID',
-    'REACT_APP_MSAL_AUTHORITY',
     'REACT_APP_SITE_ID',
     'REACT_APP_LIST_ID'
   ];
@@ -108,6 +114,13 @@ const validateConfig = () => {
     return false;
   }
 
+  // Validate authority URL construction
+  const authority = constructAuthorityUrl();
+  if (!authority) {
+    console.error('Failed to construct authority URL');
+    return false;
+  }
+
   return true;
 };
 
@@ -116,7 +129,8 @@ const isValid = validateConfig();
 if (!isValid) {
   console.log('Current MS_GRAPH_CONFIG state:', {
     ...MS_GRAPH_CONFIG,
-    clientSecret: '[HIDDEN]' // Don't log sensitive data
+    clientSecret: '[HIDDEN]', // Don't log sensitive data
+    authority: MS_GRAPH_CONFIG.authority || '[MISSING]'
   });
 }
 
