@@ -12,15 +12,37 @@ class MSListService {
     this.graphClient = null;
     this.initialized = false;
     this.initializationInProgress = false;
+    this.initializationRequired = false;
     
     // Set up base URLs from config
     this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
     this.siteId = MS_GRAPH_CONFIG.siteId;
     this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
-    
-    // Initialize MSAL immediately
-    this.initializePromise = this.initialize();
+  }
+
+  // Method to explicitly enable MS authentication for routes that need it
+  enableAuthentication() {
+    this.initializationRequired = true;
+    return this.ensureInitialized();
+  }
+
+  // Only initialize when explicitly enabled
+  async ensureInitialized() {
+    if (!this.initializationRequired) {
+      return true;
+    }
+
+    if (this.initialized) {
+      return true;
+    }
+
+    if (this.initializationInProgress) {
+      console.log('Initialization already in progress, waiting...');
+      return false;
+    }
+
+    return await this.initialize();
   }
 
   getMsalConfig() {
@@ -76,15 +98,8 @@ class MSListService {
   }
 
   async initialize() {
-    // If already initialized, return
-    if (this.initialized) {
+    if (!this.initializationRequired) {
       return true;
-    }
-
-    // Prevent multiple simultaneous initialization attempts
-    if (this.initializationInProgress) {
-      console.log('Initialization already in progress, waiting...');
-      return false;
     }
 
     this.initializationInProgress = true;
@@ -171,11 +186,8 @@ class MSListService {
   }
 
   async getNewHireRequests() {
+    await this.ensureInitialized();
     try {
-      if (!this.initialized) {
-        await this.initialize();
-      }
-
       if (!this.graphClient) {
         throw new Error('Graph client is not initialized');
       }
@@ -202,12 +214,10 @@ class MSListService {
   }
 
   async createNewHireRequest(data) {
+    await this.ensureInitialized();
     try {
-      // Wait for initialization to complete
-      await this.initializePromise;
-
-      if (!this.initialized || !this.graphClient) {
-        throw new Error('Service not properly initialized');
+      if (!this.graphClient) {
+        throw new Error('Graph client is not initialized');
       }
 
       const response = await this.graphClient
@@ -228,11 +238,8 @@ class MSListService {
   }
 
   async getAccessToken() {
+    await this.ensureInitialized();
     try {
-      if (!this.initialized) {
-        await this.initialize();
-      }
-
       if (!this.msalInstance) {
         throw new Error('MSAL instance is not initialized');
       }
@@ -256,6 +263,7 @@ class MSListService {
 
   // Send email using Microsoft Graph API
   async sendEmail(to, subject, body) {
+    await this.ensureInitialized();
     try {
       await this.refreshTokenIfNeeded();
 
@@ -286,6 +294,7 @@ class MSListService {
   }
 
   async getNewHireRequestById(id) {
+    await this.ensureInitialized();
     try {
       await this.refreshTokenIfNeeded();
       
@@ -303,6 +312,7 @@ class MSListService {
   
   // Update new hire request
   async updateNewHireRequest(id, updateData) {
+    await this.ensureInitialized();
     try {
       await this.refreshTokenIfNeeded();
       
@@ -324,6 +334,7 @@ class MSListService {
   
   // Approve new hire request
   async approveNewHireRequest(itemId, approverEmail) {
+    await this.ensureInitialized();
     try {
       await this.refreshTokenIfNeeded();
       
@@ -401,6 +412,7 @@ class MSListService {
   
   // Reject new hire request
   async rejectNewHireRequest(itemId, approverEmail, rejectionReason) {
+    await this.ensureInitialized();
     try {
       await this.refreshTokenIfNeeded();
       
@@ -480,6 +492,7 @@ class MSListService {
   
   // Trigger the approval workflow
   async triggerApprovalWorkflow(itemId) {
+    await this.ensureInitialized();
     try {
       // In real implementation, you would call a Power Automate flow or Azure Function
       // For development, we'll simulate sending emails to approvers
@@ -513,9 +526,8 @@ class MSListService {
   
   // Get pending approvals for a user
   async getPendingApprovalsForUser(userEmail) {
+    await this.ensureInitialized();
     try {
-      await this.refreshTokenIfNeeded();
-      
       console.log('Fetching pending approvals for user:', userEmail);
       
       const response = await this.graphClient

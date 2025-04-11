@@ -21,6 +21,14 @@ import '../styles/NewHireRequest.css';
 import '../styles/ApproveRequest.css';
 import '../styles/PendingApprovals.css';
 
+// Define routes that require Microsoft authentication
+const MS_AUTH_REQUIRED_ROUTES = [
+  '/new-hire-request',
+  '/pending-approvals',
+  '/approve-request',
+  '/new-hire-requests-list'
+];
+
 function App() {
   const [authStatus, setAuthStatus] = useState({
     loading: true,
@@ -30,11 +38,16 @@ function App() {
 
   useEffect(() => {
     const verifyAuthentication = async () => {
-      // Bypass auth in development
-      if (process.env.NODE_ENV === 'development' || 
+      // Check if current path requires authentication
+      const currentPath = window.location.pathname;
+      const requiresAuth = MS_AUTH_REQUIRED_ROUTES.some(route => currentPath.startsWith(route));
+
+      // If path doesn't require auth, or in development mode, bypass authentication
+      if (!requiresAuth || 
+          process.env.NODE_ENV === 'development' || 
           window.location.hostname === 'localhost' || 
           window.location.hostname === '127.0.0.1') {
-        console.log('Development mode - authentication bypassed');
+        console.log('Authentication not required or development mode');
         setAuthStatus({
           loading: false,
           isAuthorized: true,
@@ -88,8 +101,13 @@ function App() {
     verifyAuthentication();
   }, []);
 
-  // Render loading state
-  if (authStatus.loading) {
+  // Helper function to determine if a route needs authentication
+  const needsAuth = (path) => {
+    return MS_AUTH_REQUIRED_ROUTES.some(route => path.startsWith(route));
+  };
+
+  // Render loading state only for routes that need authentication
+  if (authStatus.loading && needsAuth(window.location.pathname)) {
     return (
       <div className="auth-loading-container">
         <div className="auth-loading-spinner"></div>
@@ -98,71 +116,39 @@ function App() {
     );
   }
 
-  // Render application routes or redirect to login
+  // Helper function to render route element based on auth requirements
+  const renderRouteElement = (Component, path) => {
+    if (!needsAuth(path)) {
+      return <Component />;
+    }
+    return authStatus.isAuthorized ? 
+      <Component /> : 
+      <Navigate to="/.auth/login/aad" state={{ from: path }} replace />;
+  };
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
-          authStatus.isAuthorized ? <Home /> : <Navigate to="/.auth/login/aad" state={{ from: '/' }} replace />
-        } />
+        {/* Calculator Routes - No Authentication Required */}
+        <Route path="/" element={<Home />} />
+        <Route path="/bdm-calculator-v2" element={<BDMCommissionCalculatorV2 />} />
+        <Route path="/aus-fte-gp" element={<AusFteGpCalculator />} />
+        <Route path="/aus-contractor-gp" element={<AusContractorGpCalculator />} />
+        <Route path="/php-contractor-gp" element={<PhpContractorGpCalculator />} />
+        <Route path="/php-fte-gp" element={<PhpFteGpCalculator />} />
+        <Route path="/all-cals" element={<ConsolidatedGpCalculator />} />
+        <Route path="/generic-contractor-gp" element={<GenericOffshoreContractorGpCalculator />} />
+        <Route path="/aus-working-days-cal" element={<AusWorkingDaysCalculator />} />
+        <Route path="/hello-sign-documents" element={<HelloSignDocuments />} />
         
-        <Route path="/bdm-calculator-v2" element={
-          authStatus.isAuthorized ? <BDMCommissionCalculatorV2 /> : <Navigate to="/.auth/login/aad" state={{ from: '/bdm-calculator-v2' }} replace />
-        } />
-        
-        <Route path="/aus-fte-gp" element={
-          authStatus.isAuthorized ? <AusFteGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-fte-gp' }} replace />
-        } />
-        
-        <Route path="/aus-contractor-gp" element={
-          authStatus.isAuthorized ? <AusContractorGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-contractor-gp' }} replace />
-        } />
-        
-        <Route path="/php-contractor-gp" element={
-          authStatus.isAuthorized ? <PhpContractorGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/php-contractor-gp' }} replace />
-        } />
-        
-        <Route path="/php-fte-gp" element={
-          authStatus.isAuthorized ? <PhpFteGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/php-fte-gp' }} replace />
-        } />
-        
-        <Route path="/all-cals" element={
-          authStatus.isAuthorized ? <ConsolidatedGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/all-cals' }} replace />
-        } />
-        
-        <Route path="/generic-contractor-gp" element={
-          authStatus.isAuthorized ? <GenericOffshoreContractorGpCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/generic-contractor-gp' }} replace />
-        } />
+        {/* Routes that require Microsoft Authentication */}
+        <Route path="/new-hire-request" element={renderRouteElement(NewHireRequest, '/new-hire-request')} />
+        <Route path="/pending-approvals" element={renderRouteElement(PendingApprovals, '/pending-approvals')} />
+        <Route path="/approve-request/:requestId" element={renderRouteElement(ApproveRequest, '/approve-request')} />
+        <Route path="/new-hire-requests-list" element={renderRouteElement(NewHireRequestsList, '/new-hire-requests-list')} />
 
-        <Route path="/aus-working-days-cal" element={
-          authStatus.isAuthorized ? <AusWorkingDaysCalculator /> : <Navigate to="/.auth/login/aad" state={{ from: '/aus-working-days-cal' }} replace />
-        } />
-        
-        <Route path="/hello-sign-documents" element={
-          authStatus.isAuthorized ? <HelloSignDocuments /> : <Navigate to="/.auth/login/aad" state={{ from: '/hello-sign-documents' }} replace />
-        } />
-        
-        {/* New Hire Request Routes */}
-        <Route path="/new-hire-request" element={
-          authStatus.isAuthorized ? <NewHireRequest /> : <Navigate to="/.auth/login/aad" state={{ from: '/new-hire-request' }} replace />
-        } />
-        
-        <Route path="/pending-approvals" element={
-          authStatus.isAuthorized ? <PendingApprovals /> : <Navigate to="/.auth/login/aad" state={{ from: '/pending-approvals' }} replace />
-        } />
-        
-        <Route path="/approve-request/:requestId" element={
-          authStatus.isAuthorized ? <ApproveRequest /> : <Navigate to="/.auth/login/aad" state={{ from: '/approve-request' }} replace />
-        } />
-
-        <Route path="/new-hire-requests-list" element={
-          authStatus.isAuthorized ? <NewHireRequestsList /> : <Navigate to="/.auth/login/aad" state={{ from: '/new-hire-requests-list' }} replace />
-        } />
-
-        <Route path="*" element={
-          <Navigate to={authStatus.isAuthorized ? '/' : '/.auth/login/aad'} replace />
-        } />
-
+        {/* Catch-all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
