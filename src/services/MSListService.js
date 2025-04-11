@@ -87,23 +87,35 @@ class MSListService {
         throw new Error('Environment variables not loaded. Make sure env.js is loaded before the application.');
       }
 
-      // Create and initialize MSAL instance
-      const msalConfig = this.getMsalConfig();
-      this.msalInstance = new PublicClientApplication(msalConfig);
-      await this.msalInstance.initialize();
-      
-      console.log('MSAL instance initialized');
+      // Create and initialize MSAL instance if not already created
+      if (!this.msalInstance) {
+        const msalConfig = this.getMsalConfig();
+        this.msalInstance = new PublicClientApplication(msalConfig);
+        await this.msalInstance.initialize();
+        console.log('MSAL instance initialized');
+      }
 
       // Handle redirect response if present
       const response = await this.msalInstance.handleRedirectPromise();
+      console.log('Handling redirect response:', response);
+      
+      // Get active account or use response account
+      let account = this.msalInstance.getActiveAccount();
+      
       if (response) {
         console.log('Redirect response received:', response);
-        this.msalInstance.setActiveAccount(response.account);
+        account = response.account;
+        this.msalInstance.setActiveAccount(account);
       }
-
-      // Get active account or login
-      const accounts = this.msalInstance.getAllAccounts();
-      let account = accounts[0];
+      
+      // If still no account, check all accounts
+      if (!account) {
+        const accounts = this.msalInstance.getAllAccounts();
+        if (accounts.length > 0) {
+          account = accounts[0];
+          this.msalInstance.setActiveAccount(account);
+        }
+      }
 
       if (!account) {
         console.log('No active account found, initiating login...');
@@ -112,13 +124,18 @@ class MSListService {
           prompt: 'select_account'
         };
 
-        // Always use redirect for login
-        console.log('Starting redirect login flow...');
-        await this.msalInstance.loginRedirect(loginRequest);
-        return false; // Function will be called again after redirect
+        // Check if we're already handling a redirect
+        const currentUrl = window.location.href;
+        if (!currentUrl.includes('code=') && !currentUrl.includes('error=')) {
+          console.log('Starting redirect login flow...');
+          await this.msalInstance.loginRedirect(loginRequest);
+          return false; // Function will be called again after redirect
+        } else {
+          console.log('Already handling a redirect, waiting...');
+          return false;
+        }
       }
 
-      this.msalInstance.setActiveAccount(account);
       console.log('Active account set:', account.username);
 
       // Initialize Graph client
@@ -127,7 +144,7 @@ class MSListService {
         {
           account: account,
           scopes: MS_GRAPH_CONFIG.scopes,
-          interactionType: InteractionType.Redirect // Change to redirect-based interaction
+          interactionType: InteractionType.Redirect
         }
       );
 
@@ -525,29 +542,36 @@ class MSListService {
 
   async refreshTokenIfNeeded() {
     try {
-      // Ensure MSAL is initialized
-      await this.initialize();
+      // Check if we're already handling a redirect
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('code=') || currentUrl.includes('error=')) {
+        console.log('Already handling a redirect, skipping token refresh');
+        return;
+      }
 
-      const accounts = this.msalInstance.getAllAccounts();
-      if (accounts.length === 0) {
-        // Use redirect for login
-        await this.msalInstance.loginRedirect({
-          scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All']
-        });
-        return; // Function will be called again after redirect
+      const account = this.msalInstance.getActiveAccount();
+      if (!account) {
+        const accounts = this.msalInstance.getAllAccounts();
+        if (accounts.length > 0) {
+          this.msalInstance.setActiveAccount(accounts[0]);
+        } else {
+          await this.initialize();
+          return;
+        }
       }
 
       const request = {
-        scopes: ['https://graph.microsoft.com/Sites.ReadWrite.All'],
-        account: this.msalInstance.getAllAccounts()[0]
+        scopes: MS_GRAPH_CONFIG.scopes,
+        account: this.msalInstance.getActiveAccount()
       };
 
       try {
-        // Try silent token acquisition first
         await this.msalInstance.acquireTokenSilent(request);
       } catch (error) {
-        console.log('Silent token acquisition failed, using redirect:', error);
-        await this.msalInstance.acquireTokenRedirect(request);
+        console.log('Silent token acquisition failed:', error);
+        if (!currentUrl.includes('code=') && !currentUrl.includes('error=')) {
+          await this.msalInstance.acquireTokenRedirect(request);
+        }
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
