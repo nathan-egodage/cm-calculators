@@ -5,6 +5,48 @@ import { PublicClientApplication } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { AUTHORIZED_USERS } from '../config/appConfig';
+import { LogLevel } from '@azure/msal-browser';
+
+// Initialize MS Graph configuration
+const msalConfig = {
+  auth: {
+    clientId: MS_GRAPH_CONFIG.clientId,
+    authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
+    redirectUri: window.location.origin,
+    postLogoutRedirectUri: window.location.origin,
+    navigateToLoginRequestUrl: true
+  },
+  cache: {
+    cacheLocation: 'sessionStorage',
+    storeAuthStateInCookie: false
+  },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        if (containsPii) {
+          return;
+        }
+        switch (level) {
+          case LogLevel.Error:
+            console.error('MSAL:', message);
+            break;
+          case LogLevel.Info:
+            console.info('MSAL:', message);
+            break;
+          case LogLevel.Verbose:
+            console.debug('MSAL:', message);
+            break;
+          case LogLevel.Warning:
+            console.warn('MSAL:', message);
+            break;
+          default:
+            console.log('MSAL:', message);
+        }
+      },
+      logLevel: LogLevel.Verbose
+    }
+  }
+};
 
 class MSListService {
   constructor() {
@@ -15,105 +57,54 @@ class MSListService {
     
     this.msalInstance = null;
     this.graphClient = null;
+    this.initialize();
   }
 
   async initialize() {
     try {
-      // Log all configuration values (except secrets)
+      console.log('Initializing MSAL...');
+      
+      // Validate required configuration
+      if (!MS_GRAPH_CONFIG.clientId) {
+        throw new Error('Client ID is not configured');
+      }
+      if (!MS_GRAPH_CONFIG.tenantId) {
+        throw new Error('Tenant ID is not configured');
+      }
+      
+      // Log configuration (excluding sensitive data)
       console.log('Initializing MS Graph with config:', {
         baseUrl: MS_GRAPH_CONFIG.baseUrl,
-        clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[MISSING]',
-        authority: MS_GRAPH_CONFIG.authority ? '[CONFIGURED]' : '[MISSING]',
-        redirectUri: MS_GRAPH_CONFIG.redirectUri,
-        siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[MISSING]',
-        listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[MISSING]'
+        clientId: '[CONFIGURED]',
+        authority: '[CONFIGURED]',
+        redirectUri: window.location.origin,
+        siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+        listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[NOT CONFIGURED]'
       });
 
-      // Check required configuration
-      const requiredConfigs = {
-        clientId: MS_GRAPH_CONFIG.clientId,
-        authority: MS_GRAPH_CONFIG.authority,
-        siteId: MS_GRAPH_CONFIG.siteId,
-        listId: MS_GRAPH_CONFIG.newHireListId
+      // Create MSAL instance with validated config
+      const msalConfigToUse = {
+        ...msalConfig,
+        auth: {
+          ...msalConfig.auth,
+          clientId: MS_GRAPH_CONFIG.clientId,
+          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`
+        }
       };
 
-      const missingConfigs = Object.entries(requiredConfigs)
-        .filter(([_, value]) => !value)
-        .map(([key]) => key);
-
-      if (missingConfigs.length > 0) {
-        throw new Error(`MS Graph configuration is missing required values: ${missingConfigs.join(', ')}`);
-      }
-
-      // Initialize MSAL instance if not already initialized
-      if (!this.msalInstance) {
-        const msalConfig = {
-          auth: {
-            clientId: MS_GRAPH_CONFIG.clientId,
-            authority: MS_GRAPH_CONFIG.authority,
-            redirectUri: MS_GRAPH_CONFIG.redirectUri,
-          },
-          cache: {
-            cacheLocation: 'sessionStorage',
-            storeAuthStateInCookie: false,
-          },
-          system: {
-            loggerOptions: {
-              loggerCallback: (level, message, containsPii) => {
-                if (!containsPii) console.log('MSAL:', message);
-              },
-              piiLoggingEnabled: false,
-              logLevel: 3 // Info
-            }
-          }
-        };
-
-        console.log('Creating MSAL instance with config:', {
-          ...msalConfig,
-          auth: {
-            ...msalConfig.auth,
-            clientId: '[HIDDEN]',
-          }
-        });
-
-        this.msalInstance = new PublicClientApplication(msalConfig);
-        await this.msalInstance.initialize();
-        console.log('MSAL instance initialized successfully');
-      }
-
-      // Get active account or login
-      const accounts = this.msalInstance.getAllAccounts();
-      let account = accounts[0];
-
-      if (!account) {
-        console.log('No active account found, initiating login...');
-        const loginResponse = await this.msalInstance.loginPopup({
-          scopes: MS_GRAPH_CONFIG.scopes
-        });
-        account = loginResponse.account;
-        this.msalInstance.setActiveAccount(account);
-        console.log('Login successful, account set:', account.username);
-      } else {
-        console.log('Using existing account:', account.username);
-        this.msalInstance.setActiveAccount(account);
-      }
-
-      // Initialize Graph client
-      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
-        this.msalInstance,
-        {
-          account: this.msalInstance.getActiveAccount(),
-          scopes: MS_GRAPH_CONFIG.scopes,
-          interactionType: 'popup'
+      console.log('Creating MSAL instance with config:', {
+        ...msalConfigToUse,
+        auth: {
+          ...msalConfigToUse.auth,
+          clientId: '[HIDDEN]'
         }
-      );
+      });
 
-      this.graphClient = Client.initWithMiddleware({ authProvider });
-      console.log('Graph client initialized successfully');
+      this.msalInstance = new PublicClientApplication(msalConfigToUse);
+      console.log('MSAL instance initialized successfully');
 
-      return true;
     } catch (error) {
-      console.error('Error in initialize:', error);
+      console.error('Failed to initialize MSAL:', error);
       throw error;
     }
   }
