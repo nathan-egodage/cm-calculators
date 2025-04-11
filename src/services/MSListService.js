@@ -11,6 +11,7 @@ class MSListService {
     this.msalInstance = null;
     this.graphClient = null;
     this.initialized = false;
+    this.initializationInProgress = false;
     
     // Set up base URLs from config
     this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
@@ -75,19 +76,28 @@ class MSListService {
   }
 
   async initialize() {
+    // If already initialized, return
     if (this.initialized) {
       return true;
     }
+
+    // Prevent multiple simultaneous initialization attempts
+    if (this.initializationInProgress) {
+      console.log('Initialization already in progress, waiting...');
+      return false;
+    }
+
+    this.initializationInProgress = true;
 
     try {
       console.log('Initializing MSAL...');
 
       // Ensure environment variables are loaded
       if (!window.__env__) {
-        throw new Error('Environment variables not loaded. Make sure env.js is loaded before the application.');
+        throw new Error('Environment variables not loaded');
       }
 
-      // Create and initialize MSAL instance if not already created
+      // Create MSAL instance if not exists
       if (!this.msalInstance) {
         const msalConfig = this.getMsalConfig();
         this.msalInstance = new PublicClientApplication(msalConfig);
@@ -95,20 +105,21 @@ class MSListService {
         console.log('MSAL instance initialized');
       }
 
-      // Handle redirect response if present
-      const response = await this.msalInstance.handleRedirectPromise();
-      console.log('Handling redirect response:', response);
-      
-      // Get active account or use response account
-      let account = this.msalInstance.getActiveAccount();
-      
-      if (response) {
-        console.log('Redirect response received:', response);
-        account = response.account;
-        this.msalInstance.setActiveAccount(account);
+      // Check if we're in a redirect callback
+      const currentUrl = window.location.href;
+      const isCallback = currentUrl.includes('code=') || currentUrl.includes('error=');
+
+      if (isCallback) {
+        console.log('Processing redirect callback...');
+        const response = await this.msalInstance.handleRedirectPromise();
+        if (response) {
+          console.log('Redirect response processed:', response);
+          this.msalInstance.setActiveAccount(response.account);
+        }
       }
-      
-      // If still no account, check all accounts
+
+      // Check for existing account
+      let account = this.msalInstance.getActiveAccount();
       if (!account) {
         const accounts = this.msalInstance.getAllAccounts();
         if (accounts.length > 0) {
@@ -117,47 +128,45 @@ class MSListService {
         }
       }
 
-      if (!account) {
-        console.log('No active account found, initiating login...');
+      // If no account and not already processing a callback, start login
+      if (!account && !isCallback) {
+        console.log('No account found, starting login...');
         const loginRequest = {
           scopes: MS_GRAPH_CONFIG.scopes,
           prompt: 'select_account'
         };
 
-        // Check if we're already handling a redirect
-        const currentUrl = window.location.href;
-        if (!currentUrl.includes('code=') && !currentUrl.includes('error=')) {
-          console.log('Starting redirect login flow...');
-          await this.msalInstance.loginRedirect(loginRequest);
-          return false; // Function will be called again after redirect
-        } else {
-          console.log('Already handling a redirect, waiting...');
-          return false;
-        }
+        await this.msalInstance.loginRedirect(loginRequest);
+        return false;
       }
 
-      console.log('Active account set:', account.username);
+      // If we have an account, set up Graph client
+      if (account) {
+        console.log('Setting up Graph client with account:', account.username);
+        const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+          this.msalInstance,
+          {
+            account: account,
+            scopes: MS_GRAPH_CONFIG.scopes,
+            interactionType: InteractionType.Redirect
+          }
+        );
 
-      // Initialize Graph client
-      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
-        this.msalInstance,
-        {
-          account: account,
-          scopes: MS_GRAPH_CONFIG.scopes,
-          interactionType: InteractionType.Redirect
-        }
-      );
+        this.graphClient = Client.initWithMiddleware({
+          authProvider: authProvider
+        });
 
-      this.graphClient = Client.initWithMiddleware({
-        authProvider: authProvider
-      });
+        this.initialized = true;
+        return true;
+      }
 
-      this.initialized = true;
-      return true;
+      return false;
     } catch (error) {
       console.error('Failed to initialize MSListService:', error);
       this.initialized = false;
       throw error;
+    } finally {
+      this.initializationInProgress = false;
     }
   }
 
@@ -542,40 +551,44 @@ class MSListService {
 
   async refreshTokenIfNeeded() {
     try {
-      // Check if we're already handling a redirect
+      // Don't refresh if we're in a callback
       const currentUrl = window.location.href;
       if (currentUrl.includes('code=') || currentUrl.includes('error=')) {
-        console.log('Already handling a redirect, skipping token refresh');
         return;
       }
 
-      const account = this.msalInstance.getActiveAccount();
+      // Ensure we have an account
+      let account = this.msalInstance?.getActiveAccount();
       if (!account) {
-        const accounts = this.msalInstance.getAllAccounts();
+        const accounts = this.msalInstance?.getAllAccounts() || [];
         if (accounts.length > 0) {
-          this.msalInstance.setActiveAccount(accounts[0]);
+          account = accounts[0];
+          this.msalInstance.setActiveAccount(account);
         } else {
           await this.initialize();
           return;
         }
       }
 
-      const request = {
-        scopes: MS_GRAPH_CONFIG.scopes,
-        account: this.msalInstance.getActiveAccount()
-      };
+      if (account) {
+        const request = {
+          scopes: MS_GRAPH_CONFIG.scopes,
+          account: account
+        };
 
-      try {
-        await this.msalInstance.acquireTokenSilent(request);
-      } catch (error) {
-        console.log('Silent token acquisition failed:', error);
-        if (!currentUrl.includes('code=') && !currentUrl.includes('error=')) {
-          await this.msalInstance.acquireTokenRedirect(request);
+        try {
+          await this.msalInstance.acquireTokenSilent(request);
+        } catch (error) {
+          console.log('Silent token acquisition failed, redirecting:', error);
+          if (!currentUrl.includes('code=') && !currentUrl.includes('error=')) {
+            await this.msalInstance.acquireTokenRedirect(request);
+          }
         }
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
-      throw error;
+      // Don't throw the error, just log it
+      return;
     }
   }
 }
