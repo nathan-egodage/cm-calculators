@@ -5,9 +5,17 @@
 const getEnvVar = (name) => {
   const value = process.env[name];
   if (!value) {
-    console.warn(`Environment variable ${name} is not set`);
+    console.warn(`Environment variable ${name} is not set. Current value: ${value}`);
+    // Log all environment variables for debugging (excluding secrets)
+    const safeEnvVars = Object.keys(process.env)
+      .filter(key => key.startsWith('REACT_APP_') && !key.includes('SECRET'))
+      .reduce((obj, key) => {
+        obj[key] = process.env[key];
+        return obj;
+      }, {});
+    console.log('Available environment variables:', safeEnvVars);
   }
-  return value;
+  return value || '';
 };
 
 export const MS_GRAPH_CONFIG = {
@@ -74,5 +82,13 @@ const validateConfig = () => {
   return true;
 };
 
-// Run validation on import
-validateConfig();
+// Run validation on import and log the results
+const isValid = validateConfig();
+if (!isValid) {
+  console.log('Current MS_GRAPH_CONFIG state:', {
+    ...MS_GRAPH_CONFIG,
+    clientSecret: '[HIDDEN]' // Don't log sensitive data
+  });
+}
+
+export default MS_GRAPH_CONFIG;
