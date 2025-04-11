@@ -146,7 +146,7 @@ const Home = () => {
   const newHireRequestTools = [
     {
       id: "new-hire-request",
-      title: "New Hire Request",
+      title: "New Hire Request (WIP)",
       description: "Create a new hire request",
       path: "/new-hire-request",
       category: ["hr", "tools"],
@@ -155,7 +155,7 @@ const Home = () => {
     },
     {
       id: "new-hire-requests-list",
-      title: "New Hire Requests List",
+      title: "New Hire Requests List (WIP)",
       description: "View all hire requests",
       path: "/new-hire-requests-list",
       category: ["hr", "tools"],
@@ -164,7 +164,7 @@ const Home = () => {
     },
     {
       id: "pending-approvals",
-      title: "Pending Approvals",
+      title: "Pending Approvals (WIP)",
       description: "View and manage pending hire request approvals",
       path: "/pending-approvals",
       category: ["hr", "tools"],
