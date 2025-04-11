@@ -3,17 +3,30 @@
 
 // Helper function to validate environment variables
 const getEnvVar = (name) => {
-  const value = process.env[name];
+  // Try window.__env__ first (Azure Static Web Apps injects env vars here)
+  const azureValue = window.__env__ && window.__env__[name];
+  // Fallback to process.env for local development
+  const value = azureValue || process.env[name];
+  
   if (!value) {
     console.warn(`Environment variable ${name} is not set. Current value: ${value}`);
-    // Log all environment variables for debugging (excluding secrets)
-    const safeEnvVars = Object.keys(process.env)
+    // Log all available environment variables for debugging (excluding secrets)
+    if (window.__env__) {
+      const safeEnvVars = Object.keys(window.__env__)
+        .filter(key => !key.includes('SECRET'))
+        .reduce((obj, key) => {
+          obj[key] = window.__env__[key];
+          return obj;
+        }, {});
+      console.log('Available Azure environment variables:', safeEnvVars);
+    }
+    const safeProcessEnvVars = Object.keys(process.env)
       .filter(key => key.startsWith('REACT_APP_') && !key.includes('SECRET'))
       .reduce((obj, key) => {
         obj[key] = process.env[key];
         return obj;
       }, {});
-    console.log('Available environment variables:', safeEnvVars);
+    console.log('Available process.env variables:', safeProcessEnvVars);
   }
   return value || '';
 };
@@ -72,7 +85,10 @@ const validateConfig = () => {
     'REACT_APP_LIST_ID'
   ];
 
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  const missingVars = requiredVars.filter(varName => {
+    const value = window.__env__?.[varName] || process.env[varName];
+    return !value;
+  });
 
   if (missingVars.length > 0) {
     console.error('Missing required environment variables:', missingVars);
