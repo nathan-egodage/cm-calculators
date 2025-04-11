@@ -1,7 +1,7 @@
 // src/services/MSListService.js
 import axios from 'axios';
 import MS_GRAPH_CONFIG from '../config/msGraphConfig';
-import { PublicClientApplication } from '@azure/msal-browser';
+import { PublicClientApplication, BrowserCacheLocation } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { AUTHORIZED_USERS } from '../config/appConfig';
@@ -33,14 +33,20 @@ class MSListService {
         auth: {
           clientId: MS_GRAPH_CONFIG.clientId,
           authority: MS_GRAPH_CONFIG.authority,
-          redirectUri: MS_GRAPH_CONFIG.redirectUri,
-          navigateToLoginRequestUrl: true
+          redirectUri: window.location.origin,
+          navigateToLoginRequestUrl: false,
+          postLogoutRedirectUri: window.location.origin
         },
         cache: {
-          cacheLocation: 'sessionStorage',
-          storeAuthStateInCookie: false
+          cacheLocation: BrowserCacheLocation.SessionStorage,
+          storeAuthStateInCookie: true,
+          secureCookies: true
         },
         system: {
+          allowRedirectInIframe: true,
+          windowHashTimeout: 60000,
+          iframeHashTimeout: 6000,
+          loadFrameTimeout: 0,
           loggerOptions: {
             loggerCallback: (level, message, containsPii) => {
               if (containsPii) {
@@ -59,6 +65,8 @@ class MSListService {
                 case LogLevel.Warning:
                   console.warn('MSAL:', message);
                   break;
+                default:
+                  console.log('MSAL:', message);
               }
             },
             piiLoggingEnabled: false,
@@ -79,10 +87,13 @@ class MSListService {
 
       if (!account) {
         console.log('No active account found, initiating login...');
-        const loginResponse = await this.msalInstance.loginPopup({
+        const loginRequest = {
           scopes: MS_GRAPH_CONFIG.scopes,
-          prompt: 'select_account'
-        });
+          prompt: 'select_account',
+          redirectStartPage: window.location.href
+        };
+        
+        const loginResponse = await this.msalInstance.loginPopup(loginRequest);
         account = loginResponse.account;
       }
 
