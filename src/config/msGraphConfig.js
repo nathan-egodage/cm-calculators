@@ -3,65 +3,72 @@
 
 // Helper function to validate environment variables
 const getEnvVar = (name) => {
-  const value = process.env[name] || window.__env__?.[name];
+  // Try to get from window.__env__ first (production)
+  let value = window.__env__?.[name];
+  
+  // If not found in window.__env__, try process.env (development)
+  if (!value) {
+    value = process.env[name];
+  }
+  
   if (!value) {
     console.warn(`Environment variable ${name} is not set`);
+    console.log('Current environment:', {
+      windowEnv: window.__env__ ? Object.keys(window.__env__) : 'not available',
+      processEnv: Object.keys(process.env).filter(key => key.startsWith('REACT_APP_'))
+    });
   }
+  
   return value || '';
 };
 
-// Construct the authority URL
-const constructAuthorityUrl = () => {
-  const tenantId = getEnvVar('REACT_APP_TENANT_ID');
-  if (!tenantId) {
-    console.error('Failed to construct authority URL: REACT_APP_TENANT_ID is missing or empty');
-    console.log('Current environment:', {
-      hostname: window.location.hostname,
-      isProduction: window.location.hostname === 'internal-cm-cal.cloudmarc.au',
-      isDevelopment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
-      hasWindowEnv: !!window.__env__,
-      windowEnvKeys: Object.keys(window.__env__ || {})
-    });
-    return '';
+// Initialize configuration object
+const initializeConfig = () => {
+  const config = {
+    // Microsoft Graph API base URL
+    baseUrl: 'https://graph.microsoft.com/v1.0',
+    
+    // Azure AD App Registration details
+    clientId: getEnvVar('REACT_APP_CLIENT_ID'),
+    tenantId: getEnvVar('REACT_APP_TENANT_ID'),
+    
+    // Required scopes for the application
+    scopes: [
+      'Mail.Send',
+      'Sites.ReadWrite.All',
+      'User.Read',
+      'openid',
+      'profile',
+      'offline_access'
+    ],
+    
+    // SharePoint configuration
+    siteId: getEnvVar('REACT_APP_SITE_ID'),
+    newHireListId: getEnvVar('REACT_APP_LIST_ID'),
+    
+    // Approvers configuration
+    approvers: [
+      'nathan@cloudmarc.com.au',
+      'ddallariva@cloudmarc.com.au',
+      'rocket@cloudmarc.com.au'
+    ]
+  };
+
+  // Construct authority URL
+  if (config.tenantId) {
+    config.authority = `https://login.microsoftonline.com/${config.tenantId}`;
+  } else {
+    console.error('Failed to construct authority URL: tenant ID is missing');
   }
-  return `https://login.microsoftonline.com/${tenantId}`;
+
+  // Set redirect URI
+  config.redirectUri = window.location.origin;
+
+  return config;
 };
 
-export const MS_GRAPH_CONFIG = {
-  // Microsoft Graph API base URL
-  baseUrl: 'https://graph.microsoft.com/v1.0',
-  
-  // Azure AD App Registration details
-  clientId: getEnvVar('REACT_APP_CLIENT_ID'),
-  clientSecret: getEnvVar('REACT_APP_CLIENT_SECRET'),
-  tenantId: getEnvVar('REACT_APP_TENANT_ID'),
-  authority: constructAuthorityUrl(),
-  redirectUri: window.location.origin,
-  
-  // Required scopes for the application
-  scopes: [
-    'Mail.Send',
-    'Sites.ReadWrite.All',
-    'User.Read',
-    'openid',
-    'profile',
-    'offline_access'
-  ],
-  
-  // SharePoint configuration
-  siteId: getEnvVar('REACT_APP_SITE_ID'),
-  newHireListId: getEnvVar('REACT_APP_LIST_ID'),
-  
-  // Power Automate flow URL
-  approvalFlowUrl: getEnvVar('REACT_APP_APPROVAL_FLOW_URL') || '',
-  
-  // Approvers configuration - Consider moving this to a separate config file or database
-  approvers: [
-    'nathan@cloudmarc.com.au',
-    'ddallariva@cloudmarc.com.au',
-    'rocket@cloudmarc.com.au'
-  ]
-};
+// Create and validate configuration
+export const MS_GRAPH_CONFIG = initializeConfig();
 
 // Helper function to check if a user is an approver
 export const isApprover = (userEmail) => {
@@ -71,7 +78,7 @@ export const isApprover = (userEmail) => {
   );
 };
 
-// Validate required configuration
+// Validate configuration
 const validateConfig = () => {
   const requiredVars = [
     'REACT_APP_CLIENT_ID',
@@ -80,24 +87,21 @@ const validateConfig = () => {
     'REACT_APP_LIST_ID'
   ];
 
-  console.log('Environment variables available:', {
+  // Log current configuration state
+  console.log('Current MS Graph configuration state:', {
     clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[MISSING]',
     tenantId: MS_GRAPH_CONFIG.tenantId ? '[CONFIGURED]' : '[MISSING]',
+    authority: MS_GRAPH_CONFIG.authority ? '[CONFIGURED]' : '[MISSING]',
     siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[MISSING]',
-    listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[MISSING]'
+    listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[MISSING]',
+    redirectUri: MS_GRAPH_CONFIG.redirectUri
   });
 
-  const missingVars = requiredVars.filter(varName => !getEnvVar(varName));
+  // Check for missing variables
+  const missingVars = requiredVars.filter(name => !MS_GRAPH_CONFIG[name.replace('REACT_APP_', '').toLowerCase()]);
   
   if (missingVars.length > 0) {
     console.error('Missing required environment variables:', missingVars);
-    return false;
-  }
-
-  // Validate authority URL construction
-  const authority = constructAuthorityUrl();
-  if (!authority) {
-    console.error('Failed to construct authority URL');
     return false;
   }
 
@@ -108,6 +112,13 @@ const validateConfig = () => {
 const isValid = validateConfig();
 if (!isValid) {
   console.error('MS Graph configuration validation failed');
+  console.log('Environment state:', {
+    hostname: window.location.hostname,
+    isProduction: window.location.hostname === 'internal-cm-cal.cloudmarc.au',
+    isDevelopment: window.location.hostname === 'localhost',
+    hasWindowEnv: !!window.__env__,
+    windowEnvKeys: window.__env__ ? Object.keys(window.__env__) : []
+  });
 }
 
 export default MS_GRAPH_CONFIG;

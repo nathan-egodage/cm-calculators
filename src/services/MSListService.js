@@ -57,12 +57,14 @@ class MSListService {
     
     this.msalInstance = null;
     this.graphClient = null;
-    this.initialize();
   }
 
   async initialize() {
     try {
       console.log('Initializing MSAL...');
+      
+      // Wait for environment variables to be loaded
+      await this.waitForEnvironmentVariables();
       
       // Validate required configuration
       if (!MS_GRAPH_CONFIG.clientId) {
@@ -71,12 +73,22 @@ class MSListService {
       if (!MS_GRAPH_CONFIG.tenantId) {
         throw new Error('Tenant ID is not configured');
       }
+
+      // Log the current environment state
+      console.log('Current environment state:', {
+        hostname: window.location.hostname,
+        isProduction: window.location.hostname === 'internal-cm-cal.cloudmarc.au',
+        isDevelopment: window.location.hostname === 'localhost',
+        hasWindowEnv: !!window.__env__,
+        windowEnvKeys: window.__env__ ? Object.keys(window.__env__) : []
+      });
       
       // Log configuration (excluding sensitive data)
-      console.log('Initializing MS Graph with config:', {
+      console.log('MS Graph configuration:', {
         baseUrl: MS_GRAPH_CONFIG.baseUrl,
-        clientId: '[CONFIGURED]',
-        authority: '[CONFIGURED]',
+        clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+        tenantId: MS_GRAPH_CONFIG.tenantId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
+        authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
         redirectUri: window.location.origin,
         siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
         listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[NOT CONFIGURED]'
@@ -84,29 +96,85 @@ class MSListService {
 
       // Create MSAL instance with validated config
       const msalConfigToUse = {
-        ...msalConfig,
         auth: {
-          ...msalConfig.auth,
           clientId: MS_GRAPH_CONFIG.clientId,
-          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`
+          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
+          redirectUri: window.location.origin,
+          postLogoutRedirectUri: window.location.origin,
+          navigateToLoginRequestUrl: true
+        },
+        cache: {
+          cacheLocation: 'sessionStorage',
+          storeAuthStateInCookie: false
+        },
+        system: {
+          loggerOptions: {
+            loggerCallback: (level, message, containsPii) => {
+              if (containsPii) {
+                return;
+              }
+              switch (level) {
+                case LogLevel.Error:
+                  console.error('MSAL:', message);
+                  break;
+                case LogLevel.Info:
+                  console.info('MSAL:', message);
+                  break;
+                case LogLevel.Verbose:
+                  console.debug('MSAL:', message);
+                  break;
+                case LogLevel.Warning:
+                  console.warn('MSAL:', message);
+                  break;
+                default:
+                  console.log('MSAL:', message);
+              }
+            },
+            logLevel: LogLevel.Verbose
+          }
         }
       };
 
+      // Log MSAL configuration (excluding sensitive data)
       console.log('Creating MSAL instance with config:', {
-        ...msalConfigToUse,
         auth: {
           ...msalConfigToUse.auth,
           clientId: '[HIDDEN]'
-        }
+        },
+        cache: msalConfigToUse.cache,
+        system: msalConfigToUse.system
       });
 
-      this.msalInstance = new PublicClientApplication(msalConfigToUse);
-      console.log('MSAL instance initialized successfully');
+      if (!this.msalInstance) {
+        this.msalInstance = new PublicClientApplication(msalConfigToUse);
+        console.log('MSAL instance initialized successfully');
+      }
 
+      return true;
     } catch (error) {
       console.error('Failed to initialize MSAL:', error);
       throw error;
     }
+  }
+
+  // Helper method to wait for environment variables
+  async waitForEnvironmentVariables() {
+    const maxAttempts = 10;
+    const delayMs = 500;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      if (window.__env__ || process.env.REACT_APP_TENANT_ID) {
+        console.log('Environment variables loaded successfully');
+        return true;
+      }
+      
+      console.log(`Waiting for environment variables... Attempt ${attempts + 1}/${maxAttempts}`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      attempts++;
+    }
+
+    throw new Error('Failed to load environment variables after multiple attempts');
   }
 
   async getAccessToken() {
