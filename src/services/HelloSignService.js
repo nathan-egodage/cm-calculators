@@ -20,7 +20,7 @@ class HelloSignService {
         },
         params: {
           page: 1,
-          page_size: 30,
+          page_size: 15,
           order_by: 'created_at',
           order_direction: 'desc'
         }
@@ -37,6 +37,13 @@ class HelloSignService {
           responseData: response.data.signature_requests[0].response_data
         } : null
       });
+      
+      // Ensure we only return the last 15 records
+      if (response.data && response.data.signature_requests) {
+        response.data.signature_requests = response.data.signature_requests
+          .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+          .slice(0, 15);
+      }
       
       return response.data;
     } catch (error) {

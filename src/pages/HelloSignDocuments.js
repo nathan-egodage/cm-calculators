@@ -95,7 +95,15 @@ const HelloSignDocuments = () => {
       const title = request.title.toLowerCase();
       const excludedTitle = title.includes('bank/emergency/pay schedule') || 
                           title.includes('management') ||
-                          title.includes('dilan');
+                          title.includes('dilan') ||
+                          title.includes('david') ||
+                          title.includes('ashley') ||
+                          title.includes('darren') ||
+                          title.includes('rocket') ||
+                          title.includes('nathan') ||
+                          title.includes('simon') ||
+                          title.includes('james') ||
+                          title.includes('greig');
 
       // Check for permanent employee salary limit
       const isPermanentEmployee = title.includes('permanent employee');

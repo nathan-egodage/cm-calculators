@@ -65,51 +65,6 @@ const Home = () => {
       category: ["australia", "tools"],
       theme: "india-theme",
       icon: "📅"
-    },
-    {
-      id: "generic-contractor-gp",
-      title: "Offshore Contractor (Generic)",
-      description: "Calculate Gross Profit for Offshore Contractors (LK,VN,IN & NZ)",
-      path: "/generic-contractor-gp",
-      category: ["offshore"],
-      theme: "all-cals-theme",
-      icon: "🌏"
-    },
-    {
-      id: "aus-fte-gp",
-      title: "AUS FTE GP Calculator",
-      description: "Calculate Gross Profit for Australian Full-Time Employees",
-      path: "/aus-fte-gp",
-      category: ["australia"],
-      theme: "aus-theme",
-      icon: "🇦🇺"
-    },
-    {
-      id: "aus-contractor-gp",
-      title: "AUS Contractor GP Calculator",
-      description: "Calculate Gross Profit for Australian Contractors",
-      path: "/aus-contractor-gp",
-      category: ["australia"],
-      theme: "aus-theme",
-      icon: "🇦🇺"
-    },
-    {
-      id: "php-contractor-gp",
-      title: "PHP Contractor GP Calculator",
-      description: "Calculate Gross Profit for Philippine Contractors",
-      path: "/php-contractor-gp",
-      category: ["philippines", "offshore"],
-      theme: "php-theme",
-      icon: "🇵🇭"
-    },
-    {
-      id: "php-fte-gp",
-      title: "PHP FTE GP Calculator",
-      description: "Calculate Gross Profit for Philippine Full-Time Employees",
-      path: "/php-fte-gp",
-      category: ["philippines", "offshore"],
-      theme: "php-theme",
-      icon: "🇵🇭"
     }
   ];
 
