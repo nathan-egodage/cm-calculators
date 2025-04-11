@@ -12,7 +12,7 @@ class MSListService {
     this.graphClient = null;
     this.initialized = false;
     this.initializationInProgress = false;
-    this.initializationRequired = false;
+    this.initializationRequired = true;
     
     // Set up base URLs from config
     this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
@@ -107,6 +107,76 @@ class MSListService {
     try {
       console.log('Initializing MSAL...');
 
+      // Special handling for localhost/development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('%c Development environment detected - using mock authentication', 'background: #222; color: #bada55');
+        
+        // Mock storage for development
+        if (!window._mockMSListStorage) {
+          window._mockMSListStorage = [];
+        }
+        
+        // Create a mock Graph client for development
+        this.graphClient = {
+          api: (endpoint) => {
+            console.log('%c Mock API called with endpoint:', 'color: #6495ED', endpoint);
+            
+            return {
+              expand: () => this.graphClient.api(endpoint),
+              get: async () => {
+                console.log('%c Mock GET request to:', 'color: #6495ED', endpoint);
+                if (endpoint.includes('/items')) {
+                  return {
+                    value: window._mockMSListStorage.map(item => ({
+                      id: item.id,
+                      fields: item
+                    }))
+                  };
+                }
+                return { value: [] };
+              },
+              post: async (data) => {
+                console.log('%c Mock POST request to:', 'color: #6495ED', endpoint);
+                console.log('%c With data:', 'color: #6495ED', data);
+                
+                const newItem = {
+                  id: Date.now().toString(),
+                  ...data.fields
+                };
+                
+                window._mockMSListStorage.push(newItem);
+                console.log('%c Mock storage updated:', 'color: #6495ED', window._mockMSListStorage);
+                
+                return newItem;
+              },
+              update: async (data) => {
+                console.log('%c Mock UPDATE request to:', 'color: #6495ED', endpoint);
+                console.log('%c With data:', 'color: #6495ED', data);
+                
+                const itemId = endpoint.split('/').pop();
+                const itemIndex = window._mockMSListStorage.findIndex(item => item.id === itemId);
+                
+                if (itemIndex !== -1) {
+                  window._mockMSListStorage[itemIndex] = {
+                    ...window._mockMSListStorage[itemIndex],
+                    ...data.fields
+                  };
+                }
+                
+                return window._mockMSListStorage[itemIndex];
+              },
+              header: () => this.graphClient.api(endpoint)
+            };
+          }
+        };
+
+        // Set initialized state
+        this.initialized = true;
+        console.log('%c Mock Graph client initialized for development', 'background: #222; color: #bada55');
+        return true;
+      }
+
+      // Rest of the original initialization code for production...
       // Ensure environment variables are loaded
       if (!window.__env__) {
         throw new Error('Environment variables not loaded');
@@ -115,6 +185,15 @@ class MSListService {
       // Create MSAL instance if not exists
       if (!this.msalInstance) {
         const msalConfig = this.getMsalConfig();
+        console.log('MSAL Config:', {
+          ...msalConfig,
+          auth: {
+            ...msalConfig.auth,
+            clientId: '***hidden***',
+            authority: msalConfig.auth.authority
+          }
+        });
+        
         this.msalInstance = new PublicClientApplication(msalConfig);
         await this.msalInstance.initialize();
         console.log('MSAL instance initialized');
@@ -172,6 +251,7 @@ class MSListService {
         });
 
         this.initialized = true;
+        console.log('Graph client initialized successfully');
         return true;
       }
 
@@ -265,6 +345,15 @@ class MSListService {
   async sendEmail(to, subject, body) {
     await this.ensureInitialized();
     try {
+      // Special handling for development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('%c Mock: Sending email', 'background: #222; color: #bada55');
+        console.log('%c To:', 'color: #6495ED', to);
+        console.log('%c Subject:', 'color: #6495ED', subject);
+        console.log('%c Body:', 'color: #6495ED', body);
+        return true;
+      }
+
       await this.refreshTokenIfNeeded();
 
       const message = {

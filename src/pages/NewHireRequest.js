@@ -484,33 +484,74 @@ const NewHireRequest = () => {
       setError(null);
       setTestSuccess(false);
       
-      // Test data
+      console.log('%c Starting MS List connection test...', 'background: #222; color: #bada55');
+      
+      // Ensure authentication is enabled
+      await MSListService.enableAuthentication();
+      
+      // Test data with all required fields mapped to MS List fields
       const testData = {
-        Title: 'test@test.com'
+        field_1: 'Test', // FirstName
+        field_2: 'User', // LastName
+        field_3: user?.userDetails || 'test@test.com', // PersonalEmail
+        field_4: '+61412345678', // Mobile
+        field_5: '123 Test Street, Test City', // Address
+        field_6: 'Test Position', // Position
+        field_7: 'Test Client', // ClientName
+        field_8: 'Pending', // Status
+        field_9: new Date().toISOString().split('T')[0], // SignByDate
+        field_10: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // StartDate
+        field_11: '$800/day', // PackageOrRate
+        field_12: '30', // GrossProfitMargin
+        field_13: '6 months', // ContractEndDate
+        field_14: 'No', // IsLaptopRequired
+        field_15: 'Australia - Sydney', // Office
+        field_16: 'No', // Rehire
+        field_17: 'Test connection request', // Notes
+        field_21: 'Test Engagement', // EngagementName
+        field_22: 'Test Task', // TaskName
+        field_23: '$1000/day', // BillingRate
+        field_27: 'L3', // ResourceLevelCode
+        field_30: user?.userDetails || 'test@test.com', // CreateBy
+        field_33: 'AU PAYG Contractor', // EmployeeType
+        Title: user?.userDetails || 'test@test.com', // AccountManager
+        CreateDate: new Date().toISOString()
       };
       
-      // Test the connection
-      const response = await MSListService.createNewHireRequest(testData);
-      console.log('Test connection response:', response);
+      console.log('%c Creating test item with data:', 'color: #6495ED', testData);
       
-      // Test email functionality
+      // Create test item in MS List
+      const response = await MSListService.createNewHireRequest(testData);
+      console.log('%c Test item created successfully:', 'background: #222; color: #bada55', response);
+      
+      // Send test email notification
       if (user?.userDetails) {
-        const testEmailSubject = 'Test Email - MS List Connection';
+        const testEmailSubject = 'Test Email - MS List Connection Successful';
         const testEmailContent = `
-          <h2>Test Email - MS List Connection</h2>
-          <p>This is a test email to verify that the email notification system is working correctly.</p>
-          <p>If you received this email, it means:</p>
+          <h2>MS List Connection Test Successful</h2>
+          <p>This email confirms that the connection to Microsoft Lists is working correctly.</p>
+          <h3>Test Item Created:</h3>
           <ul>
-            <li>The MS List connection is working</li>
-            <li>The email notification system is functioning</li>
-            <li>You have the necessary permissions to send emails</li>
+            <li><strong>Account Manager:</strong> ${testData.Title}</li>
+            <li><strong>Candidate Name:</strong> ${testData.field_1} ${testData.field_2}</li>
+            <li><strong>Position:</strong> ${testData.field_6}</li>
+            <li><strong>Client:</strong> ${testData.field_7}</li>
+            <li><strong>Status:</strong> ${testData.field_8}</li>
+            <li><strong>Package/Rate:</strong> ${testData.field_11}</li>
+            <li><strong>Billing Rate:</strong> ${testData.field_23}</li>
           </ul>
-          <p>This is an automated test message. No action is required.</p>
+          <p>The test item has been created in the MS List and this email notification confirms that both systems are functioning correctly.</p>
+          <p><em>This is a test message. You can safely delete the test item from MS Lists.</em></p>
         `;
         
-        await MSListService.sendEmail([user.userDetails], testEmailSubject, testEmailContent);
-        console.log('Test email sent successfully');
+        console.log('%c Sending test email to:', 'color: #6495ED', user.userDetails);
+        const emailResult = await MSListService.sendEmail([user.userDetails], testEmailSubject, testEmailContent);
+        console.log('%c Email sending result:', 'background: #222; color: #bada55', emailResult);
       }
+      
+      // Verify the item was created by fetching it
+      const allItems = await MSListService.getNewHireRequests();
+      console.log('%c Current items in list:', 'color: #6495ED', allItems);
       
       setTestSuccess(true);
       setTimeout(() => {

@@ -90,6 +90,7 @@ const HelloSignDocuments = () => {
                           title.includes('rocket') ||
                           title.includes('nathan') ||
                           title.includes('simon') ||
+                          title.includes('james') ||
                           title.includes('greig');
 
       // Check for permanent employee salary limit

@@ -50,27 +50,6 @@ const Home = () => {
 
   // Base calculator data with added category and icon properties
   const baseCalculators = [
-    // Document Management
-    {
-      id: "hello-sign-documents",
-      title: "HelloSign Document Status",
-      description: "View and manage HelloSign document statuses",
-      path: "/hello-sign-documents",
-      category: ["tools", "documents"],
-      theme: "cloudmarc-theme",
-      icon: "📝"
-    },
-        // Utility Tools
-    {
-          id: "aus-working-days-cal",
-          title: "Australian Working Days Calculator",
-          description: "Calculate Australian Working Days",
-          path: "/aus-working-days-cal",
-          category: ["australia", "tools"],
-          theme: "india-theme",
-          icon: "📅"
-    },
-    // GP Calculators - Combined View
     {
       id: "all-cals",
       title: "All GP Calculators",
@@ -80,55 +59,24 @@ const Home = () => {
       theme: "all-cals-theme",
       icon: "📊"
     },
-    // GP Calculators - Australia
     {
-      id: "aus-fte-gp",
-      title: "AUS FTE GP Calculator",
-      description: "Calculate Gross Profit for Australian Full-Time Employees",
-      path: "/aus-fte-gp",
-      category: ["australia"],
-      theme: "aus-theme",
-      icon: "🇦🇺"
+      id: "hello-sign-documents",
+      title: "HelloSign Document Status",
+      description: "View and manage HelloSign document statuses",
+      path: "/hello-sign-documents",
+      category: ["tools", "documents"],
+      theme: "cloudmarc-theme",
+      icon: "📝"
     },
     {
-      id: "aus-contractor-gp",
-      title: "AUS Contractor GP Calculator",
-      description: "Calculate Gross Profit for Australian Contractors",
-      path: "/aus-contractor-gp",
-      category: ["australia"],
-      theme: "aus-theme",
-      icon: "🇦🇺"
-    },
-    // GP Calculators - Philippines
-    {
-      id: "php-fte-gp",
-      title: "PHP FTE GP Calculator",
-      description: "Calculate Gross Profit for Philippine Full-Time Employees",
-      path: "/php-fte-gp",
-      category: ["philippines", "offshore"],
-      theme: "php-theme",
-      icon: "🇵🇭"
-    },
-    {
-      id: "php-contractor-gp",
-      title: "PHP Contractor GP Calculator",
-      description: "Calculate Gross Profit for Philippine Contractors",
-      path: "/php-contractor-gp",
-      category: ["philippines", "offshore"],
-      theme: "php-theme",
-      icon: "🇵🇭"
-    },
-    // GP Calculators - Offshore
-    {
-      id: "generic-contractor-gp",
-      title: "Offshore Contractor (Generic)",
-      description: "Calculate Gross Profit for Offshore Contractors (LK,VN,IN & NZ)",
-      path: "/generic-contractor-gp",
-      category: ["offshore"],
-      theme: "all-cals-theme",
-      icon: "🌏"
-    },
-
+      id: "aus-working-days-cal",
+      title: "Australian Working Days Calculator",
+      description: "Calculate Australian Working Days",
+      path: "/aus-working-days-cal",
+      category: ["australia", "tools"],
+      theme: "india-theme",
+      icon: "📅"
+    }
   ];
 
   // BDM calculator to conditionally add
