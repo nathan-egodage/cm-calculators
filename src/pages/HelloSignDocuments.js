@@ -5,8 +5,6 @@ import useAuth from '../hooks/useAuth';
 import HelloSignService from '../services/HelloSignService';
 import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
-const AUTH_HEADER = `Basic ${process.env.HELLOSIGN_API_KEY}`;
-
 const HelloSignDocuments = () => {
   // Get the authenticated user
   const { user, loaded } = useAuth();
@@ -14,7 +12,6 @@ const HelloSignDocuments = () => {
   // State for signature requests
   const [signatureRequests, setSignatureRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
-  const [rawApiResponse, setRawApiResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -40,14 +37,11 @@ const HelloSignDocuments = () => {
         setLoading(true);
         setError(null);
         
-        // Use the real HelloSign API
         const response = await HelloSignService.getSignatureRequests();
-        console.log('Raw API Response in HelloSignDocuments:', {
-          response,
-          signatureRequests: response?.signature_requests,
+        console.log('API Response:', {
           totalRequests: response?.signature_requests?.length
         });
-        setRawApiResponse(response);
+        
         const processedData = HelloSignService.processSignatureData(response);
         
         // Filter out Bank/Emergency/Pay Schedule documents
@@ -59,20 +53,14 @@ const HelloSignDocuments = () => {
         setFilteredRequests(filteredData);
       } catch (err) {
         console.error('Failed to fetch signature requests:', err);
-        setError('Failed to load signature requests. Please try again later.');
+        setError(err.message || 'Failed to load signature requests. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    // Call the function
     fetchData();
-    
-    // Cleanup function
-    return () => {
-      // Any cleanup needed when component unmounts
-    };
-  }, [loaded, user]); // Only run on initial load and auth changes
+  }, [loaded, user]);
 
   // Apply filters when filter values change
   useEffect(() => {
@@ -91,11 +79,18 @@ const HelloSignDocuments = () => {
         ) ||
         (request.response_data?.find(field => field.name === "Full name3")?.value || '').toLowerCase().includes(searchTerm);
 
-      // Exclude documents with "Bank/Emergency/Pay Schedule" or "management" in title
+      // Exclude specific documents by title
       const title = request.title.toLowerCase();
       const excludedTitle = title.includes('bank/emergency/pay schedule') || 
                           title.includes('management') ||
-                          title.includes('dilan');
+                          title.includes('dilan') ||
+                          title.includes('david') ||
+                          title.includes('ashley') ||
+                          title.includes('darren') ||
+                          title.includes('rocket') ||
+                          title.includes('nathan') ||
+                          title.includes('simon') ||
+                          title.includes('greig');
 
       // Check for permanent employee salary limit
       const isPermanentEmployee = title.includes('permanent employee');

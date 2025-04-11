@@ -1,40 +1,31 @@
 // src/services/HelloSignService.js
 import axios from 'axios';
-import { HELLOSIGN_API_BASE_URL, getHelloSignAuthHeader } from '../config/apiConfig';
-
-// No initialization code that runs on import
-// All API calls are now explicitly called by components
 
 class HelloSignService {
   constructor() {
-    // Set base URL - always use the API endpoint
-    this.baseUrl = '/api';
-      
-    // Configure axios defaults with better timeout and retry logic
+    // Set base URL for HelloSign API
+    this.baseUrl = 'https://api.hellosign.com/v3';
+    
+    // Get API key from environment
+    this.apiKey = process.env.REACT_APP_HELLOSIGN_API_KEY;
+    if (!this.apiKey) {
+      console.error('HelloSign API key not found in environment variables');
+    }
+
+    // Configure axios defaults with proper auth header format
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
-      timeout: 60000, // Increase timeout to 60 seconds
+      timeout: 30000, // 30 second timeout
+      auth: {
+        username: this.apiKey,
+        password: ''
+      },
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Content-Type': 'application/json'
       }
     });
 
-    // Add request interceptor for logging
-    this.axiosInstance.interceptors.request.use(
-      config => {
-        console.log(`Making request to ${config.url}`);
-        return config;
-      },
-      error => {
-        console.error('Request failed:', error);
-        return Promise.reject(error);
-      }
-    );
-
-    // Add response interceptor for better error handling
+    // Add response interceptor for error handling
     this.axiosInstance.interceptors.response.use(
       response => {
         if (!response.data) {
@@ -43,43 +34,22 @@ class HelloSignService {
         return response;
       },
       error => {
-        // Log detailed error information
-        console.error('HelloSign API Error:', {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          config: {
-            url: error.config?.url,
-            method: error.config?.method,
-            headers: error.config?.headers
-          }
-        });
-        
-        // Create user-friendly error message
-        let errorMessage = 'Failed to connect to HelloSign service. ';
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          errorMessage += `Server returned ${error.response.status}: ${error.response.statusText}`;
-        } else if (error.request) {
-          // The request was made but no response was received
-          errorMessage += 'No response received from server. Please check your network connection.';
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          errorMessage += error.message;
-        }
-        
-        throw new Error(errorMessage);
+        console.error('HelloSign API Error:', error);
+        throw error;
       }
     );
   }
 
   async getSignatureRequests() {
-    console.log('Fetching HelloSign signature requests...');
     try {
-      const response = await this.axiosInstance.get('/hellosign/signature-requests');
-      console.log('HelloSign API Response received');
+      const response = await this.axiosInstance.get('/signature_request/list', {
+        params: {
+          page: 1,
+          page_size: 15,  // Limit to 15 results
+          order_by: 'created_at',  // Sort by creation date
+          order_direction: 'desc'  // Most recent first
+        }
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to fetch signature requests:', error);
@@ -94,7 +64,12 @@ class HelloSignService {
       return [];
     }
 
-    return response.signature_requests.map(request => {
+    // Take only the first 15 requests after sorting by created_at
+    const sortedRequests = response.signature_requests
+      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      .slice(0, 15);
+
+    return sortedRequests.map(request => {
       // Process signers
       const signers = request.signatures.map(signature => ({
         email: signature.signer_email_address,
@@ -118,7 +93,8 @@ class HelloSignService {
         signers,
         customFields,
         response_data: request.response_data,
-        raw_request: request // Keep raw request for additional processing if needed
+        raw_request: request,
+        created_at: request.created_at ? new Date(request.created_at * 1000).toLocaleDateString() : 'N/A'
       };
     });
   }
@@ -148,115 +124,3 @@ class HelloSignService {
 const helloSignService = new HelloSignService();
 
 export default helloSignService;
-
-/**
- * Fetches signature requests from HelloSign API
- * @param {Object} filters - Optional filters for the API request
- * @returns {Promise} - Promise with the API response
- */
-export const fetchSignatureRequests = async (filters = {}) => {
-  try {
-    // Build query parameters
-    const queryParams = new URLSearchParams();
-    
-    // Add filters if provided
-    if (filters.status) {
-      queryParams.append('query', filters.status);
-    }
-    
-    if (filters.fullName) {
-      queryParams.append('query', filters.fullName);
-    }
-    
-    // Add pagination parameters
-    queryParams.append('page', filters.page || 1);
-    queryParams.append('page_size', filters.pageSize || 20);
-    
-    // Build the URL with query parameters
-    const url = `${HELLOSIGN_API_BASE_URL}/signature_request/list?${queryParams.toString()}`;
-    
-    // Make the API request
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': getHelloSignAuthHeader(),
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    // Check if the request was successful
-    if (!response.ok) {
-      throw new Error(`HelloSign API error: ${response.status} ${response.statusText}`);
-    }
-    
-    // Parse and return the response
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching signature requests:', error);
-    throw error;
-  }
-};
-
-/**
- * Maps the status code to a human-readable status
- * @param {string} statusCode - The status code from HelloSign
- * @returns {string} - Human-readable status
- */
-export const mapStatusToReadable = (statusCode) => {
-  const statusMap = {
-    'awaiting_signature': 'Awaiting Signature',
-    'signed': 'Signed',
-    'declined': 'Declined',
-    'expired': 'Expired',
-    'viewed': 'Viewed',
-    'pending_approval': 'Pending Approval',
-    'approved': 'Approved',
-    'rejected': 'Rejected',
-  };
-  
-  return statusMap[statusCode] || statusCode;
-};
-
-/**
- * Formats a date to AEST timezone
- * @param {string} dateString - The date string to format
- * @returns {string} - Formatted date in AEST
- */
-export const formatDateToAEST = (dateString) => {
-  if (!dateString) return 'N/A';
-  
-  try {
-    const date = new Date(dateString);
-    
-    // Format to AEST (UTC+10)
-    const options = {
-      timeZone: 'Australia/Sydney',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    };
-    
-    return date.toLocaleString('en-AU', options);
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid Date';
-  }
-};
-
-/**
- * Extracts custom field value from signature request
- * @param {Object} signatureRequest - The signature request object
- * @param {string} fieldName - The name of the custom field
- * @returns {string} - The value of the custom field
- */
-export const getCustomFieldValue = (signatureRequest, fieldName) => {
-  if (!signatureRequest || !signatureRequest.custom_fields) {
-    return 'N/A';
-  }
-  
-  const field = signatureRequest.custom_fields.find(f => f.name === fieldName);
-  return field ? field.value : 'N/A';
-};
