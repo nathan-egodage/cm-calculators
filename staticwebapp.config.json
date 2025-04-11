@@ -40,20 +40,22 @@
       "allowedRoles": ["authenticated"]
     },
     {
-      "route": "/*",
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/*.js",
+      "route": "/static/js/*.js",
       "headers": {
+        "cache-control": "public, max-age=31536000, immutable",
         "Content-Type": "application/javascript; charset=utf-8"
       }
     },
     {
-      "route": "/*.css",
+      "route": "/static/css/*.css",
       "headers": {
+        "cache-control": "public, max-age=31536000, immutable",
         "Content-Type": "text/css"
       }
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"]
     }
   ],
   "navigationFallback": {
