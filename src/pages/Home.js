@@ -40,15 +40,6 @@ const Home = () => {
   // Base calculator data with added category and icon properties
   const baseCalculators = [
     {
-      id: "hello-sign-documents",
-      title: "HelloSign Document Status",
-      description: "View and manage HelloSign document statuses",
-      path: "/hello-sign-documents",
-      category: ["tools", "documents"],
-      theme: "cloudmarc-theme",
-      icon: "📝"
-    },
-    {
       id: "all-cals",
       title: "All GP Calculators",
       description: "Combined view with all GP calculators (AU,PH,LK,IN,VN,NZ)",
@@ -56,6 +47,15 @@ const Home = () => {
       category: ["combined", "australia", "philippines", "offshore"],
       theme: "all-cals-theme",
       icon: "📊"
+    },
+    {
+      id: "hello-sign-documents",
+      title: "HelloSign Document Status",
+      description: "View and manage HelloSign document statuses",
+      path: "/hello-sign-documents",
+      category: ["tools", "documents"],
+      theme: "cloudmarc-theme",
+      icon: "📝"
     },
     {
       id: "aus-working-days-cal",
