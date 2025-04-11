@@ -1,6 +1,6 @@
 // src/services/MSListService.js
 import axios from 'axios';
-import { getConfig } from '../config/msGraphConfig';
+import MS_GRAPH_CONFIG from '../config/msGraphConfig';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
@@ -12,7 +12,12 @@ class MSListService {
     this.msalInstance = null;
     this.graphClient = null;
     this.initialized = false;
-    this.config = null;
+    
+    // Set up base URLs from config
+    this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
+    this.siteId = MS_GRAPH_CONFIG.siteId;
+    this.listId = MS_GRAPH_CONFIG.newHireListId;
+    this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
   }
 
   async initialize() {
@@ -23,21 +28,12 @@ class MSListService {
     try {
       console.log('Initializing MSAL...');
       
-      // Get configuration
-      this.config = await getConfig();
-      
-      // Set up base URLs
-      this.graphApiUrl = this.config.baseUrl;
-      this.siteId = this.config.siteId;
-      this.listId = this.config.newHireListId;
-      this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
-
       // Create MSAL instance with validated config
       const msalConfig = {
         auth: {
-          clientId: this.config.clientId,
-          authority: this.config.authority,
-          redirectUri: this.config.redirectUri,
+          clientId: MS_GRAPH_CONFIG.clientId,
+          authority: MS_GRAPH_CONFIG.authority,
+          redirectUri: MS_GRAPH_CONFIG.redirectUri,
           navigateToLoginRequestUrl: true
         },
         cache: {
@@ -71,12 +67,6 @@ class MSListService {
         }
       };
 
-      console.log('Creating MSAL instance with config:', {
-        clientId: '[CONFIGURED]',
-        authority: this.config.authority,
-        redirectUri: this.config.redirectUri
-      });
-
       if (!this.msalInstance) {
         this.msalInstance = new PublicClientApplication(msalConfig);
         await this.msalInstance.initialize();
@@ -90,7 +80,7 @@ class MSListService {
       if (!account) {
         console.log('No active account found, initiating login...');
         const loginResponse = await this.msalInstance.loginPopup({
-          scopes: this.config.scopes,
+          scopes: MS_GRAPH_CONFIG.scopes,
           prompt: 'select_account'
         });
         account = loginResponse.account;
@@ -104,7 +94,7 @@ class MSListService {
         this.msalInstance,
         {
           account: account,
-          scopes: this.config.scopes,
+          scopes: MS_GRAPH_CONFIG.scopes,
           interactionType: 'popup'
         }
       );
@@ -195,7 +185,7 @@ class MSListService {
       }
 
       const response = await this.msalInstance.acquireTokenSilent({
-        scopes: this.config.scopes,
+        scopes: MS_GRAPH_CONFIG.scopes,
         account: account
       });
 
@@ -451,7 +441,7 @@ class MSListService {
       
       // For production, call the Power Automate flow or Azure Function
       const response = await axios.post(
-        this.config.approvalFlowUrl,
+        MS_GRAPH_CONFIG.approvalFlowUrl,
         { itemId }
       );
       
