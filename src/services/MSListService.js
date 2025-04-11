@@ -19,24 +19,35 @@ class MSListService {
 
   async initialize() {
     try {
+      // Log all configuration values (except secrets)
+      console.log('Initializing MS Graph with config:', {
+        baseUrl: MS_GRAPH_CONFIG.baseUrl,
+        clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[MISSING]',
+        authority: MS_GRAPH_CONFIG.authority ? '[CONFIGURED]' : '[MISSING]',
+        redirectUri: MS_GRAPH_CONFIG.redirectUri,
+        siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[MISSING]',
+        listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[MISSING]'
+      });
+
       // Check required configuration
-      if (!MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.authority) {
-        console.error('Missing configuration:', { 
-          clientId: MS_GRAPH_CONFIG.clientId, 
-          authority: MS_GRAPH_CONFIG.authority 
-        });
-        throw new Error('MS Graph configuration is missing required values');
+      const requiredConfigs = {
+        clientId: MS_GRAPH_CONFIG.clientId,
+        authority: MS_GRAPH_CONFIG.authority,
+        siteId: MS_GRAPH_CONFIG.siteId,
+        listId: MS_GRAPH_CONFIG.newHireListId
+      };
+
+      const missingConfigs = Object.entries(requiredConfigs)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
+
+      if (missingConfigs.length > 0) {
+        throw new Error(`MS Graph configuration is missing required values: ${missingConfigs.join(', ')}`);
       }
 
       // Initialize MSAL instance if not already initialized
       if (!this.msalInstance) {
-        console.log('Initializing MSAL instance with config:', {
-          clientId: MS_GRAPH_CONFIG.clientId,
-          authority: MS_GRAPH_CONFIG.authority,
-          redirectUri: MS_GRAPH_CONFIG.redirectUri
-        });
-
-        this.msalInstance = new PublicClientApplication({
+        const msalConfig = {
           auth: {
             clientId: MS_GRAPH_CONFIG.clientId,
             authority: MS_GRAPH_CONFIG.authority,
@@ -49,14 +60,23 @@ class MSListService {
           system: {
             loggerOptions: {
               loggerCallback: (level, message, containsPii) => {
-                if (!containsPii) console.log(message);
+                if (!containsPii) console.log('MSAL:', message);
               },
               piiLoggingEnabled: false,
               logLevel: 3 // Info
             }
           }
+        };
+
+        console.log('Creating MSAL instance with config:', {
+          ...msalConfig,
+          auth: {
+            ...msalConfig.auth,
+            clientId: '[HIDDEN]',
+          }
         });
 
+        this.msalInstance = new PublicClientApplication(msalConfig);
         await this.msalInstance.initialize();
         console.log('MSAL instance initialized successfully');
       }
