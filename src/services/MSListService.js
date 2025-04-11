@@ -18,18 +18,8 @@ class MSListService {
   }
 
   async initialize() {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-      console.log('Running in localhost mode - using mock data');
-      return Promise.resolve({
-        success: true,
-        message: 'Initialized with mock data for local development'
-      });
-    }
-
     try {
-      // Production initialization
+      // Check required configuration
       if (!MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.authority) {
         console.error('Missing configuration:', { 
           clientId: MS_GRAPH_CONFIG.clientId, 
@@ -38,36 +28,57 @@ class MSListService {
         throw new Error('MS Graph configuration is missing required values');
       }
 
-      this.msalInstance = new PublicClientApplication({
-        auth: {
+      // Initialize MSAL instance if not already initialized
+      if (!this.msalInstance) {
+        console.log('Initializing MSAL instance with config:', {
           clientId: MS_GRAPH_CONFIG.clientId,
           authority: MS_GRAPH_CONFIG.authority,
-          redirectUri: MS_GRAPH_CONFIG.redirectUri,
-        },
-        cache: {
-          cacheLocation: 'sessionStorage',
-          storeAuthStateInCookie: false,
-        },
-      });
+          redirectUri: MS_GRAPH_CONFIG.redirectUri
+        });
 
-      // Initialize MSAL
-      await this.msalInstance.initialize();
+        this.msalInstance = new PublicClientApplication({
+          auth: {
+            clientId: MS_GRAPH_CONFIG.clientId,
+            authority: MS_GRAPH_CONFIG.authority,
+            redirectUri: MS_GRAPH_CONFIG.redirectUri,
+          },
+          cache: {
+            cacheLocation: 'sessionStorage',
+            storeAuthStateInCookie: false,
+          },
+          system: {
+            loggerOptions: {
+              loggerCallback: (level, message, containsPii) => {
+                if (!containsPii) console.log(message);
+              },
+              piiLoggingEnabled: false,
+              logLevel: 3 // Info
+            }
+          }
+        });
 
-      // Get the active account
+        await this.msalInstance.initialize();
+        console.log('MSAL instance initialized successfully');
+      }
+
+      // Get active account or login
       const accounts = this.msalInstance.getAllAccounts();
-      if (accounts.length === 0) {
-        // If no account is signed in, prompt the user to sign in
+      let account = accounts[0];
+
+      if (!account) {
+        console.log('No active account found, initiating login...');
         const loginResponse = await this.msalInstance.loginPopup({
           scopes: MS_GRAPH_CONFIG.scopes
         });
-        if (loginResponse.account) {
-          this.msalInstance.setActiveAccount(loginResponse.account);
-        }
+        account = loginResponse.account;
+        this.msalInstance.setActiveAccount(account);
+        console.log('Login successful, account set:', account.username);
       } else {
-        // Use the first account
-        this.msalInstance.setActiveAccount(accounts[0]);
+        console.log('Using existing account:', account.username);
+        this.msalInstance.setActiveAccount(account);
       }
 
+      // Initialize Graph client
       const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
         this.msalInstance,
         {
@@ -78,9 +89,11 @@ class MSListService {
       );
 
       this.graphClient = Client.initWithMiddleware({ authProvider });
-      console.log('MSAL and Graph client initialized successfully');
+      console.log('Graph client initialized successfully');
+
+      return true;
     } catch (error) {
-      console.error('Error initializing MSAL:', error);
+      console.error('Error in initialize:', error);
       throw error;
     }
   }
@@ -326,38 +339,14 @@ class MSListService {
       throw error;
     }
   }
-  
+
   // Get all new hire requests
   async getNewHireRequests() {
     try {
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      
-      if (isLocalhost) {
-        // Return mock data for local development
-        return [
-          {
-            id: '1',
-            field_1: 'John',
-            field_2: 'Doe',
-            field_3: 'john@example.com',
-            field_4: '+61412345678',
-            field_6: 'Developer',
-            field_7: 'Client A',
-            field_8: 'Pending',
-            field_10: '2024-03-20',
-            field_11: '$800/day',
-            field_12: '40',
-            // Add other fields as needed
-          },
-          // Add more mock entries if needed
-        ];
-      }
-
-      // Production code
       await this.refreshTokenIfNeeded();
       
       const response = await this.graphClient
-        .api('/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/4ac9d268-cbfc-455a-8b9b-cf09547e8bd4/items?$expand=fields')
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items?$expand=fields`)
         .get();
       
       return response.value.map(item => item.fields);
@@ -373,7 +362,7 @@ class MSListService {
       await this.refreshTokenIfNeeded();
       
       const response = await this.graphClient
-        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items/${id}`)
         .expand('fields')
         .get();
       
@@ -395,7 +384,7 @@ class MSListService {
       };
       
       const response = await this.graphClient
-        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items/${id}`)
         .update(fieldsToUpdate);
       
       return response;
@@ -596,54 +585,6 @@ class MSListService {
   
   // Get pending approvals for a user
   async getPendingApprovalsForUser(userEmail) {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-      console.log('Returning mock pending approvals data for localhost');
-      return [
-        {
-          id: '1',
-          AccountManager: 'John Manager',
-          FirstName: 'Alice',
-          LastName: 'Smith',
-          PersonalEmail: 'alice.smith@example.com',
-          Mobile: '+61412345678',
-          Position: 'Senior Developer',
-          ClientName: 'Tech Corp',
-          PackageOrRate: '$800/day',
-          GrossProfitMargin: '35',
-          ContractEndDate: '2024-12-31',
-          IsLaptopRequired: 'Yes',
-          Notes: 'Urgent hire needed',
-          BillingRate: '$1000/day',
-          NewClientLegalName: 'Tech Corporation Pty Ltd',
-          ApprovalStatus: 'Pending',
-          CreateBy: 'john.doe@example.com',
-          EmployeeType: 'AU PAYG Contractor'
-        },
-        {
-          id: '2',
-          AccountManager: 'Jane Manager',
-          FirstName: 'Bob',
-          LastName: 'Johnson',
-          PersonalEmail: 'bob.johnson@example.com',
-          Mobile: '+61423456789',
-          Position: 'Business Analyst',
-          ClientName: 'Finance Co',
-          PackageOrRate: '$700/day',
-          GrossProfitMargin: '40',
-          ContractEndDate: '2024-11-30',
-          IsLaptopRequired: 'No',
-          Notes: 'Starting next month',
-          BillingRate: '$900/day',
-          NewClientLegalName: 'Finance Co Ltd',
-          ApprovalStatus: 'Pending',
-          CreateBy: 'jane.smith@example.com',
-          EmployeeType: 'AU FTE'
-        }
-      ];
-    }
-
     try {
       await this.refreshTokenIfNeeded();
       

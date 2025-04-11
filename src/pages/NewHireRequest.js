@@ -132,10 +132,11 @@ const NewHireRequest = () => {
       try {
         setClientLoading(true);
         const clientList = await ClientService.getClients();
-        setClients(clientList);
+        setClients(Array.isArray(clientList) ? clientList : []);
       } catch (err) {
         console.error('Failed to fetch clients:', err);
         setError('Failed to load client list. Please try again later.');
+        setClients([]);
       } finally {
         setClientLoading(false);
       }
@@ -966,11 +967,17 @@ const NewHireRequest = () => {
                 required
               >
                 <option value="">Select a client</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
+                {Array.isArray(clients) && clients.length > 0 ? (
+                  clients.map(client => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    {clientLoading ? 'Loading clients...' : 'No clients available'}
                   </option>
-                ))}
+                )}
               </select>
               {clientLoading && <span className="loading-indicator">Loading client data...</span>}
               {validationErrors.ClientSelect && <div className="error-text">{validationErrors.ClientSelect}</div>}

@@ -43,25 +43,29 @@ const NewHireRequestsList = () => {
     const checkAuth = async () => {
       try {
         if (isLocalhost) {
+          // For localhost, set default user and proceed with MSAL authentication
           setUserInfo({
             userDetails: 'nathan@cloudmarc.com.au',
             identityProvider: 'aad',
-            userId: 'local-test-user',
+            userId: 'test-user',
             userRoles: ['authenticated']
           });
+          return;
+        }
+
+        const response = await fetch('/.auth/me');
+        const authData = await response.json();
+        
+        if (authData.clientPrincipal) {
+          setUserInfo(authData.clientPrincipal);
         } else {
-          const response = await fetch('/.auth/me');
-          const authData = await response.json();
-          
-          if (authData.clientPrincipal) {
-            setUserInfo(authData.clientPrincipal);
-          } else {
-            window.location.href = '/.auth/login/aad';
-          }
+          window.location.href = '/.auth/login/aad';
         }
       } catch (err) {
         console.error('Auth check failed:', err);
-        setError('Authentication failed. Please try logging in again.');
+        if (!isLocalhost) {
+          setError('Authentication failed. Please try logging in again.');
+        }
       }
     };
 
@@ -76,6 +80,10 @@ const NewHireRequestsList = () => {
         setLoading(true);
         setError(null);
         
+        // Initialize MS List Service first
+        await msListService.initialize();
+        
+        // Then fetch the data
         const data = await msListService.getNewHireRequests();
         setRequests(data);
       } catch (err) {
@@ -91,9 +99,6 @@ const NewHireRequestsList = () => {
 
   const userHasAccess = () => {
     if (!userInfo) return false;
-    
-    if (isLocalhost) return true;
-    
     return AUTHORIZED_USERS.newHireRequestCreators.includes(userInfo.userDetails);
   };
 
