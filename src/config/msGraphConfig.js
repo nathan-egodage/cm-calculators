@@ -3,14 +3,18 @@
 
 // Helper function to validate environment variables
 const getEnvVar = (name) => {
-  // Try window.__env__ first (Azure Static Web Apps injects env vars here)
-  const azureValue = window.__env__ && window.__env__[name];
-  // Fallback to process.env for local development
-  const value = azureValue || process.env[name];
+  // Check if we're running in production
+  const isProduction = window.location.hostname === 'internal-cm-cal.cloudmarc.au';
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // Get value from window.__env__ (Production) or process.env (local)
+  const value = isProduction ? window.__env__?.[name] : process.env[name];
   
   if (!value) {
     console.warn(`Environment variable ${name} is not set. Current value: ${value}`);
-    // Log all available environment variables for debugging (excluding secrets)
+    console.log('Running in:', isProduction ? 'Production' : (isDevelopment ? 'Development' : 'Unknown'));
+    
+    // Log available environment variables
     if (window.__env__) {
       const safeEnvVars = Object.keys(window.__env__)
         .filter(key => !key.includes('SECRET'))
@@ -18,16 +22,20 @@ const getEnvVar = (name) => {
           obj[key] = window.__env__[key];
           return obj;
         }, {});
-      console.log('Available Azure environment variables:', safeEnvVars);
+      console.log('Available production environment variables:', safeEnvVars);
     }
-    const safeProcessEnvVars = Object.keys(process.env)
-      .filter(key => key.startsWith('REACT_APP_') && !key.includes('SECRET'))
-      .reduce((obj, key) => {
-        obj[key] = process.env[key];
-        return obj;
-      }, {});
-    console.log('Available process.env variables:', safeProcessEnvVars);
+    
+    if (isDevelopment) {
+      const safeProcessEnvVars = Object.keys(process.env)
+        .filter(key => key.startsWith('REACT_APP_') && !key.includes('SECRET'))
+        .reduce((obj, key) => {
+          obj[key] = process.env[key];
+          return obj;
+        }, {});
+      console.log('Available development environment variables:', safeProcessEnvVars);
+    }
   }
+  
   return value || '';
 };
 
@@ -85,13 +93,18 @@ const validateConfig = () => {
     'REACT_APP_LIST_ID'
   ];
 
+  const isProduction = window.location.hostname === 'internal-cm-cal.cloudmarc.au';
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   const missingVars = requiredVars.filter(varName => {
-    const value = window.__env__?.[varName] || process.env[varName];
+    const value = isProduction ? window.__env__?.[varName] : process.env[varName];
     return !value;
   });
 
   if (missingVars.length > 0) {
     console.error('Missing required environment variables:', missingVars);
+    console.log('Environment:', isProduction ? 'Production' : (isDevelopment ? 'Development' : 'Unknown'));
+    console.log('Hostname:', window.location.hostname);
     return false;
   }
 
