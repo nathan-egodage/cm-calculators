@@ -7,15 +7,32 @@ const getEnvVar = (name) => {
   const isProduction = window.location.hostname === 'internal-cm-cal.cloudmarc.au';
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
-  // Get value from window.__env__ (Production) or process.env (local)
-  const value = isProduction ? window.__env__?.[name] : process.env[name];
+  let value;
+  
+  // Try to get value from window.__env__ first (Production)
+  if (isProduction && window.__env__) {
+    value = window.__env__[name];
+    if (!value) {
+      console.warn(`Production: ${name} not found in window.__env__`);
+      console.log('Available window.__env__ keys:', Object.keys(window.__env__ || {}));
+    }
+  }
+  
+  // Fallback to process.env (Development)
+  if (!value && isDevelopment) {
+    value = process.env[name];
+    if (!value) {
+      console.warn(`Development: ${name} not found in process.env`);
+    }
+  }
   
   if (!value) {
     console.warn(`Environment variable ${name} is not set. Current value: ${value}`);
     console.log('Running in:', isProduction ? 'Production' : (isDevelopment ? 'Development' : 'Unknown'));
+    console.log('Hostname:', window.location.hostname);
     
-    // Log available environment variables
-    if (window.__env__) {
+    // Log all available environment variables (excluding secrets)
+    if (isProduction && window.__env__) {
       const safeEnvVars = Object.keys(window.__env__)
         .filter(key => !key.includes('SECRET'))
         .reduce((obj, key) => {
@@ -42,7 +59,17 @@ const getEnvVar = (name) => {
 // Construct the authority URL
 const constructAuthorityUrl = () => {
   const tenantId = getEnvVar('REACT_APP_TENANT_ID');
-  if (!tenantId) return '';
+  if (!tenantId) {
+    console.error('Failed to construct authority URL: REACT_APP_TENANT_ID is missing or empty');
+    console.log('Current environment:', {
+      hostname: window.location.hostname,
+      isProduction: window.location.hostname === 'internal-cm-cal.cloudmarc.au',
+      isDevelopment: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+      hasWindowEnv: !!window.__env__,
+      windowEnvKeys: Object.keys(window.__env__ || {})
+    });
+    return '';
+  }
   return `https://login.microsoftonline.com/${tenantId}`;
 };
 
@@ -102,8 +129,14 @@ const validateConfig = () => {
   const isProduction = window.location.hostname === 'internal-cm-cal.cloudmarc.au';
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
+  console.log('Validating configuration in:', isProduction ? 'Production' : (isDevelopment ? 'Development' : 'Unknown'));
+  console.log('window.__env__ available:', !!window.__env__);
+  
   const missingVars = requiredVars.filter(varName => {
-    const value = isProduction ? window.__env__?.[varName] : process.env[varName];
+    const value = getEnvVar(varName);
+    if (!value) {
+      console.warn(`Missing required variable: ${varName}`);
+    }
     return !value;
   });
 
@@ -132,6 +165,8 @@ if (!isValid) {
     clientSecret: '[HIDDEN]', // Don't log sensitive data
     authority: MS_GRAPH_CONFIG.authority || '[MISSING]'
   });
+} else {
+  console.log('Configuration validated successfully');
 }
 
 export default MS_GRAPH_CONFIG;
