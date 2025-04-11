@@ -4,12 +4,8 @@ node_modules/
 # Build output
 build/
 
-# Local environment variables
+# Environment files
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
 # System files
 .DS_Store
@@ -37,4 +33,4 @@ coverage/
 # Backup files
 backup/
 
-*.csv
+*.csv.env.development

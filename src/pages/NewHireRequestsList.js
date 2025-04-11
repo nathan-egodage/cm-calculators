@@ -8,78 +8,10 @@ const NewHireRequestsList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchRequests = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const data = await msListService.getNewHireRequests();
-        
-        if (isMounted) {
-          setRequests(data);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Failed to fetch new hire requests:', err);
-        
-        if (isMounted) {
-          setError(`Failed to fetch new hire requests: ${err.message}`);
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchRequests();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const userHasAccess = () => {
-    try {
-      if (!msListService.msalInstance) {
-        console.log('MSAL instance not initialized');
-        return false;
-      }
-      
-      const accounts = msListService.msalInstance.getAllAccounts();
-      const currentUserEmail = accounts.length > 0 ? accounts[0]?.username : null;
-      const isLocalhost = window.location.hostname === 'localhost';
-      
-      return isLocalhost || 
-        (currentUserEmail && AUTHORIZED_USERS.newHireRequestCreators.includes(currentUserEmail));
-    } catch (error) {
-      console.error('Error checking user access:', error);
-      return false;
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString || dateString === 'N/A') return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString('en-AU', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  const handleSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-  };
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   const sortedRequests = React.useMemo(() => {
     let sortableRequests = [...requests];
@@ -97,13 +29,108 @@ const NewHireRequestsList = () => {
     return sortableRequests;
   }, [requests, sortConfig]);
 
-  const filteredRequests = sortedRequests.filter(request => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return Object.values(request).some(value =>
-      value && value.toString().toLowerCase().includes(term)
+  const filteredRequests = React.useMemo(() => {
+    return sortedRequests.filter(request => {
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      return Object.values(request).some(value =>
+        value && value.toString().toLowerCase().includes(term)
+      );
+    });
+  }, [sortedRequests, searchTerm]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        if (isLocalhost) {
+          // For localhost, set default user and proceed with MSAL authentication
+          setUserInfo({
+            userDetails: 'nathan@cloudmarc.com.au',
+            identityProvider: 'aad',
+            userId: 'test-user',
+            userRoles: ['authenticated']
+          });
+          return;
+        }
+
+        const response = await fetch('/.auth/me');
+        const authData = await response.json();
+        
+        if (authData.clientPrincipal) {
+          setUserInfo(authData.clientPrincipal);
+        } else {
+          window.location.href = '/.auth/login/aad';
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        if (!isLocalhost) {
+          setError('Authentication failed. Please try logging in again.');
+        }
+      }
+    };
+
+    checkAuth();
+  }, [isLocalhost]);
+
+  useEffect(() => {
+    if (!userInfo) return;
+
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Initialize MS List Service first
+        await msListService.initialize();
+        
+        // Then fetch the data
+        const data = await msListService.getNewHireRequests();
+        setRequests(data);
+      } catch (err) {
+        console.error('Failed to fetch new hire requests:', err);
+        setError(`Failed to fetch new hire requests: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, [userInfo]);
+
+  const userHasAccess = () => {
+    if (!userInfo) return false;
+    return AUTHORIZED_USERS.newHireRequestCreators.includes(userInfo.userDetails);
+  };
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === 'N/A') return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  if (!userInfo) {
+    return (
+      <div className="auth-loading-container">
+        <div className="auth-loading-spinner"></div>
+        <p>Verifying your access permissions...</p>
+      </div>
     );
-  });
+  }
 
   if (!userHasAccess()) {
     return (
@@ -111,6 +138,12 @@ const NewHireRequestsList = () => {
         <div className="error-message">
           <h2>Access Denied</h2>
           <p>You do not have permission to view hire requests.</p>
+          <button 
+            onClick={() => window.location.href = '/.auth/logout'}
+            className="logout-button"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     );

@@ -8,9 +8,9 @@ import { AUTHORIZED_USERS } from '../config/appConfig';
 
 class MSListService {
   constructor() {
-    this.graphApiUrl = 'https://graph.microsoft.com/v1.0';
-    this.siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-    this.listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
+    this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
+    this.siteId = MS_GRAPH_CONFIG.siteId;
+    this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
     
     this.msalInstance = null;
@@ -18,67 +18,102 @@ class MSListService {
   }
 
   async initialize() {
-    if (this.msalInstance) return;
-
     try {
-      // Ensure MS_GRAPH_CONFIG is properly imported and has values
-      if (!MS_GRAPH_CONFIG || !MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.tenantId) {
-        throw new Error('MS Graph configuration is missing required values');
-      }
-
-      this.msalInstance = new PublicClientApplication({
-        auth: {
-          clientId: MS_GRAPH_CONFIG.clientId,
-          authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
-          redirectUri: window.location.origin,
-        },
-        cache: {
-          cacheLocation: 'sessionStorage',
-          storeAuthStateInCookie: false,
-        },
+      // Log all configuration values (except secrets)
+      console.log('Initializing MS Graph with config:', {
+        baseUrl: MS_GRAPH_CONFIG.baseUrl,
+        clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[MISSING]',
+        authority: MS_GRAPH_CONFIG.authority ? '[CONFIGURED]' : '[MISSING]',
+        redirectUri: MS_GRAPH_CONFIG.redirectUri,
+        siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[MISSING]',
+        listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[MISSING]'
       });
 
-      // Initialize MSAL
-      await this.msalInstance.initialize();
+      // Check required configuration
+      const requiredConfigs = {
+        clientId: MS_GRAPH_CONFIG.clientId,
+        authority: MS_GRAPH_CONFIG.authority,
+        siteId: MS_GRAPH_CONFIG.siteId,
+        listId: MS_GRAPH_CONFIG.newHireListId
+      };
 
-      // Define scopes without .default
-      const scopes = [
-        'Mail.Send',
-        'Sites.ReadWrite.All',
-        'User.Read',
-        'openid',
-        'profile',
-        'offline_access'
-      ];
+      const missingConfigs = Object.entries(requiredConfigs)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
 
-      // Get the active account
-      const accounts = this.msalInstance.getAllAccounts();
-      if (accounts.length === 0) {
-        // If no account is signed in, prompt the user to sign in
-        const loginResponse = await this.msalInstance.loginPopup({
-          scopes: scopes
-        });
-        if (loginResponse.account) {
-          this.msalInstance.setActiveAccount(loginResponse.account);
-        }
-      } else {
-        // Use the first account
-        this.msalInstance.setActiveAccount(accounts[0]);
+      if (missingConfigs.length > 0) {
+        throw new Error(`MS Graph configuration is missing required values: ${missingConfigs.join(', ')}`);
       }
 
+      // Initialize MSAL instance if not already initialized
+      if (!this.msalInstance) {
+        const msalConfig = {
+          auth: {
+            clientId: MS_GRAPH_CONFIG.clientId,
+            authority: MS_GRAPH_CONFIG.authority,
+            redirectUri: MS_GRAPH_CONFIG.redirectUri,
+          },
+          cache: {
+            cacheLocation: 'sessionStorage',
+            storeAuthStateInCookie: false,
+          },
+          system: {
+            loggerOptions: {
+              loggerCallback: (level, message, containsPii) => {
+                if (!containsPii) console.log('MSAL:', message);
+              },
+              piiLoggingEnabled: false,
+              logLevel: 3 // Info
+            }
+          }
+        };
+
+        console.log('Creating MSAL instance with config:', {
+          ...msalConfig,
+          auth: {
+            ...msalConfig.auth,
+            clientId: '[HIDDEN]',
+          }
+        });
+
+        this.msalInstance = new PublicClientApplication(msalConfig);
+        await this.msalInstance.initialize();
+        console.log('MSAL instance initialized successfully');
+      }
+
+      // Get active account or login
+      const accounts = this.msalInstance.getAllAccounts();
+      let account = accounts[0];
+
+      if (!account) {
+        console.log('No active account found, initiating login...');
+        const loginResponse = await this.msalInstance.loginPopup({
+          scopes: MS_GRAPH_CONFIG.scopes
+        });
+        account = loginResponse.account;
+        this.msalInstance.setActiveAccount(account);
+        console.log('Login successful, account set:', account.username);
+      } else {
+        console.log('Using existing account:', account.username);
+        this.msalInstance.setActiveAccount(account);
+      }
+
+      // Initialize Graph client
       const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
         this.msalInstance,
         {
           account: this.msalInstance.getActiveAccount(),
-          scopes: scopes,
+          scopes: MS_GRAPH_CONFIG.scopes,
           interactionType: 'popup'
         }
       );
 
       this.graphClient = Client.initWithMiddleware({ authProvider });
-      console.log('MSAL and Graph client initialized successfully');
+      console.log('Graph client initialized successfully');
+
+      return true;
     } catch (error) {
-      console.error('Error initializing MSAL:', error);
+      console.error('Error in initialize:', error);
       throw error;
     }
   }
@@ -324,14 +359,14 @@ class MSListService {
       throw error;
     }
   }
-  
+
   // Get all new hire requests
   async getNewHireRequests() {
     try {
       await this.refreshTokenIfNeeded();
       
       const response = await this.graphClient
-        .api('/sites/cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38/lists/4ac9d268-cbfc-455a-8b9b-cf09547e8bd4/items?$expand=fields')
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items?$expand=fields`)
         .get();
       
       return response.value.map(item => item.fields);
@@ -347,7 +382,7 @@ class MSListService {
       await this.refreshTokenIfNeeded();
       
       const response = await this.graphClient
-        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items/${id}`)
         .expand('fields')
         .get();
       
@@ -369,7 +404,7 @@ class MSListService {
       };
       
       const response = await this.graphClient
-        .api(`/sites/${MS_GRAPH_CONFIG.siteId}/lists/${MS_GRAPH_CONFIG.newHireListId}/items/${id}`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items/${id}`)
         .update(fieldsToUpdate);
       
       return response;
@@ -575,11 +610,8 @@ class MSListService {
       
       console.log('Fetching pending approvals for user:', userEmail);
       
-      const siteId = 'cloudmarc.sharepoint.com,a1e3c62a-f735-4ee2-a5a7-9412e863c617,f6ba5e0b-6ec1-43d8-98de-28e8c2517d38';
-      const listId = '4ac9d268-cbfc-455a-8b9b-cf09547e8bd4';
-
       const response = await this.graphClient
-        .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&$filter=fields/field_8 eq 'Pending'`)
+        .api(`/sites/${this.siteId}/lists/${this.listId}/items?$expand=fields&$filter=fields/field_8 eq 'Pending'`)
         .header('Prefer', 'HonorNonIndexedQueriesWarningMayFailRandomly')
         .get();
       
@@ -601,7 +633,7 @@ class MSListService {
         ApprovalStatus: item.fields.field_8,
         CreateBy: item.fields.field_30,
         EmployeeType: item.fields.field_33,
-        id: item.id // Ensure the ID is included for actions like approving/rejecting
+        id: item.id
       }));
     } catch (error) {
       console.error(`Error fetching pending approvals for user ${userEmail}:`, error);

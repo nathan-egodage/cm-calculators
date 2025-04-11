@@ -412,8 +412,6 @@ button:hover {
 .calculator-card.all-cals-theme:hover {
   box-shadow: 0 8px 20px rgba(0, 132, 61, 0.15), 0 8px 20px rgba(0, 56, 168, 0.15);
 }
-
-
 /* CloudMarc Theme Styles */
 .cloudmarc-theme {
   --primary-color: #1A4A8D;  /* Dark blue from logo */
