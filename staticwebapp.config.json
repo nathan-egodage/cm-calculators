@@ -3,21 +3,11 @@
     "identityProviders": {
       "azureActiveDirectory": {
         "registration": {
-          "clientIdSettingName": "AAD_CLIENT_ID",
-          "clientSecretSettingName": "AAD_CLIENT_SECRET",
-          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85/v2.0"
+          "clientIdSettingName": "REACT_APP_CLIENT_ID",
+          "clientSecretSettingName": "REACT_APP_CLIENT_SECRET",
+          "openIdIssuer": "https://login.microsoftonline.com/cloudmarc.com.au/v2.0"
         },
-        "userDetailsClaim": "preferred_username",
-        "validate": {
-          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"],
-          "allowedPrincipals": {
-            "identities": [
-              "nathan@cloudmarc.com.au",
-              "ddallariva@cloudmarc.com.au",
-              "rocket@cloudmarc.com.au"
-            ]
-          }
-        }
+        "userDetailsClaim": "preferred_username"
       }
     }
   },
@@ -31,28 +21,32 @@
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/error",
+      "route": "/manifest.json",
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/favicon.ico",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/static/*",
+      "allowedRoles": ["anonymous"],
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/new-hire-requests-list",
+      "allowedRoles": ["authenticated"]
+    },
+    {
       "route": "/*",
-      "allowedRoles": ["authenticated"],
-      "rules": [
-        {
-          "match": "roles",
-          "principals": [
-            "nathan@cloudmarc.com.au",
-            "ddallariva@cloudmarc.com.au",
-            "rocket@cloudmarc.com.au"
-          ],
-          "requireAllRoles": false
-        }
-      ]
+      "allowedRoles": ["authenticated"]
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*", "/css/*", "/js/*", "/assets/*", "/.auth/*"]
+    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/js/*", "/static/*"]
   },
   "responseOverrides": {
     "401": {
@@ -60,8 +54,21 @@
       "statusCode": 302
     },
     "403": {
-      "redirect": "/error?code=403",
-      "statusCode": 302
+      "rewrite": "/error.html"
     }
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.microsoft.com https://*.microsoftonline.com https://*.sharepoint.com https://*.cloudmarc.com.au; img-src 'self' data: https:; connect-src 'self' https://*.microsoft.com https://*.microsoftonline.com https://*.sharepoint.com https://*.cloudmarc.com.au;",
+    "cache-control": "no-cache",
+    "X-Content-Type-Options": "nosniff"
+  },
+  "mimeTypes": {
+    ".js": "application/javascript",
+    ".css": "text/css",
+    ".html": "text/html",
+    ".json": "application/json"
+  },
+  "platform": {
+    "apiRuntime": "node:16"
   }
 }

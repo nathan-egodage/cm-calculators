@@ -610,7 +610,7 @@ const ConsolidatedGpCalculator = () => {
   return (
     <div className={`container ${currentTheme}`} style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
-        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
+        <Link to="/" className="back-button">&#8592; Back to Home</Link>
       </div>
       
       <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>Offshore Contractor GP Calculator</h1>

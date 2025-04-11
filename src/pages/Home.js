@@ -36,6 +36,17 @@ const Home = () => {
     AUTHORIZED_USERS.bdmCalculator.some(email => 
       email.toLowerCase() === user.userDetails.toLowerCase()
     );
+    
+  // Check if user is authorized to create or approve new hire requests
+  const canCreateHireRequests = user && 
+    AUTHORIZED_USERS.newHireRequestCreators.some(email => 
+      email.toLowerCase() === user.userDetails.toLowerCase()
+    );
+    
+  const canApproveHireRequests = user && 
+    AUTHORIZED_USERS.newHireRequestApprovers.some(email => 
+      email.toLowerCase() === user.userDetails.toLowerCase()
+    );
 
   // Base calculator data with added category and icon properties
   const baseCalculators = [
@@ -79,10 +90,54 @@ const Home = () => {
     icon: "💰"
   };
 
+  // HR tools to conditionally add
+  const newHireRequestTools = [
+    {
+      id: "new-hire-request",
+      title: "New Hire Request (WIP)",
+      description: "Create a new hire request",
+      path: "/new-hire-request",
+      category: ["hr", "tools"],
+      theme: "cloudmarc-theme",
+      icon: "👤"
+    },
+    {
+      id: "new-hire-requests-list",
+      title: "New Hire Requests List (WIP)",
+      description: "View all hire requests",
+      path: "/new-hire-requests-list",
+      category: ["hr", "tools"],
+      theme: "cloudmarc-theme",
+      icon: "📋"
+    },
+    {
+      id: "pending-approvals",
+      title: "Pending Approvals (WIP)",
+      description: "View and manage pending hire request approvals",
+      path: "/pending-approvals",
+      category: ["hr", "tools"],
+      theme: "cloudmarc-theme",
+      icon: "✅"
+    }
+  ];
+  
   // Combine calculators based on authorization
-  const calculators = isBdmAuthorized 
-    ? [bdmCalculator,...baseCalculators] 
-    : baseCalculators;
+  let allTools = [...baseCalculators];
+  
+  if (isBdmAuthorized) {
+    allTools = [bdmCalculator, ...allTools];
+  }
+  
+ 
+  if (canCreateHireRequests) {
+    allTools.push(newHireRequestTools[0]);
+    allTools.push(newHireRequestTools[2]);
+  }
+  
+  if (canApproveHireRequests) {
+    allTools.push(newHireRequestTools[1]);
+  }
+
 
   // Category definitions for filtering
   const categories = [
@@ -95,6 +150,11 @@ const Home = () => {
     { id: "tools", label: "Tools" }
   ];
 
+  // Add HR category if user has access to hire request features
+  if (canCreateHireRequests || canApproveHireRequests) {
+    categories.push({ id: "hr", label: "HR" });
+  }
+  
   // Add commission category only if user has access to BDM calculator
   if (isBdmAuthorized) {
     categories.push({ id: "commission", label: "Commission" });
@@ -102,8 +162,8 @@ const Home = () => {
 
   // Filter calculators based on active category
   const filteredCalculators = activeCategory === "all" 
-    ? calculators 
-    : calculators.filter(calc => calc.category.includes(activeCategory));
+    ? allTools 
+    : allTools.filter(calc => calc.category.includes(activeCategory));
 
   return (
     <div className="container compact-home">

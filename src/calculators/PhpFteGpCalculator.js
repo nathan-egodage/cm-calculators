@@ -294,7 +294,7 @@ const PhpFteGpCalculator = () => {
   return (
     <div className="container php-theme" style={{ maxWidth: "800px", margin: "0 auto", padding: "12px" }}>
       <div className="nav-buttons" style={{ marginBottom: "8px" }}>
-        <Link to="/" className="back-button">&#8592; Back to All Calculators</Link>
+        <Link to="/" className="back-button">&#8592; Back to Home</Link>
       </div>
       
       <h1 style={{ fontSize: "1.5rem", marginBottom: "8px" }}>PHP FTE GP Calculator</h1>
