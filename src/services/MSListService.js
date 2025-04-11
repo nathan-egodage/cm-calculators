@@ -7,202 +7,166 @@ import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-
 import { AUTHORIZED_USERS } from '../config/appConfig';
 import { LogLevel } from '@azure/msal-browser';
 
-// Initialize MS Graph configuration
-const msalConfig = {
-  auth: {
-    clientId: MS_GRAPH_CONFIG.clientId,
-    authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
-    redirectUri: window.location.origin,
-    postLogoutRedirectUri: window.location.origin,
-    navigateToLoginRequestUrl: true
-  },
-  cache: {
-    cacheLocation: 'sessionStorage',
-    storeAuthStateInCookie: false
-  },
-  system: {
-    loggerOptions: {
-      loggerCallback: (level, message, containsPii) => {
-        if (containsPii) {
-          return;
-        }
-        switch (level) {
-          case LogLevel.Error:
-            console.error('MSAL:', message);
-            break;
-          case LogLevel.Info:
-            console.info('MSAL:', message);
-            break;
-          case LogLevel.Verbose:
-            console.debug('MSAL:', message);
-            break;
-          case LogLevel.Warning:
-            console.warn('MSAL:', message);
-            break;
-          default:
-            console.log('MSAL:', message);
-        }
-      },
-      logLevel: LogLevel.Verbose
-    }
-  }
-};
-
 class MSListService {
   constructor() {
+    this.msalInstance = null;
+    this.graphClient = null;
+    this.initialized = false;
     this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
     this.siteId = MS_GRAPH_CONFIG.siteId;
     this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
-    
-    this.msalInstance = null;
-    this.graphClient = null;
   }
 
   async initialize() {
+    if (this.initialized) {
+      return true;
+    }
+
     try {
       console.log('Initializing MSAL...');
       
-      // Wait for environment variables to be loaded
-      await this.waitForEnvironmentVariables();
-      
       // Validate required configuration
-      if (!MS_GRAPH_CONFIG.clientId) {
-        throw new Error('Client ID is not configured');
+      if (!MS_GRAPH_CONFIG.clientId || !MS_GRAPH_CONFIG.tenantId) {
+        throw new Error('Missing required configuration: clientId or tenantId');
       }
-      if (!MS_GRAPH_CONFIG.tenantId) {
-        throw new Error('Tenant ID is not configured');
-      }
-
-      // Log the current environment state
-      console.log('Current environment state:', {
-        hostname: window.location.hostname,
-        isProduction: window.location.hostname === 'internal-cm-cal.cloudmarc.au',
-        isDevelopment: window.location.hostname === 'localhost',
-        hasWindowEnv: !!window.__env__,
-        windowEnvKeys: window.__env__ ? Object.keys(window.__env__) : []
-      });
-      
-      // Log configuration (excluding sensitive data)
-      console.log('MS Graph configuration:', {
-        baseUrl: MS_GRAPH_CONFIG.baseUrl,
-        clientId: MS_GRAPH_CONFIG.clientId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
-        tenantId: MS_GRAPH_CONFIG.tenantId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
-        authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
-        redirectUri: window.location.origin,
-        siteId: MS_GRAPH_CONFIG.siteId ? '[CONFIGURED]' : '[NOT CONFIGURED]',
-        listId: MS_GRAPH_CONFIG.newHireListId ? '[CONFIGURED]' : '[NOT CONFIGURED]'
-      });
 
       // Create MSAL instance with validated config
-      const msalConfigToUse = {
+      const msalConfig = {
         auth: {
           clientId: MS_GRAPH_CONFIG.clientId,
           authority: `https://login.microsoftonline.com/${MS_GRAPH_CONFIG.tenantId}`,
           redirectUri: window.location.origin,
-          postLogoutRedirectUri: window.location.origin,
           navigateToLoginRequestUrl: true
         },
         cache: {
           cacheLocation: 'sessionStorage',
           storeAuthStateInCookie: false
-        },
-        system: {
-          loggerOptions: {
-            loggerCallback: (level, message, containsPii) => {
-              if (containsPii) {
-                return;
-              }
-              switch (level) {
-                case LogLevel.Error:
-                  console.error('MSAL:', message);
-                  break;
-                case LogLevel.Info:
-                  console.info('MSAL:', message);
-                  break;
-                case LogLevel.Verbose:
-                  console.debug('MSAL:', message);
-                  break;
-                case LogLevel.Warning:
-                  console.warn('MSAL:', message);
-                  break;
-                default:
-                  console.log('MSAL:', message);
-              }
-            },
-            logLevel: LogLevel.Verbose
-          }
         }
       };
 
-      // Log MSAL configuration (excluding sensitive data)
-      console.log('Creating MSAL instance with config:', {
-        auth: {
-          ...msalConfigToUse.auth,
-          clientId: '[HIDDEN]'
-        },
-        cache: msalConfigToUse.cache,
-        system: msalConfigToUse.system
-      });
-
       if (!this.msalInstance) {
-        this.msalInstance = new PublicClientApplication(msalConfigToUse);
+        this.msalInstance = new PublicClientApplication(msalConfig);
+        await this.msalInstance.initialize();
         console.log('MSAL instance initialized successfully');
       }
 
+      // Get active account or login
+      const accounts = this.msalInstance.getAllAccounts();
+      let account = accounts[0];
+
+      if (!account) {
+        console.log('No active account found, initiating login...');
+        const loginResponse = await this.msalInstance.loginPopup({
+          scopes: MS_GRAPH_CONFIG.scopes
+        });
+        account = loginResponse.account;
+      }
+
+      this.msalInstance.setActiveAccount(account);
+      console.log('Active account set:', account.username);
+
+      // Initialize Graph client
+      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+        this.msalInstance,
+        {
+          account: account,
+          scopes: MS_GRAPH_CONFIG.scopes,
+          interactionType: 'popup'
+        }
+      );
+
+      this.graphClient = Client.initWithMiddleware({
+        authProvider: authProvider
+      });
+
+      this.initialized = true;
       return true;
     } catch (error) {
-      console.error('Failed to initialize MSAL:', error);
+      console.error('Failed to initialize MSListService:', error);
       throw error;
     }
   }
 
-  // Helper method to wait for environment variables
-  async waitForEnvironmentVariables() {
-    const maxAttempts = 10;
-    const delayMs = 500;
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      if (window.__env__ || process.env.REACT_APP_TENANT_ID) {
-        console.log('Environment variables loaded successfully');
-        return true;
+  async getNewHireRequests() {
+    try {
+      if (!this.initialized) {
+        await this.initialize();
       }
-      
-      console.log(`Waiting for environment variables... Attempt ${attempts + 1}/${maxAttempts}`);
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-      attempts++;
-    }
 
-    throw new Error('Failed to load environment variables after multiple attempts');
+      if (!this.graphClient) {
+        throw new Error('Graph client is not initialized');
+      }
+
+      console.log('Fetching new hire requests...');
+      const response = await this.graphClient
+        .api(`${this.baseUrl}/items`)
+        .expand('fields')
+        .get();
+
+      console.log('New hire requests response:', response);
+      return response.value.map(item => ({
+        id: item.id,
+        ...item.fields
+      }));
+    } catch (error) {
+      console.error('Error fetching new hire requests:', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to fetch new hire requests: ${error.message}`);
+      } else {
+        throw new Error('Failed to fetch new hire requests: Unknown error');
+      }
+    }
+  }
+
+  async createNewHireRequest(data) {
+    try {
+      if (!this.initialized) {
+        await this.initialize();
+      }
+
+      if (!this.graphClient) {
+        throw new Error('Graph client is not initialized');
+      }
+
+      const response = await this.graphClient
+        .api(`${this.baseUrl}/items`)
+        .post({
+          fields: data
+        });
+
+      return response;
+    } catch (error) {
+      console.error('Error creating new hire request:', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to create new hire request: ${error.message}`);
+      } else {
+        throw new Error('Failed to create new hire request: Unknown error');
+      }
+    }
   }
 
   async getAccessToken() {
     try {
-      // Ensure MSAL is initialized
-      await this.initialize();
-      
-      const request = {
-        scopes: [
-          'Mail.Send',
-          'Sites.ReadWrite.All',
-          'User.Read',
-          'openid',
-          'profile',
-          'offline_access'
-        ]
-      };
-
-      // Try silent token acquisition first
-      try {
-        const response = await this.msalInstance.acquireTokenSilent(request);
-        return response.accessToken;
-      } catch (silentError) {
-        // If silent acquisition fails, fall back to interactive method
-        console.log('Silent token acquisition failed, trying interactive...');
-        const response = await this.msalInstance.acquireTokenPopup(request);
-        return response.accessToken;
+      if (!this.initialized) {
+        await this.initialize();
       }
+
+      if (!this.msalInstance) {
+        throw new Error('MSAL instance is not initialized');
+      }
+
+      const account = this.msalInstance.getActiveAccount();
+      if (!account) {
+        throw new Error('No active account');
+      }
+
+      const response = await this.msalInstance.acquireTokenSilent({
+        scopes: MS_GRAPH_CONFIG.scopes,
+        account: account
+      });
+
+      return response.accessToken;
     } catch (error) {
       console.error('Error getting access token:', error);
       throw error;
@@ -240,202 +204,6 @@ class MSListService {
     }
   }
 
-  async createNewHireRequest(data, user) {
-    try {
-      console.log('Initializing MSAL...');
-      // Ensure MSAL is initialized before any operation
-      await this.initialize();
-      
-      console.log('Getting access token...');
-      const token = await this.getAccessToken();
-      if (!token) {
-        throw new Error('Failed to get access token');
-      }
-      
-      console.log('Preparing request data...');
-      const requestData = {
-        fields: {
-          Title: data.AccountManager || user?.userDetails || '',
-          field_1: data.FirstName,
-          field_2: data.LastName,
-          field_3: data.PersonalEmail,
-          field_4: data.Mobile,
-          field_5: data.Address,
-          field_6: data.Position,
-          field_7: data.ClientName,
-          field_8: data.Status || 'Pending',
-          field_9: data.SignByDate,
-          field_10: data.StartDate,
-          field_11: data.PackageOrRate,
-          field_12: data.GrossProfitMargin,
-          field_13: data.ContractEndDate,
-          field_14: data.IsLaptopRequired || 'No',
-          field_15: data.Office,
-          field_16: data.Rehire || 'No',
-          field_17: data.Notes,
-          field_18: data.ABNName,
-          field_19: data.ABNNumber,
-          field_20: data.ABNAddress,
-          field_21: data.EngagementName,
-          field_22: data.TaskName,
-          field_23: data.BillingRate,
-          field_24: data.NewClientLegalName,
-          field_25: data.NewClientAddress,
-          field_26: data.NewClientEmailAddress,
-          field_27: data.ResourceLevelCode,
-          field_29: new Date().toISOString(),
-          field_30: user?.userDetails || '',
-          field_31: data.ApprovedBy || '',
-          field_32: data.ApprovedDate || '',
-          field_33: data.EmployeeType || 'AU PAYG Contractor'
-        }
-      };
-      
-      console.log('Sending request to:', `${this.baseUrl}/items`);
-      console.log('Request data:', requestData);
-
-      const response = await this.graphClient
-        .api(`${this.baseUrl}/items`)
-        .post(requestData);
-
-      // Send email notifications after successful creation
-      if (response && response.id) {
-        // Get the list of approvers from AUTHORIZED_USERS
-        const approvers = AUTHORIZED_USERS.newHireRequestApprovers || [];
-        
-        // Prepare email content
-        const subject = `New Hire Request Created: ${data.FirstName} ${data.LastName}`;
-        
-        const creatorEmailContent = `
-          <h2>New Hire Request Confirmation</h2>
-          <p>Your new hire request has been successfully created and is pending approval.</p>
-          <h3>Request Details:</h3>
-          <ul>
-            <li><strong>Submitted By:</strong> ${user?.userDetails}</li>
-            <li><strong>Submission Date:</strong> ${new Date().toLocaleDateString()}</li>
-            <li><strong>Candidate Name:</strong> ${data.FirstName} ${data.LastName}</li>
-            <li><strong>Personal Email:</strong> ${data.PersonalEmail}</li>
-            <li><strong>Mobile:</strong> ${data.Mobile}</li>
-            <li><strong>Address:</strong> ${data.Address}</li>
-            <li><strong>Position:</strong> ${data.Position}</li>
-            <li><strong>Employee Type:</strong> ${data.EmployeeType || 'AU PAYG Contractor'}</li>
-            <li><strong>Client Name:</strong> ${data.ClientName}</li>
-            <li><strong>Status:</strong> ${data.Status || 'Pending'}</li>
-            <li><strong>Sign By Date:</strong> ${data.SignByDate}</li>
-            <li><strong>Start Date:</strong> ${data.StartDate}</li>
-            <li><strong>Package/Rate:</strong> ${data.PackageOrRate}</li>
-            <li><strong>Gross Profit Margin:</strong> ${data.GrossProfitMargin}</li>
-            <li><strong>Contract End Date:</strong> ${data.ContractEndDate}</li>
-            <li><strong>Laptop Required:</strong> ${data.IsLaptopRequired || 'No'}</li>
-            <li><strong>Office:</strong> ${data.Office}</li>
-            <li><strong>Rehire:</strong> ${data.Rehire || 'No'}</li>
-            ${data.ABNName ? `<li><strong>ABN Name:</strong> ${data.ABNName}</li>` : ''}
-            ${data.ABNNumber ? `<li><strong>ABN Number:</strong> ${data.ABNNumber}</li>` : ''}
-            ${data.ABNAddress ? `<li><strong>ABN Address:</strong> ${data.ABNAddress}</li>` : ''}
-            <li><strong>Engagement Name:</strong> ${data.EngagementName}</li>
-            <li><strong>Task Name:</strong> ${data.TaskName}</li>
-            <li><strong>Billing Rate:</strong> ${data.BillingRate}</li>
-            ${data.NewClientLegalName ? `<li><strong>New Client Legal Name:</strong> ${data.NewClientLegalName}</li>` : ''}
-            ${data.NewClientAddress ? `<li><strong>New Client Address:</strong> ${data.NewClientAddress}</li>` : ''}
-            ${data.NewClientEmailAddress ? `<li><strong>New Client Email:</strong> ${data.NewClientEmailAddress}</li>` : ''}
-            <li><strong>Resource Level Code:</strong> ${data.ResourceLevelCode}</li>
-            ${data.Notes ? `<li><strong>Notes:</strong> ${data.Notes}</li>` : ''}
-          </ul>
-          <p>You will be notified once the request is approved or if any additional information is required.</p>
-        `;
-
-        const approverEmailContent = `
-          <h2>New Hire Request Pending Approval</h2>
-          <p>A new hire request has been submitted and requires your approval.</p>
-          <h3>Request Details:</h3>
-          <ul>
-            <li><strong>Submitted By:</strong> ${user?.userDetails}</li>
-            <li><strong>Submission Date:</strong> ${new Date().toLocaleDateString()}</li>
-            <li><strong>Candidate Name:</strong> ${data.FirstName} ${data.LastName}</li>
-            <li><strong>Personal Email:</strong> ${data.PersonalEmail}</li>
-            <li><strong>Mobile:</strong> ${data.Mobile}</li>
-            <li><strong>Address:</strong> ${data.Address}</li>
-            <li><strong>Position:</strong> ${data.Position}</li>
-            <li><strong>Employee Type:</strong> ${data.EmployeeType || 'AU PAYG Contractor'}</li>
-            <li><strong>Client Name:</strong> ${data.ClientName}</li>
-            <li><strong>Status:</strong> ${data.Status || 'Pending'}</li>
-            <li><strong>Sign By Date:</strong> ${data.SignByDate}</li>
-            <li><strong>Start Date:</strong> ${data.StartDate}</li>
-            <li><strong>Package/Rate:</strong> ${data.PackageOrRate}</li>
-            <li><strong>Gross Profit Margin:</strong> ${data.GrossProfitMargin}</li>
-            <li><strong>Contract End Date:</strong> ${data.ContractEndDate}</li>
-            <li><strong>Laptop Required:</strong> ${data.IsLaptopRequired || 'No'}</li>
-            <li><strong>Office:</strong> ${data.Office}</li>
-            <li><strong>Rehire:</strong> ${data.Rehire || 'No'}</li>
-            ${data.ABNName ? `<li><strong>ABN Name:</strong> ${data.ABNName}</li>` : ''}
-            ${data.ABNNumber ? `<li><strong>ABN Number:</strong> ${data.ABNNumber}</li>` : ''}
-            ${data.ABNAddress ? `<li><strong>ABN Address:</strong> ${data.ABNAddress}</li>` : ''}
-            <li><strong>Engagement Name:</strong> ${data.EngagementName}</li>
-            <li><strong>Task Name:</strong> ${data.TaskName}</li>
-            <li><strong>Billing Rate:</strong> ${data.BillingRate}</li>
-            ${data.NewClientLegalName ? `<li><strong>New Client Legal Name:</strong> ${data.NewClientLegalName}</li>` : ''}
-            ${data.NewClientAddress ? `<li><strong>New Client Address:</strong> ${data.NewClientAddress}</li>` : ''}
-            ${data.NewClientEmailAddress ? `<li><strong>New Client Email:</strong> ${data.NewClientEmailAddress}</li>` : ''}
-            <li><strong>Resource Level Code:</strong> ${data.ResourceLevelCode}</li>
-            ${data.Notes ? `<li><strong>Notes:</strong> ${data.Notes}</li>` : ''}
-          </ul>
-          
-          <div style="margin: 20px 0; text-align: center;">
-            <p>You can quickly approve or reject this request by clicking one of the buttons below:</p>
-            <div style="margin: 20px 0;">
-              <a href="${window.location.origin}/approve-request/${response.id}" 
-                 style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-right: 10px; display: inline-block;">
-                Approve Request
-              </a>
-              <a href="${window.location.origin}/reject-request/${response.id}" 
-                 style="background-color: #f44336; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                Reject Request
-              </a>
-            </div>
-            <p style="font-size: 12px; color: #666; margin-top: 10px;">
-              Or you can review the request in detail by visiting the application at 
-              <a href="${window.location.origin}/pending-approvals">${window.location.origin}/pending-approvals</a>
-            </p>
-          </div>
-          
-          <p>Please review and approve the request at your earliest convenience.</p>
-        `;
-
-        // Send email to creator
-        if (user?.userDetails) {
-          await this.sendEmail([user.userDetails], subject, creatorEmailContent);
-        }
-
-        // Send email to approvers
-        if (approvers.length > 0) {
-          await this.sendEmail(approvers, subject, approverEmailContent);
-        }
-      }
-
-      return response;
-    } catch (error) {
-      console.error('Error creating new hire request:', error);
-      throw error;
-    }
-  }
-
-  // Get all new hire requests
-  async getNewHireRequests() {
-    try {
-      await this.refreshTokenIfNeeded();
-      
-      const response = await this.graphClient
-        .api(`/sites/${this.siteId}/lists/${this.listId}/items?$expand=fields`)
-        .get();
-      
-      return response.value.map(item => item.fields);
-    } catch (error) {
-      console.error('Error fetching new hire requests:', error);
-      throw error;
-    }
-  }
-  
-  // Get new hire request by ID
   async getNewHireRequestById(id) {
     try {
       await this.refreshTokenIfNeeded();

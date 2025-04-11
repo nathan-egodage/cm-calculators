@@ -212,7 +212,7 @@ const NewHireRequestsList = () => {
             <tbody>
               {filteredRequests.map((request) => (
                 <tr key={request.id}>
-                  <td><span className={`status-badge ${request.field_8.toLowerCase()}`}>{request.field_8}</span></td>
+                  <td><span className={`status-badge ${(request.field_8 || 'pending').toLowerCase()}`}>{request.field_8 || 'Pending'}</span></td>
                   <td>{request.field_30}</td>
                   <td>{formatDate(request.field_29)}</td>
                   <td>{request.field_1}</td>
