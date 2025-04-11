@@ -8,101 +8,91 @@ const useAuth = () => {
   const [msalInstance, setMsalInstance] = useState(null);
   const [error, setError] = useState(null);
 
-  const isLocalhost = window.location.hostname === "localhost";
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (isLocalhost) {
-          // Initialize MSAL for local development
-          const msalConfig = {
-            auth: {
-              clientId: MS_GRAPH_CONFIG.clientId,
-              authority: MS_GRAPH_CONFIG.authority,
-              redirectUri: window.location.origin,
-              postLogoutRedirectUri: window.location.origin,
-              navigateToLoginRequestUrl: true
-            },
-            cache: {
-              cacheLocation: 'sessionStorage',
-              storeAuthStateInCookie: true
-            },
-            system: {
-              allowNativeBroker: false,
-              windowHashTimeout: 60000,
-              iframeHashTimeout: 6000,
-              loadFrameTimeout: 0
-            }
-          };
+        // For development, use a mock user
+        if (isDevelopment) {
+          setUser({
+            userDetails: 'nathan@cloudmarc.com.au',
+            userRoles: ['authenticated']
+          });
+          setLoaded(true);
+          return;
+        }
 
-          const msal = new PublicClientApplication(msalConfig);
-          await msal.initialize();
-          setMsalInstance(msal);
-
-          // Handle redirect promise first
-          const response = await msal.handleRedirectPromise();
-          if (response) {
-            // If we have a response, we came back from a redirect
-            msal.setActiveAccount(response.account);
-            setUser({
-              userDetails: response.account.username,
-              userRoles: ["authenticated"]
-            });
-          } else {
-            // Check for existing accounts
-            const accounts = msal.getAllAccounts();
-            if (accounts.length > 0) {
-              msal.setActiveAccount(accounts[0]);
-              setUser({
-                userDetails: accounts[0].username,
-                userRoles: ["authenticated"]
-              });
-            } else {
-              // For local development, set a default user instead of forcing login
-              setUser({
-                userDetails: "nathan@cloudmarc.com.au",
-                userRoles: ["authenticated"]
-              });
-            }
+        // Production authentication
+        const msalConfig = {
+          auth: {
+            clientId: MS_GRAPH_CONFIG.clientId,
+            authority: MS_GRAPH_CONFIG.authority,
+            redirectUri: window.location.origin,
+            navigateToLoginRequestUrl: false
+          },
+          cache: {
+            cacheLocation: 'sessionStorage',
+            storeAuthStateInCookie: true
           }
+        };
+
+        const msal = new PublicClientApplication(msalConfig);
+        await msal.initialize();
+        setMsalInstance(msal);
+
+        // Check if we're handling a redirect
+        const response = await msal.handleRedirectPromise();
+        
+        if (response) {
+          // We have a response from a redirect
+          msal.setActiveAccount(response.account);
+          setUser({
+            userDetails: response.account.username,
+            userRoles: ['authenticated']
+          });
         } else {
-          // Production: fetch real identity from Azure Static Web Apps
-          const response = await fetch("/.auth/me");
-          const data = await response.json();
-          const principal = data?.clientPrincipal;
-          if (principal) {
-            setUser(principal);
+          // Check for existing accounts
+          const accounts = msal.getAllAccounts();
+          if (accounts.length > 0) {
+            msal.setActiveAccount(accounts[0]);
+            setUser({
+              userDetails: accounts[0].username,
+              userRoles: ['authenticated']
+            });
           }
         }
       } catch (error) {
-        console.error('Auth initialization failed:', error);
+        console.error('Auth initialization error:', error);
         setError(error);
-        if (isLocalhost) {
-          // Fallback for local development
-          setUser({
-            userDetails: "nathan@cloudmarc.com.au",
-            userRoles: ["authenticated"]
-          });
-        }
       } finally {
         setLoaded(true);
       }
     };
 
     initializeAuth();
-  }, [isLocalhost]);
+  }, [isDevelopment]);
 
   const login = async () => {
+    if (isDevelopment) {
+      setUser({
+        userDetails: 'nathan@cloudmarc.com.au',
+        userRoles: ['authenticated']
+      });
+      return;
+    }
+
     if (!msalInstance) return;
 
     try {
       const loginRequest = {
-        scopes: MS_GRAPH_CONFIG.scopes,
-        prompt: 'select_account'
+        scopes: MS_GRAPH_CONFIG.scopes
       };
 
-      // Use redirect for more reliable auth flow
-      await msalInstance.loginRedirect(loginRequest);
+      // Check if we're already handling a redirect
+      if (!window.location.hash.includes('code=') && !window.location.hash.includes('error=')) {
+        await msalInstance.loginRedirect(loginRequest);
+      }
     } catch (error) {
       console.error('Login failed:', error);
       setError(error);
@@ -110,6 +100,11 @@ const useAuth = () => {
   };
 
   const logout = async () => {
+    if (isDevelopment) {
+      setUser(null);
+      return;
+    }
+
     if (!msalInstance) return;
 
     try {
@@ -121,7 +116,15 @@ const useAuth = () => {
     }
   };
 
-  return { user, loaded, login, logout, msalInstance, error };
+  return {
+    user,
+    loaded,
+    login,
+    logout,
+    msalInstance,
+    error,
+    isAuthenticated: !!user
+  };
 };
 
 export default useAuth;
