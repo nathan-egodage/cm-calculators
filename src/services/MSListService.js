@@ -11,154 +11,136 @@ class MSListService {
     this.msalInstance = null;
     this.graphClient = null;
     this.initialized = false;
-    this.isInitializing = false;
     
     // Set up base URLs from config
     this.graphApiUrl = MS_GRAPH_CONFIG.baseUrl;
     this.siteId = MS_GRAPH_CONFIG.siteId;
     this.listId = MS_GRAPH_CONFIG.newHireListId;
     this.baseUrl = `${this.graphApiUrl}/sites/${this.siteId}/lists/${this.listId}`;
+    
+    // Initialize MSAL immediately
+    this.initializePromise = this.initialize();
   }
 
   getMsalConfig() {
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const redirectUri = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:63892'  // Use the actual port your app is running on
+      : window.location.origin;
+
     return {
       auth: {
         clientId: MS_GRAPH_CONFIG.clientId,
         authority: MS_GRAPH_CONFIG.authority,
-        redirectUri: isDevelopment ? 'http://localhost:63892' : window.location.origin,
-        navigateToLoginRequestUrl: false
+        redirectUri: redirectUri,
+        navigateToLoginRequestUrl: true,
+        postLogoutRedirectUri: redirectUri
       },
       cache: {
         cacheLocation: BrowserCacheLocation.SessionStorage,
-        storeAuthStateInCookie: true
+        storeAuthStateInCookie: true,
+        secureCookies: process.env.NODE_ENV !== 'development'
       },
       system: {
         allowNativeBroker: false,
         windowHashTimeout: 60000,
         iframeHashTimeout: 6000,
-        loadFrameTimeout: 0
+        loadFrameTimeout: 0,
+        loggerOptions: {
+          loggerCallback: (level, message, containsPii) => {
+            if (containsPii) {
+              return;
+            }
+            switch (level) {
+              case LogLevel.Error:
+                console.error('MSAL:', message);
+                break;
+              case LogLevel.Info:
+                console.info('MSAL:', message);
+                break;
+              case LogLevel.Verbose:
+                console.debug('MSAL:', message);
+                break;
+              case LogLevel.Warning:
+                console.warn('MSAL:', message);
+                break;
+              default:
+                console.log('MSAL:', message);
+            }
+          },
+          piiLoggingEnabled: false,
+          logLevel: LogLevel.Verbose
+        }
       }
     };
   }
 
   async initialize() {
-    // Prevent multiple simultaneous initialization attempts
-    if (this.isInitializing) {
-      return false;
-    }
-
     if (this.initialized) {
       return true;
     }
 
-    this.isInitializing = true;
-
     try {
       console.log('Initializing MSAL...');
 
-      // Create MSAL instance if not already done
-      if (!this.msalInstance) {
-        const msalConfig = this.getMsalConfig();
-        this.msalInstance = new PublicClientApplication(msalConfig);
-        await this.msalInstance.initialize();
-        console.log('MSAL instance initialized');
+      // Ensure environment variables are loaded
+      if (!window.__env__) {
+        throw new Error('Environment variables not loaded. Make sure env.js is loaded before the application.');
       }
+
+      // Create and initialize MSAL instance
+      const msalConfig = this.getMsalConfig();
+      this.msalInstance = new PublicClientApplication(msalConfig);
+      await this.msalInstance.initialize();
+      
+      console.log('MSAL instance initialized');
 
       // Handle redirect response if present
       const response = await this.msalInstance.handleRedirectPromise();
-      
-      // Get active account
+      if (response) {
+        console.log('Redirect response received:', response);
+        this.msalInstance.setActiveAccount(response.account);
+      }
+
+      // Get active account or login
       const accounts = this.msalInstance.getAllAccounts();
-      const account = accounts[0];
+      let account = accounts[0];
 
-      if (account) {
-        this.msalInstance.setActiveAccount(account);
-        console.log('Active account set:', account.username);
-
-        // Initialize Graph client
-        const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
-          this.msalInstance,
-          {
-            account: account,
-            scopes: MS_GRAPH_CONFIG.scopes,
-            interactionType: InteractionType.Redirect
-          }
-        );
-
-        this.graphClient = Client.initWithMiddleware({
-          authProvider: authProvider
-        });
-
-        this.initialized = true;
-        this.isInitializing = false;
-        return true;
-      }
-
-      // If we're in development mode and there's no account, use a mock account
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode - using mock authentication');
-        this.initialized = true;
-        this.isInitializing = false;
-        return true;
-      }
-
-      // Only initiate login if we're not already handling a redirect
-      if (!window.location.hash.includes('code=') && !window.location.hash.includes('error=')) {
+      if (!account) {
+        console.log('No active account found, initiating login...');
         const loginRequest = {
           scopes: MS_GRAPH_CONFIG.scopes,
           prompt: 'select_account'
         };
+
+        // Always use redirect for login
+        console.log('Starting redirect login flow...');
         await this.msalInstance.loginRedirect(loginRequest);
+        return false; // Function will be called again after redirect
       }
 
-      this.isInitializing = false;
-      return false;
+      this.msalInstance.setActiveAccount(account);
+      console.log('Active account set:', account.username);
+
+      // Initialize Graph client
+      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+        this.msalInstance,
+        {
+          account: account,
+          scopes: MS_GRAPH_CONFIG.scopes,
+          interactionType: InteractionType.Redirect // Change to redirect-based interaction
+        }
+      );
+
+      this.graphClient = Client.initWithMiddleware({
+        authProvider: authProvider
+      });
+
+      this.initialized = true;
+      return true;
     } catch (error) {
       console.error('Failed to initialize MSListService:', error);
       this.initialized = false;
-      this.isInitializing = false;
-      
-      // In development, continue without throwing
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode - continuing without authentication');
-        return true;
-      }
-      
       throw error;
-    }
-  }
-
-  async createNewHireRequest(data) {
-    try {
-      // For development environment, simulate success
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode - simulating new hire request creation:', data);
-        return { id: 'mock-id', ...data };
-      }
-
-      // Only initialize if not in development mode
-      if (!this.initialized) {
-        const initResult = await this.initialize();
-        if (!initResult) {
-          throw new Error('Failed to initialize service');
-        }
-      }
-
-      if (!this.graphClient) {
-        throw new Error('Graph client is not initialized');
-      }
-
-      const response = await this.graphClient
-        .api(`${this.baseUrl}/items`)
-        .post({
-          fields: data
-        });
-
-      return response;
-    } catch (error) {
-      console.error('Error creating new hire request:', error);
-      throw new Error(`Failed to create new hire request: ${error.message}`);
     }
   }
 
@@ -189,6 +171,32 @@ class MSListService {
         throw new Error(`Failed to fetch new hire requests: ${error.message}`);
       } else {
         throw new Error('Failed to fetch new hire requests: Unknown error');
+      }
+    }
+  }
+
+  async createNewHireRequest(data) {
+    try {
+      // Wait for initialization to complete
+      await this.initializePromise;
+
+      if (!this.initialized || !this.graphClient) {
+        throw new Error('Service not properly initialized');
+      }
+
+      const response = await this.graphClient
+        .api(`${this.baseUrl}/items`)
+        .post({
+          fields: data
+        });
+
+      return response;
+    } catch (error) {
+      console.error('Error creating new hire request:', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to create new hire request: ${error.message}`);
+      } else {
+        throw new Error('Failed to create new hire request: Unknown error');
       }
     }
   }
