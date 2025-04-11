@@ -23,22 +23,17 @@ class MSListService {
   }
 
   getMsalConfig() {
-    const redirectUri = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:63892'  // Use the actual port your app is running on
-      : window.location.origin;
-
     return {
       auth: {
         clientId: MS_GRAPH_CONFIG.clientId,
         authority: MS_GRAPH_CONFIG.authority,
-        redirectUri: redirectUri,
-        navigateToLoginRequestUrl: true,
-        postLogoutRedirectUri: redirectUri
+        redirectUri: window.location.origin,
+        postLogoutRedirectUri: window.location.origin,
+        navigateToLoginRequestUrl: true
       },
       cache: {
         cacheLocation: BrowserCacheLocation.SessionStorage,
-        storeAuthStateInCookie: true,
-        secureCookies: process.env.NODE_ENV !== 'development'
+        storeAuthStateInCookie: true
       },
       system: {
         allowNativeBroker: false,
@@ -84,15 +79,16 @@ class MSListService {
 
       // Ensure environment variables are loaded
       if (!window.__env__) {
-        throw new Error('Environment variables not loaded. Make sure env.js is loaded before the application.');
+        console.warn('Environment variables not loaded, using default configuration');
       }
 
-      // Create and initialize MSAL instance
-      const msalConfig = this.getMsalConfig();
-      this.msalInstance = new PublicClientApplication(msalConfig);
-      await this.msalInstance.initialize();
-      
-      console.log('MSAL instance initialized');
+      // Create and initialize MSAL instance if not already done
+      if (!this.msalInstance) {
+        const msalConfig = this.getMsalConfig();
+        this.msalInstance = new PublicClientApplication(msalConfig);
+        await this.msalInstance.initialize();
+        console.log('MSAL instance initialized');
+      }
 
       // Handle redirect response if present
       const response = await this.msalInstance.handleRedirectPromise();
@@ -101,42 +97,50 @@ class MSListService {
         this.msalInstance.setActiveAccount(response.account);
       }
 
-      // Get active account or login
+      // Get active account
       const accounts = this.msalInstance.getAllAccounts();
       let account = accounts[0];
 
-      if (!account) {
+      // Only proceed with login if we're not in the middle of a redirect
+      if (!account && !window.location.hash.includes('code=')) {
         console.log('No active account found, initiating login...');
         const loginRequest = {
           scopes: MS_GRAPH_CONFIG.scopes,
           prompt: 'select_account'
         };
 
-        // Always use redirect for login
+        // Start redirect login flow
         console.log('Starting redirect login flow...');
         await this.msalInstance.loginRedirect(loginRequest);
         return false; // Function will be called again after redirect
       }
 
-      this.msalInstance.setActiveAccount(account);
-      console.log('Active account set:', account.username);
+      if (account) {
+        this.msalInstance.setActiveAccount(account);
+        console.log('Active account set:', account.username);
 
-      // Initialize Graph client
-      const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
-        this.msalInstance,
-        {
-          account: account,
-          scopes: MS_GRAPH_CONFIG.scopes,
-          interactionType: InteractionType.Redirect // Change to redirect-based interaction
-        }
-      );
+        // Initialize Graph client
+        const authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+          this.msalInstance,
+          {
+            account: account,
+            scopes: MS_GRAPH_CONFIG.scopes,
+            interactionType: InteractionType.Redirect
+          }
+        );
 
-      this.graphClient = Client.initWithMiddleware({
-        authProvider: authProvider
-      });
+        this.graphClient = Client.initWithMiddleware({
+          authProvider: authProvider
+        });
 
-      this.initialized = true;
-      return true;
+        this.initialized = true;
+        return true;
+      }
+
+      // If we reach here without an account but after handling redirect,
+      // we're probably in an intermediate state - don't force another login
+      return false;
+
     } catch (error) {
       console.error('Failed to initialize MSListService:', error);
       this.initialized = false;
