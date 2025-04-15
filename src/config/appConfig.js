@@ -61,19 +61,22 @@ export const AUTHORIZED_USERS = {
   newHireRequestCreators: [
     "nathan@cloudmarc.com.au",
     "darren@cloudmarc.com.au",
-    "david@cloudmarc.com.au"
+    "david@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
   ],
   newHireRequestApprovers: [
     "nathan@cloudmarc.com.au",
     "darren@cloudmarc.com.au",
-    "david@cloudmarc.com.au"
+    "david@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
   ],
   cvConverterUsers: [
     "nathan@cloudmarc.com.au",
     "darren@cloudmarc.com.au",
     "david@cloudmarc.com.au",
     "rocket@cloudmarc.com.au",
-    "simon@cloudmarc.com.au"
+    "simon@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
   ]
 };
 

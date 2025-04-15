@@ -47,6 +47,7 @@ function App() {
         const userEmail = authData.clientPrincipal?.userDetails?.toLowerCase();
 
         const ALLOWED_USERS = [
+          'Nathan@cloudmarc.com.au',
           'nathan@cloudmarc.com.au',
           'ddallariva@cloudmarc.com.au',
           'rocket@cloudmarc.com.au',
