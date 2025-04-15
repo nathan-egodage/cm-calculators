@@ -9,12 +9,11 @@ env:
 on:
   push:
     branches:
-      - main
       - master
+      - feature/cv-convertor-module
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - main
       - master
 
 jobs:
@@ -67,3 +66,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_PEBBLE_0AECC5610 }}
           action: "close"
+          app_location: "/"
