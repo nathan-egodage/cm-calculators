@@ -3,19 +3,25 @@
     "identityProviders": {
       "azureActiveDirectory": {
         "registration": {
-          "openIdIssuer": "https://login.microsoftonline.com/{TENANT_ID}",
-          "clientIdSettingName": "AZURE_CLIENT_ID",
-          "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85",
+          "clientIdSettingName": "REACT_APP_CLIENT_ID",
+          "clientSecretSettingName": "REACT_APP_CLIENT_SECRET"
         },
         "userDetailsClaim": "preferred_username",
         "validate": {
-          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"],
+          "allowedAudiences": ["a35e23a4-3f4e-44ca-a75a-b90d177b1c47"],
           "allowedPrincipals": {
             "identities": [
               "nathan@cloudmarc.com.au",
               "Nathan@cloudmarc.com.au",
               "ddallariva@cloudmarc.com.au",
-              "rocket@cloudmarc.com.au"
+              "rocket@cloudmarc.com.au",
+              "dnewland@cloudmarc.com.au",
+              "dscanlon@cloudmarc.com.au",
+              "jgregory@cloudmarc.com.au",
+              "sbrownbill@cloudmarc.com.au",
+              "david@cloudmarc.com.au",
+              "simon@cloudmarc.com.au"
             ]
           }
         }
