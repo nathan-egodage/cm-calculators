@@ -36,9 +36,9 @@ module.exports = async function (context, req) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
+                body: {
                     error: "Please provide a file in the request body"
-                })
+                }
             };
             return;
         }
@@ -71,12 +71,27 @@ module.exports = async function (context, req) {
 
             busboy.on('finish', () => resolve());
             busboy.on('error', (error) => reject(error));
-
-            busboy.write(req.body);
-            busboy.end();
         });
 
-        await busboyPromise;
+        // Write the request body to busboy
+        try {
+            busboy.write(req.body);
+            busboy.end();
+            await busboyPromise;
+        } catch (error) {
+            context.log.error('Error parsing form data:', error);
+            context.res = {
+                status: 400,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: {
+                    error: "Failed to parse form data",
+                    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+                }
+            };
+            return;
+        }
 
         if (!fileBuffer) {
             context.res = {
@@ -84,9 +99,9 @@ module.exports = async function (context, req) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
+                body: {
                     error: "No file found in request"
-                })
+                }
             };
             return;
         }
@@ -238,15 +253,16 @@ module.exports = async function (context, req) {
     } catch (error) {
         context.log.error('Error in CV conversion:', error);
         
+        // Ensure we always return a proper JSON response
         context.res = {
             status: 500,
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
+            body: {
                 error: error.message || 'An error occurred during CV conversion',
                 details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-            })
+            }
         };
     }
 };

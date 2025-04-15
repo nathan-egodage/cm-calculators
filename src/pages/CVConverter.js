@@ -113,18 +113,33 @@ const CVConverter = () => {
 
       console.log('Response status:', response.status);
       let responseData;
+      let responseText;
       
       try {
-        const textData = await response.text();
-        console.log('Raw response:', textData);
-        responseData = JSON.parse(textData);
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        throw new Error('Invalid response from server');
+        responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        // Only try to parse as JSON if we have content
+        if (responseText.trim()) {
+          try {
+            responseData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            throw new Error('Server returned invalid JSON response');
+          }
+        } else {
+          throw new Error('Server returned empty response');
+        }
+      } catch (error) {
+        console.error('Error reading response:', error);
+        throw new Error('Failed to read server response');
       }
 
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to convert CV');
+        const errorMessage = responseData?.error || 'Server error occurred';
+        const errorDetails = responseData?.details;
+        console.error('Server error:', { message: errorMessage, details: errorDetails });
+        throw new Error(errorMessage);
       }
 
       if (!responseData.docxUrl || !responseData.pdfUrl) {
