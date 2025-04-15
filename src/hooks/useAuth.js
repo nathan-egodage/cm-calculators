@@ -7,7 +7,7 @@ const mockUser = {
   email: 'Nathan@cloudmarc.com.au'
 };
 
-export function useAuth() {
+function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,3 +60,6 @@ export function useAuth() {
 
   return { user, loading, error };
 }
+
+export { useAuth };
+export default useAuth;
