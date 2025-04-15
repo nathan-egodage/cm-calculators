@@ -33,10 +33,14 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Clean Install Dependencies
         run: |
-          npm ci --legacy-peer-deps
-          cd api && npm ci --legacy-peer-deps
+          rm -f package-lock.json
+          npm install --legacy-peer-deps
+          cd api
+          rm -f package-lock.json
+          npm install --legacy-peer-deps
+          cd ..
 
       - name: Build And Deploy
         id: builddeploy
