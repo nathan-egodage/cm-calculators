@@ -5,6 +5,7 @@ env:
   FORM_RECOGNIZER_ENDPOINT: ${{ secrets.FORM_RECOGNIZER_ENDPOINT }}
   FORM_RECOGNIZER_KEY: ${{ secrets.FORM_RECOGNIZER_KEY }}
   AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+  REACT_APP_API_URL: ''  # Empty for production as API is relative to current domain
   
 on:
   push:

@@ -96,8 +96,10 @@ const CVConverter = () => {
         formData.append('positionTitle', positionTitle);
       }
 
-      // Get the API URL from environment or use default
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:7071';
+      // Get the API URL from environment or use relative path for production
+      const API_URL = process.env.NODE_ENV === 'development' 
+        ? (process.env.REACT_APP_API_URL || 'http://localhost:7071')
+        : '';  // Empty string for production as API is relative to current domain
       console.log('Using API URL:', API_URL);
 
       console.log('Sending request to API...');
