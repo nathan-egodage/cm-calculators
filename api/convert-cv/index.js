@@ -26,14 +26,29 @@ function sanitizeText(text) {
 }
 
 module.exports = async function (context, req) {
-    context.log('CV Converter function processing a request.');
-    
-    // Log request details in development
-    if (process.env.NODE_ENV === 'development') {
-        context.log('Request headers:', req.headers);
-    }
-
     try {
+        // Log detailed request information
+        context.log({
+            message: 'CV Converter function processing request',
+            headers: req.headers,
+            contentType: req.headers['content-type'],
+            bodyLength: req.body ? req.body.length : 0,
+            method: req.method,
+            url: req.url
+        });
+
+        // Validate environment variables
+        const requiredEnvVars = [
+            'FORM_RECOGNIZER_ENDPOINT',
+            'FORM_RECOGNIZER_KEY',
+            'AZURE_STORAGE_CONNECTION_STRING'
+        ];
+
+        const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+        if (missingEnvVars.length > 0) {
+            throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+        }
+
         // Validate content type
         if (!req.headers['content-type']?.includes('multipart/form-data')) {
             context.log.error('Invalid content type:', req.headers['content-type']);
@@ -251,21 +266,34 @@ module.exports = async function (context, req) {
             }
         };
     } catch (error) {
-        context.log.error('Error processing CV:', error);
+        context.log.error('Error processing CV:', {
+            error: error.message,
+            stack: error.stack,
+            type: error.constructor.name
+        });
         
         // Determine appropriate status code
         const statusCode = error.statusCode || 
                           (error.message?.includes('validation') ? 400 : 500);
 
-        // Prepare error response
+        // Prepare error response with more details
         const errorResponse = {
             error: error.message || 'An unexpected error occurred',
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            type: error.constructor.name,
+            details: process.env.NODE_ENV === 'development' ? {
+                stack: error.stack,
+                cause: error.cause
+            } : undefined
         };
 
         context.res = {
             status: statusCode,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
             body: errorResponse
         };
     }
