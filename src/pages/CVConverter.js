@@ -107,7 +107,9 @@ const CVConverter = () => {
         method: 'POST',
         body: formData,
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          // Do not set Content-Type header when sending FormData,
+          // the browser will set it automatically with the correct boundary
         }
       });
 

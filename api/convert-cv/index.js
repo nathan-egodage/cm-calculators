@@ -26,81 +26,80 @@ function sanitizeText(text) {
 }
 
 module.exports = async function (context, req) {
-    context.log('Starting CV conversion process');
+    context.log('CV Converter function processing a request.');
     
+    // Log request details in development
+    if (process.env.NODE_ENV === 'development') {
+        context.log('Request headers:', req.headers);
+    }
+
     try {
-        // Check if file is provided
-        if (!req.body || !req.body.length) {
+        // Validate content type
+        if (!req.headers['content-type']?.includes('multipart/form-data')) {
+            context.log.error('Invalid content type:', req.headers['content-type']);
             context.res = {
                 status: 400,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: {
-                    error: "Please provide a file in the request body"
+                    error: 'Invalid content type. Expected multipart/form-data.',
+                    details: req.headers['content-type']
                 }
             };
             return;
         }
 
-        // Parse multipart form data using busboy
-        const busboy = Busboy({ headers: req.headers });
-        let fileBuffer;
-        let fileName;
+        // Initialize busboy
+        const bb = Busboy({ headers: req.headers });
+        let fileBuffer = null;
+        let fileName = '';
         let positionTitle = '';
         let accountManagerId = '';
+        let fileSize = 0;
 
-        const busboyPromise = new Promise((resolve, reject) => {
-            busboy.on('file', (fieldname, file, info) => {
-                const { filename } = info;
-                const chunks = [];
-                file.on('data', (chunk) => chunks.push(chunk));
-                file.on('end', () => {
-                    fileBuffer = Buffer.concat(chunks);
-                    fileName = filename;
-                });
+        // Handle file data
+        bb.on('file', (name, file, info) => {
+            context.log(`Processing file: ${info.filename}, encoding: ${info.encoding}, mimeType: ${info.mimeType}`);
+            const chunks = [];
+            
+            file.on('data', (chunk) => {
+                chunks.push(chunk);
+                fileSize += chunk.length;
+                context.log(`Received chunk of size: ${chunk.length} bytes`);
             });
 
-            busboy.on('field', (fieldname, val) => {
-                if (fieldname === 'positionTitle') {
-                    positionTitle = val;
-                } else if (fieldname === 'accountManager') {
-                    accountManagerId = val;
-                }
+            file.on('end', () => {
+                fileBuffer = Buffer.concat(chunks);
+                fileName = info.filename;
+                context.log(`File processing complete. Total size: ${fileSize} bytes`);
             });
-
-            busboy.on('finish', () => resolve());
-            busboy.on('error', (error) => reject(error));
         });
 
-        // Write the request body to busboy
-        try {
-            busboy.write(req.body);
-            busboy.end();
-            await busboyPromise;
-        } catch (error) {
-            context.log.error('Error parsing form data:', error);
-            context.res = {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: {
-                    error: "Failed to parse form data",
-                    details: process.env.NODE_ENV === 'development' ? error.message : undefined
-                }
-            };
-            return;
-        }
+        // Handle field data
+        bb.on('field', (name, val) => {
+            context.log(`Processing field: ${name}, value: ${val}`);
+            if (name === 'positionTitle') {
+                positionTitle = val;
+            } else if (name === 'accountManager') {
+                accountManagerId = val;
+            }
+        });
 
+        // Wait for busboy to finish
+        await new Promise((resolve, reject) => {
+            bb.on('finish', resolve);
+            bb.on('error', reject);
+            req.pipe(bb);
+        });
+
+        // Validate file
         if (!fileBuffer) {
+            context.log.error('No file received in request');
             context.res = {
                 status: 400,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: {
-                    error: "No file found in request"
+                    error: 'No file received in request',
+                    details: 'Please ensure a file is included in the form data'
                 }
             };
             return;
@@ -238,6 +237,7 @@ module.exports = async function (context, req) {
         await pdfBlockBlobClient.upload(convertedCV.pdf, convertedCV.pdf.length);
         const pdfSasUrl = await generateSasUrl(pdfBlockBlobClient);
 
+        // Return success response
         context.res = {
             status: 200,
             headers: {
@@ -251,18 +251,22 @@ module.exports = async function (context, req) {
             }
         };
     } catch (error) {
-        context.log.error('Error in CV conversion:', error);
+        context.log.error('Error processing CV:', error);
         
-        // Ensure we always return a proper JSON response
+        // Determine appropriate status code
+        const statusCode = error.statusCode || 
+                          (error.message?.includes('validation') ? 400 : 500);
+
+        // Prepare error response
+        const errorResponse = {
+            error: error.message || 'An unexpected error occurred',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        };
+
         context.res = {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: {
-                error: error.message || 'An error occurred during CV conversion',
-                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-            }
+            status: statusCode,
+            headers: { 'Content-Type': 'application/json' },
+            body: errorResponse
         };
     }
 };
