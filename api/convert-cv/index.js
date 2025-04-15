@@ -26,12 +26,19 @@ function sanitizeText(text) {
 }
 
 module.exports = async function (context, req) {
+    context.log('Starting CV conversion process');
+    
     try {
         // Check if file is provided
         if (!req.body || !req.body.length) {
             context.res = {
                 status: 400,
-                body: "Please provide a file in the request body"
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    error: "Please provide a file in the request body"
+                })
             };
             return;
         }
@@ -43,35 +50,43 @@ module.exports = async function (context, req) {
         let positionTitle = '';
         let accountManagerId = '';
 
-        busboy.on('file', (fieldname, file, info) => {
-            const { filename } = info;
-            const chunks = [];
-            file.on('data', (chunk) => chunks.push(chunk));
-            file.on('end', () => {
-                fileBuffer = Buffer.concat(chunks);
-                fileName = filename;
+        const busboyPromise = new Promise((resolve, reject) => {
+            busboy.on('file', (fieldname, file, info) => {
+                const { filename } = info;
+                const chunks = [];
+                file.on('data', (chunk) => chunks.push(chunk));
+                file.on('end', () => {
+                    fileBuffer = Buffer.concat(chunks);
+                    fileName = filename;
+                });
             });
-        });
 
-        busboy.on('field', (fieldname, val) => {
-            if (fieldname === 'positionTitle') {
-                positionTitle = val;
-            } else if (fieldname === 'accountManagerId') {
-                accountManagerId = val;
-            }
-        });
+            busboy.on('field', (fieldname, val) => {
+                if (fieldname === 'positionTitle') {
+                    positionTitle = val;
+                } else if (fieldname === 'accountManager') {
+                    accountManagerId = val;
+                }
+            });
 
-        await new Promise((resolve, reject) => {
-            busboy.on('finish', resolve);
-            busboy.on('error', reject);
+            busboy.on('finish', () => resolve());
+            busboy.on('error', (error) => reject(error));
+
             busboy.write(req.body);
             busboy.end();
         });
 
+        await busboyPromise;
+
         if (!fileBuffer) {
             context.res = {
                 status: 400,
-                body: "No file found in request"
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    error: "No file found in request"
+                })
             };
             return;
         }
@@ -221,14 +236,16 @@ module.exports = async function (context, req) {
             }
         };
     } catch (error) {
-        context.log.error("Error in CV conversion:", error);
+        context.log.error('Error in CV conversion:', error);
+        
         context.res = {
             status: 500,
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                error: error.message || "An error occurred while converting the CV"
+                error: error.message || 'An error occurred during CV conversion',
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
             })
         };
     }

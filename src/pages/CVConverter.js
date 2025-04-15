@@ -99,7 +99,7 @@ const CVConverter = () => {
       // Get the API URL from environment or use relative path for production
       const API_URL = process.env.NODE_ENV === 'development' 
         ? (process.env.REACT_APP_API_URL || 'http://localhost:7071')
-        : '';  // Empty string for production as API is relative to current domain
+        : '';
       console.log('Using API URL:', API_URL);
 
       console.log('Sending request to API...');
@@ -112,12 +112,19 @@ const CVConverter = () => {
       });
 
       console.log('Response status:', response.status);
+      let responseData;
       
-      const responseData = await response.json();
-      console.log('Response data:', responseData);
+      try {
+        const textData = await response.text();
+        console.log('Raw response:', textData);
+        responseData = JSON.parse(textData);
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Invalid response from server');
+      }
 
       if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to convert CV');
+        throw new Error(responseData.error || 'Failed to convert CV');
       }
 
       if (!responseData.docxUrl || !responseData.pdfUrl) {
@@ -131,7 +138,7 @@ const CVConverter = () => {
       setConversionComplete(true);
     } catch (err) {
       console.error('Conversion error:', err);
-      setError(err.message || 'Failed to convert CV');
+      setError(err.message || 'Failed to convert CV. Please try again.');
     } finally {
       setConverting(false);
     }
