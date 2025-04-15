@@ -33,24 +33,29 @@ function useAuth() {
           setLoading(false);
         } else {
           // Production: fetch real identity from Azure Static Web Apps
-          fetch("/.auth/me")
-            .then(res => res.json())
-            .then(data => {
-              const principal = data?.clientPrincipal;
-              if (principal) {
-                setUser(principal);
-              }
-              setLoading(false);
-            })
-            .catch(() => {
-              // Optional: fail-safe to still load the app
-              setLoading(false);
-            });
+          const response = await fetch("/.auth/me");
+          
+          if (response.status === 401 || response.status === 403) {
+            // User is not authenticated, redirect to login
+            window.location.href = "/.auth/login/aad?post_login_redirect_uri=" + encodeURIComponent(window.location.pathname);
+            return;
+          }
+
+          const data = await response.json();
+          const principal = data?.clientPrincipal;
+          
+          if (!principal) {
+            // No user data, redirect to login
+            window.location.href = "/.auth/login/aad?post_login_redirect_uri=" + encodeURIComponent(window.location.pathname);
+            return;
+          }
+
+          setUser(principal);
+          setLoading(false);
         }
       } catch (err) {
         console.error('Authentication error:', err);
         setError(err);
-      } finally {
         setLoading(false);
       }
     };
