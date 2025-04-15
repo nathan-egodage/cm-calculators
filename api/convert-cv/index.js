@@ -26,6 +26,10 @@ function sanitizeText(text) {
 }
 
 module.exports = async function (context, req) {
+    console.log('Function started');
+    console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Request body length:', req.body ? req.body.length : 0);
+    
     try {
         // Log detailed request information
         context.log({
