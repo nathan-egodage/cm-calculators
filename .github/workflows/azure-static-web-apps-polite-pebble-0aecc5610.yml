@@ -1,16 +1,20 @@
 name: Azure Static Web Apps CI/CD
 
 env:
-  CI: false   # ← change this to prevent warnings being treated as errors
-  REACT_APP_HELLOSIGN_API_KEY: ${{ secrets.REACT_APP_HELLOSIGN_API_KEY }}
+  CI: false   # Prevent warnings being treated as errors
+  FORM_RECOGNIZER_ENDPOINT: ${{ secrets.FORM_RECOGNIZER_ENDPOINT }}
+  FORM_RECOGNIZER_KEY: ${{ secrets.FORM_RECOGNIZER_KEY }}
+  AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
   
 on:
   push:
     branches:
+      - main
       - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
+      - main
       - master
 
 jobs:
@@ -23,18 +27,33 @@ jobs:
         with:
           submodules: true
           lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+          cd api && npm ci
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          FORM_RECOGNIZER_ENDPOINT: ${{ secrets.FORM_RECOGNIZER_ENDPOINT }}
+          FORM_RECOGNIZER_KEY: ${{ secrets.FORM_RECOGNIZER_KEY }}
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_PEBBLE_0AECC5610 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "./" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "build" # Built app content directory - optional
+          ###### Repository/Build Configurations ######
+          app_location: "/"
+          api_location: "api"
+          output_location: "build"
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
@@ -46,5 +65,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APP_API_TOKEN_POLITE_PEBBLE_0AECC5610 }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_POLITE_PEBBLE_0AECC5610 }}
           action: "close"

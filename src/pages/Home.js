@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from '../hooks/useAuth';
 import { APP_VERSION, AUTHORIZED_USERS, isUserAuthorized } from "../config/appConfig";
 
 const Home = () => {
   // Get the authenticated user
-  const { user, loaded } = useAuth();
+  const { user, loading, error } = useAuth();
   
   // State to track active category filter
   const [activeCategory, setActiveCategory] = useState("all");
   
   // Check if loading is still in progress
-  if (!loaded) {
+  if (loading) {
     return (
       <div className="auth-loading-container">
         <div className="auth-loading-spinner"></div>
@@ -47,6 +47,15 @@ const Home = () => {
       category: ["combined", "australia", "philippines", "offshore"],
       theme: "all-cals-theme",
       icon: "📊"
+    },
+    {
+      id: "cv-converter",
+      title: "CV Converter",
+      description: "Convert CVs to CloudMarc branded template using AI",
+      path: "/cv-converter",
+      category: ["tools", "documents"],
+      theme: "cloudmarc-theme",
+      icon: "📄"
     },
     {
       id: "hello-sign-documents",

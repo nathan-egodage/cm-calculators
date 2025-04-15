@@ -9,7 +9,7 @@ import ConsolidatedGpCalculator from '../calculators/ConsolidatedGpCalculator';
 import GenericOffshoreContractorGpCalculator from '../calculators/GenericOffshoreContractorGpCalculator';
 import AusWorkingDaysCalculator from '../calculators/AusWorkingDaysCalculator';
 import HelloSignDocuments from '../pages/HelloSignDocuments';
-
+import CVConverter from '../pages/CVConverter';
 import Home from '../pages/Home';
 import '../styles/App.css';
 import '../styles/HelloSignStyles.css';
@@ -97,6 +97,10 @@ function App() {
       <Routes>
         <Route path="/" element={
           authStatus.isAuthorized ? <Home /> : <Navigate to="/.auth/login/aad" state={{ from: '/' }} replace />
+        } />
+        
+        <Route path="/cv-converter" element={
+          authStatus.isAuthorized ? <CVConverter /> : <Navigate to="/.auth/login/aad" state={{ from: '/cv-converter' }} replace />
         } />
         
         <Route path="/bdm-calculator-v2" element={

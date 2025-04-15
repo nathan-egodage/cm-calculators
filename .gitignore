@@ -1,38 +1,126 @@
-# Node modules
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Build output
-build/
+# testing
+/coverage
 
-# Local environment variables
+# production
+/build
+
+# misc
+.DS_Store
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.development
+.env.production
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Azure Functions artifacts
+bin
+obj
+appsettings.json
+local.settings.json
+
+# Azurite artifacts
+__blobstorage__
+__queuestorage__
+__azurite_db_*.json
+AzuriteConfig
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Backup files
+backup/
+*.bak
+*.backup
 
 # System files
 .DS_Store
 Thumbs.db
 
+# Node.js dependencies
+node_modules/
+
+# Environment variables
+.env.*.local
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IDE - JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# macOS
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Desktop.ini
+
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Build output
+dist/
+out/
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Blob storage temp files
+converted-cvs/
+
+# Debug files
+*.debug
+debug/
+
+# SSL certificates
+*.pem
+*.key
+*.crt
 
 # Optional editor folders
 .vscode/
 .idea/
 
-# Test coverage
-coverage/
-
-# MacOS metadata
-*.DS_Store
-
 # Git files
 *.swp
 *.swo
 
-# Backup files
-backup/
+# sample CV's
+sample-cv/
+
+api/local.settings.json
