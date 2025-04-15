@@ -13,6 +13,7 @@
           "allowedPrincipals": {
             "identities": [
               "nathan@cloudmarc.com.au",
+              "Nathan@cloudmarc.com.au",
               "ddallariva@cloudmarc.com.au",
               "rocket@cloudmarc.com.au"
             ]
