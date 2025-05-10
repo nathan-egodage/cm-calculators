@@ -1,34 +1,48 @@
 {
   "name": "bdm-commission-calculator-app",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.8.4",
-    "crypto-browserify": "^3.12.1",
-    "os-browserify": "^0.3.0",
-    "path-browserify": "^1.0.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.4.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
-  },
+  "version": "1.0.0",
+  "description": "CloudMarc CV Converter and Commission Calculator Application",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:api": "cd api && func start",
+    "build:api": "cd api && npm install",
+    "clean": "rm -rf node_modules && cd api && rm -rf node_modules",
+    "postinstall": "npm run build:api"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "dependencies": {
+    "@azure/msal-browser": "^2.38.0",
+    "@azure/msal-react": "^1.5.9",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.6.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router": "^6.11.1",
+    "react-router-dom": "^6.11.1",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
   },
+  "overrides": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "cloudmarc",
+    "cv",
+    "converter",
+    "azure",
+    "functions"
+  ],
+  "author": "CloudMarc",
+  "license": "UNLICENSED",
+  "private": true,
   "browserslist": {
     "production": [
       ">0.2%",

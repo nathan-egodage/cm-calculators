@@ -1,0 +1,38 @@
+[
+    {
+        "id": "ddallariva",
+        "name": "Darren Dalla Riva",
+        "email": "ddallariva@cloudmarc.com.au",
+        "phone": "+61 419 588 394"
+    },
+    {
+        "id": "dscanlon",
+        "name": "David Scanlon",
+        "email": "dscanlon@cloudmarc.com.au",
+        "phone": "+61 414 449 300"
+    },
+    {
+        "id": "jgregory",
+        "name": "James Gregory",
+        "email": "jgregory@cloudmarc.com.au",
+        "phone": "+61 466 230 611"
+    },
+    {
+        "id": "negodage",
+        "name": "Nathan Egodage",
+        "email": "nathan@cloudmarc.com.au",
+        "phone": "+61 450 057 155"
+    },
+    {
+        "id": "rilukpitiya",
+        "name": "Rocket Ilukpitiya",
+        "email": "rocket@cloudmarc.com.au",
+        "phone": "+61 433 359 151"
+    },
+    {
+        "id": "sbrownbill",
+        "name": "Simon Brownbill",
+        "email": "sbrownbill@cloudmarc.com.au",
+        "phone": "+61 425 712 376"
+    }
+] 

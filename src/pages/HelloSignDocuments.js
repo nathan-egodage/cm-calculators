@@ -1,7 +1,7 @@
 // src/pages/HelloSignDocuments.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import HelloSignService from '../services/HelloSignService';
 import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
@@ -9,13 +9,13 @@ const AUTH_HEADER = `Basic ${process.env.HELLOSIGN_API_KEY}`;
 
 const HelloSignDocuments = () => {
   // Get the authenticated user
-  const { user, loaded } = useAuth();
+  const { user, loading: authLoading, error: authError } = useAuth();
   
   // State for signature requests
   const [signatureRequests, setSignatureRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [rawApiResponse, setRawApiResponse] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
   // Filter states
@@ -34,7 +34,7 @@ const HelloSignDocuments = () => {
   // Fetch signature requests when component mounts
   useEffect(() => {
     const fetchData = async () => {
-      if (!loaded || !isAuthorized()) return;
+      if (authLoading || !isAuthorized()) return;
       
       try {
         setLoading(true);
@@ -72,7 +72,7 @@ const HelloSignDocuments = () => {
     return () => {
       // Any cleanup needed when component unmounts
     };
-  }, [loaded, user]); // Only run on initial load and auth changes
+  }, [authLoading, user]); // Only run on initial load and auth changes
 
   // Apply filters when filter values change
   useEffect(() => {
@@ -153,8 +153,8 @@ const HelloSignDocuments = () => {
     return 'AUD$ ***.00';
   };
 
-  // Loading state
-  if (!loaded) {
+  // Check if authentication is still in progress
+  if (authLoading) {
     return (
       <div className="auth-loading-container">
         <div className="auth-loading-spinner"></div>

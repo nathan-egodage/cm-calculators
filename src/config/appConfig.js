@@ -2,8 +2,8 @@
 
 // Version information
 export const APP_VERSION = {
-  number: "V2.0.1", 
-  date: "01-Apr-2025",
+  number: "1.0.0",
+  date: "2024-04-11",
   owner: "Nathan Egodage",
   repository: "https://github.com/nathan-egodage/cm-calculators.git"
 };
@@ -56,6 +56,27 @@ export const AUTHORIZED_USERS = {
     "Nathan@cloudmarc.com.au",
     "rocket@cloudmarc.com.au",
     "sbrownbill@cloudmarc.com.au"
+  ],
+
+  newHireRequestCreators: [
+    "nathan@cloudmarc.com.au",
+    "darren@cloudmarc.com.au",
+    "david@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
+  ],
+  newHireRequestApprovers: [
+    "nathan@cloudmarc.com.au",
+    "darren@cloudmarc.com.au",
+    "david@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
+  ],
+  cvConverterUsers: [
+    "nathan@cloudmarc.com.au",
+    "darren@cloudmarc.com.au",
+    "david@cloudmarc.com.au",
+    "rocket@cloudmarc.com.au",
+    "simon@cloudmarc.com.au",
+    "Nathan@cloudmarc.com.au"
   ]
 };
 
