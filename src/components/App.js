@@ -48,9 +48,9 @@ function App() {
 
         const ALLOWED_USERS = [
           'nathan@cloudmarc.com.au',
-          'ddallariva@cloudmarc.com.au',
           'rocket@cloudmarc.com.au',
-          'dnewland@cloudmarc.com.au',
+          'ddallariva@cloudmarc.com.au',
+          'dlessa@cloudmarc.com.au',
           'dscanlon@cloudmarc.com.au',
           'jgregory@cloudmarc.com.au',
           'sbrownbill@cloudmarc.com.au'
