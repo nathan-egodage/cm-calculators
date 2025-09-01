@@ -3,18 +3,25 @@
     "identityProviders": {
       "azureActiveDirectory": {
         "registration": {
-          "clientIdSettingName": "AAD_CLIENT_ID",
-          "clientSecretSettingName": "AAD_CLIENT_SECRET",
-          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85/v2.0"
+          "openIdIssuer": "https://login.microsoftonline.com/000a8b0a-e54c-4a59-8346-e7268038cd85",
+          "clientIdSettingName": "REACT_APP_CLIENT_ID",
+          "clientSecretSettingName": "REACT_APP_CLIENT_SECRET"
         },
         "userDetailsClaim": "preferred_username",
         "validate": {
-          "allowedAudiences": ["5feffca4-2086-4129-8680-29c2207d0edb"],
+          "allowedAudiences": ["a35e23a4-3f4e-44ca-a75a-b90d177b1c47"],
           "allowedPrincipals": {
             "identities": [
               "nathan@cloudmarc.com.au",
+              "Nathan@cloudmarc.com.au",
               "ddallariva@cloudmarc.com.au",
-              "rocket@cloudmarc.com.au"
+              "rocket@cloudmarc.com.au",
+              "dnewland@cloudmarc.com.au",
+              "dscanlon@cloudmarc.com.au",
+              "jgregory@cloudmarc.com.au",
+              "sbrownbill@cloudmarc.com.au",
+              "david@cloudmarc.com.au",
+              "simon@cloudmarc.com.au"
             ]
           }
         }
@@ -23,45 +30,46 @@
   },
   "routes": [
     {
-      "route": "/.auth/*",
-      "allowedRoles": ["anonymous"]
+      "route": "/api/convert-cv",
+      "methods": ["POST"],
+      "allowedRoles": ["authenticated"]
     },
     {
-      "route": "/assets/*",
-      "allowedRoles": ["anonymous"]
+      "route": "/api/*",
+      "methods": ["GET", "POST", "PUT", "DELETE"],
+      "allowedRoles": ["authenticated"]
     },
     {
-      "route": "/error",
-      "allowedRoles": ["anonymous"]
+      "route": "/login",
+      "rewrite": "/.auth/login/aad"
+    },
+    {
+      "route": "/logout",
+      "redirect": "/.auth/logout"
     },
     {
       "route": "/*",
-      "allowedRoles": ["authenticated"],
-      "rules": [
-        {
-          "match": "roles",
-          "principals": [
-            "nathan@cloudmarc.com.au",
-            "ddallariva@cloudmarc.com.au",
-            "rocket@cloudmarc.com.au"
-          ],
-          "requireAllRoles": false
-        }
-      ]
+      "serve": "/index.html",
+      "statusCode": 200
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*", "/css/*", "/js/*", "/assets/*", "/.auth/*"]
+    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/api/*"]
   },
   "responseOverrides": {
     "401": {
-      "redirect": "/.auth/login/aad",
+      "redirect": "/login",
       "statusCode": 302
     },
     "403": {
       "redirect": "/error?code=403",
       "statusCode": 302
     }
+  },
+  "globalHeaders": {
+    "content-security-policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: ws:;",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-XSS-Protection": "1; mode=block"
   }
 }
