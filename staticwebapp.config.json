@@ -14,7 +14,8 @@
             "identities": [
               "nathan@cloudmarc.com.au",
               "ddallariva@cloudmarc.com.au",
-              "rocket@cloudmarc.com.au"
+              "rocket@cloudmarc.com.au",
+              "cnicholls@cloudmarc.com.au"
             ]
           }
         }
@@ -43,7 +44,8 @@
           "principals": [
             "nathan@cloudmarc.com.au",
             "ddallariva@cloudmarc.com.au",
-            "rocket@cloudmarc.com.au"
+            "rocket@cloudmarc.com.au",
+            "cnicholls@cloudmarc.com.au"
           ],
           "requireAllRoles": false
         }
