@@ -15,7 +15,8 @@
               "nathan@cloudmarc.com.au",
               "ddallariva@cloudmarc.com.au",
               "rocket@cloudmarc.com.au",
-              "cnicholls@cloudmarc.com.au"
+              "cnicholls@cloudmarc.com.au",
+              "skalpani@cloudmarc.com.au"
             ]
           }
         }
@@ -45,7 +46,8 @@
             "nathan@cloudmarc.com.au",
             "ddallariva@cloudmarc.com.au",
             "rocket@cloudmarc.com.au",
-            "cnicholls@cloudmarc.com.au"
+            "cnicholls@cloudmarc.com.au",
+            "skalpani@cloudmarc.com.au"
           ],
           "requireAllRoles": false
         }
