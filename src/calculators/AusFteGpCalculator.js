@@ -11,6 +11,7 @@ const AusFteGpCalculator = () => {
   
   // State for configuration settings
   const [payrollTaxApplicable, setPayrollTaxApplicable] = useState('Y');
+  const [state, setState] = useState('VIC');
   const [workcover, setWorkcover] = useState('Y');
   const [leaveMovements, setLeaveMovements] = useState('Y');
   const [lslMovements, setLslMovements] = useState('Y');
@@ -35,7 +36,17 @@ const AusFteGpCalculator = () => {
   const [annualRevenue, setAnnualRevenue] = useState(0);
 
   // Constants for calculations
-  const PAYROLL_TAX_RATE = 0.0485;
+  const PAYROLL_TAX_RATES = {
+    'VIC': 0.0585,
+    'NSW': 0.0485,
+    'QLD': 0.0485,
+    'SA': 0.0485,
+    'WA': 0.0485,
+    'TAS': 0.0485
+  };
+  
+  const getPayrollTaxRate = () => PAYROLL_TAX_RATES[state] || 0.0485;
+  
   const WORKCOVER_RATE = 0.0055;
   const LEAVE_MOVEMENTS_RATE = 0.0050;
   const LSL_MOVEMENTS_RATE = 0.0005;
@@ -47,7 +58,8 @@ const AusFteGpCalculator = () => {
     salaryPackage, 
     targetMarginPercent, 
     dailyClientRate, 
-    payrollTaxApplicable, 
+    payrollTaxApplicable,
+    state, 
     workcover, 
     leaveMovements, 
     lslMovements, 
@@ -59,8 +71,9 @@ const AusFteGpCalculator = () => {
 
   // Function to handle the main calculations
   const calculateValues = () => {
-    // Calculate payroll tax if applicable
-    const payrollTaxValue = payrollTaxApplicable === 'Y' ? salaryPackage * PAYROLL_TAX_RATE : 0;
+    // Calculate payroll tax based on selected state (if applicable)
+    const currentPayrollTaxRate = getPayrollTaxRate();
+    const payrollTaxValue = payrollTaxApplicable === 'Y' ? salaryPackage * currentPayrollTaxRate : 0;
     setPayrollTax(payrollTaxValue);
 
     // Calculate workcover if applicable
@@ -77,7 +90,7 @@ const AusFteGpCalculator = () => {
 
     // Calculate total extra cost percentage
     const totalExtraPercent = 
-      (payrollTaxApplicable === 'Y' ? PAYROLL_TAX_RATE : 0) +
+      (payrollTaxApplicable === 'Y' ? currentPayrollTaxRate : 0) +
       (workcover === 'Y' ? WORKCOVER_RATE : 0) +
       (leaveMovements === 'Y' ? LEAVE_MOVEMENTS_RATE : 0) +
       (lslMovements === 'Y' ? LSL_MOVEMENTS_RATE : 0);
@@ -242,6 +255,24 @@ const AusFteGpCalculator = () => {
                 </select>
               </div>
               
+              <div style={{ flex: "1 1 50%" }}>
+                <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>State</label>
+                <select 
+                  value={state} 
+                  onChange={(e) => setState(e.target.value)}
+                  style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px" }}
+                >
+                  <option value="VIC">VIC</option>
+                  <option value="NSW">NSW</option>
+                  <option value="QLD">QLD</option>
+                  <option value="SA">SA</option>
+                  <option value="WA">WA</option>
+                  <option value="TAS">TAS</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
               <div style={{ flex: "1 1 50%" }}>
                 <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>Workcover</label>
                 <select 
@@ -449,7 +480,7 @@ const AusFteGpCalculator = () => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <tbody>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                <td style={{ padding: "4px 8px" }}>Payroll Tax ({formatPercent(PAYROLL_TAX_RATE * 100)})</td>
+                <td style={{ padding: "4px 8px" }}>Payroll Tax ({formatPercent(getPayrollTaxRate() * 100)})</td>
                 <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCurrency(payrollTax)}</td>
               </tr>
               <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
