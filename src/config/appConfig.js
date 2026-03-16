@@ -37,7 +37,8 @@ export const AUTHORIZED_USERS = {
     "jgregory@cloudmarc.com.au",
     "sbrownbill@cloudmarc.com.au",
     "cnicholls@cloudmarc.com.au",
-    "skalpani@cloudmarc.com.au"
+    "skalpani@cloudmarc.com.au",
+    "stu@cloudmarc.com.au"
   ],
   
   // Users who can access the BDM calculator
@@ -60,7 +61,8 @@ export const AUTHORIZED_USERS = {
     "jgregory@cloudmarc.com.au",
     "sbrownbill@cloudmarc.com.au",
     "cnicholls@cloudmarc.com.au",
-    "skalpani@cloudmarc.com.au"
+    "skalpani@cloudmarc.com.au",
+    "stu@cloudmarc.com.au"
   ]
 };
 
