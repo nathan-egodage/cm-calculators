@@ -49,6 +49,7 @@ const ConsolidatedGpCalculator = () => {
   // API status tracking
   const [apiStatus, setApiStatus] = useState(null);
   const [isApiLoading, setIsApiLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
   
   // Additional state for FTE calculators
   const [thirteenthMonthPay, setThirteenthMonthPay] = useState('Y');
@@ -123,33 +124,34 @@ const ConsolidatedGpCalculator = () => {
     if (!currencyCode) return;
     
     setIsApiLoading(true);
+    setApiError(null);
     try {
-      const response = await fetch(`https://api.frankfurter.app/latest?from=AUD&to=${currencyCode}`);
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/AUD');
       setApiStatus(response.status);
       
       if (response.ok) {
         const data = await response.json();
-        // Calculate currency/AUD rate as 1 / (rate from API)
-        const newRate = 1 / data.rates[currencyCode];
-        
-        if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
-          setPhpRate(parseFloat(newRate.toFixed(5)));
-        } else if (calculatorType === 'offshore') {
-          // For offshore, we use the common exchange rate variable
-          setPhpRate(parseFloat(newRate.toFixed(5))); // We're reusing the phpRate variable
+        if (data && data.rates && data.rates[currencyCode]) {
+          // Calculate currency/AUD rate as 1 / (rate from API)
+          const newRate = 1 / data.rates[currencyCode];
+          
+          if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
+            setPhpRate(parseFloat(newRate.toFixed(5)));
+          } else if (calculatorType === 'offshore') {
+            // For offshore, we use the common exchange rate variable
+            setPhpRate(parseFloat(newRate.toFixed(6))); // We're reusing the phpRate variable
+          }
+          setApiError(null);
+        } else {
+          throw new Error('Invalid API response format');
         }
       } else {
-        console.error('API returned error status:', response.status);
-        // Use the default fallback rate
-        if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
-          setPhpRate(EXCHANGE_RATES.PHP);
-        } else if (calculatorType === 'offshore') {
-          setPhpRate(EXCHANGE_RATES[currencyCode] || 0.01); // Fallback rate
-        }
+        throw new Error(`API returned status ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
       setApiStatus(500);
+      setApiError('Unable to fetch exchange rate. Please update manually or click Retry.');
       // Use the default fallback rate
       if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
         setPhpRate(EXCHANGE_RATES.PHP);
@@ -614,8 +616,9 @@ const ConsolidatedGpCalculator = () => {
   // Get API status indicator to display alongside the exchange rate
   const getApiStatusIndicator = () => {
     if (isApiLoading) return '(Loading...)';
-    if (apiStatus === null) return '';
-    return `(Status: ${apiStatus})`;
+    if (apiStatus === 200) return '✓ Live Rate';
+    if (apiStatus) return `(Status: ${apiStatus})`;
+    return '';
   };
 
   const currentTheme = getCurrentTheme();
@@ -923,27 +926,83 @@ const ConsolidatedGpCalculator = () => {
                 <div style={{ flex: "1 1 50%" }}>
                   <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                     {calculatorType.startsWith('php') ? 'PHP/AUD' : `${currency}/AUD`} <span style={{ 
-                      color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
+                      color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280"),
+                      fontSize: "0.75rem"
                     }}>{getApiStatusIndicator()}</span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.00001"
-                    value={phpRate.toFixed(5)}
-                    onChange={(e) => handleRateChange(e.target.value)}
-                    style={{ 
-                      padding: "6px", 
-                      fontSize: "0.85rem", 
-                      width: "100%", 
-                      border: "1px solid #d1d5db", 
-                      borderRadius: "4px",
-                      backgroundColor: "white",
-                      color: "black"
-                    }}
-                  />
+                  <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                    <input
+                      type="text"
+                      value={phpRate ? phpRate.toFixed(calculatorType.startsWith('php') ? 5 : 6) : (calculatorType.startsWith('php') ? "0.02800" : EXCHANGE_RATES[currency]?.toFixed(6))}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value) && value > 0) {
+                          handleRateChange(e.target.value);
+                        } else if (e.target.value === "") {
+                          const defaultRate = calculatorType.startsWith('php') ? 0.028 : (EXCHANGE_RATES[currency] || 0.01);
+                          setPhpRate(defaultRate);
+                        }
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      onBlur={(e) => {
+                        if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                          const defaultRate = calculatorType.startsWith('php') ? 0.028 : (EXCHANGE_RATES[currency] || 0.01);
+                          setPhpRate(defaultRate);
+                        }
+                      }}
+                      placeholder={calculatorType.startsWith('php') ? "0.02800" : EXCHANGE_RATES[currency]?.toString()}
+                      style={{ 
+                        padding: "6px 8px", 
+                        fontSize: "0.9rem", 
+                        flex: 1,
+                        border: "2px solid #d1d5db", 
+                        borderRadius: "4px",
+                        backgroundColor: "white",
+                        color: "#111",
+                        fontWeight: "500",
+                        fontFamily: "monospace"
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const currencyCode = calculatorType.startsWith('php') ? 'PHP' : currency;
+                        fetchExchangeRate(currencyCode);
+                      }}
+                      disabled={isApiLoading}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "0.75rem",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "4px",
+                        backgroundColor: isApiLoading ? "#f3f4f6" : "#fff",
+                        cursor: isApiLoading ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap"
+                      }}
+                      title="Refresh exchange rate"
+                    >
+                      {isApiLoading ? "Loading..." : "↻ Retry"}
+                    </button>
+                  </div>
+                  {apiError && (
+                    <div style={{ 
+                      fontSize: "0.75rem", 
+                      color: "#ef4444", 
+                      marginTop: "4px",
+                      padding: "4px 8px",
+                      backgroundColor: "#fee2e2",
+                      borderRadius: "4px"
+                    }}>
+                      {apiError}
+                    </div>
+                  )}
                   {isApiLoading && (
                     <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
                       Fetching latest exchange rate...
+                    </div>
+                  )}
+                  {apiStatus === 200 && !isApiLoading && !apiError && (
+                    <div style={{ fontSize: "0.75rem", color: "#22c55e", marginTop: "2px" }}>
+                      Exchange rate updated successfully
                     </div>
                   )}
                 </div>

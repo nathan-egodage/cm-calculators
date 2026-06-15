@@ -12,6 +12,7 @@ const GenericOffshoreContractorGpCalculator = () => {
   // State for API status
   const [apiStatus, setApiStatus] = useState(null);
   const [apiStatusCode, setApiStatusCode] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
   // State for form inputs and calculated values
   const [monthlyLocalSalary, setMonthlyLocalSalary] = useState(84210);
@@ -74,9 +75,11 @@ const GenericOffshoreContractorGpCalculator = () => {
 
   // Function to fetch exchange rate from API
   const fetchExchangeRate = async (currencyCode) => {
+    setApiStatus('loading');
+    setApiError(null);
     try {
-      setApiStatus('loading');
-      const response = await fetch(`https://api.frankfurter.app/latest?from=AUD&to=${currencyCode}`);
+      // Try primary API: exchangerate-api.com (free, no key required)
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/AUD');
       setApiStatusCode(response.status);
       
       if (!response.ok) {
@@ -90,16 +93,18 @@ const GenericOffshoreContractorGpCalculator = () => {
         const newRate = parseFloat((1 / data.rates[currencyCode]).toFixed(6));
         setExchangeRate(newRate);
         setApiStatus('success');
+        setApiError(null);
       } else {
         throw new Error('Invalid API response format');
       }
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
       setApiStatus('error');
+      setApiStatusCode(500);
+      setApiError('Unable to fetch exchange rate. Please update manually or click Retry.');
       // Fall back to default exchange rate
       setExchangeRate(EXCHANGE_RATES[currencyCode]);
     }
-
   };
 
   // Effect to handle country selection
@@ -432,22 +437,82 @@ const GenericOffshoreContractorGpCalculator = () => {
                   <span style={{ 
                     marginLeft: "8px", 
                     fontSize: "0.75rem", 
-                    color: apiStatus === 'success' ? "green" : apiStatus === 'error' ? "red" : "gray" 
+                    color: apiStatus === 'success' ? "#22c55e" : apiStatus === 'error' ? "#ef4444" : "#6b7280"
                   }}>
-                    (API Status: {apiStatusCode})
+                    {apiStatus === 'success' ? '✓ Live Rate' : `(Status: ${apiStatusCode})`}
                   </span>
                 )}
               </label>
-              <input
-                type="number"
-                step="0.000001"
-                value={exchangeRate}
-                className="calculated-input"
-                onChange={(e) =>
-                  setExchangeRate(parseFloat(e.target.value) || 0)
-                }
-                style={{ padding: "6px", fontSize: "0.85rem", width: "100%", border: "1px solid #d1d5db", borderRadius: "4px", }}
-              />
+              <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  value={exchangeRate ? exchangeRate.toFixed(6) : EXCHANGE_RATES[currency]?.toFixed(6)}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      setExchangeRate(value);
+                    } else if (e.target.value === "") {
+                      setExchangeRate(EXCHANGE_RATES[currency] || 0.01);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={(e) => {
+                    if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                      setExchangeRate(EXCHANGE_RATES[currency] || 0.01);
+                    }
+                  }}
+                  placeholder={EXCHANGE_RATES[currency]?.toString()}
+                  style={{ 
+                    padding: "6px 8px", 
+                    fontSize: "0.9rem", 
+                    flex: 1,
+                    border: "2px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white",
+                    color: "#111",
+                    fontWeight: "500",
+                    fontFamily: "monospace"
+                  }}
+                />
+                <button
+                  onClick={() => fetchExchangeRate(currency)}
+                  disabled={apiStatus === 'loading'}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.75rem",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "4px",
+                    backgroundColor: apiStatus === 'loading' ? "#f3f4f6" : "#fff",
+                    cursor: apiStatus === 'loading' ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap"
+                  }}
+                  title="Refresh exchange rate"
+                >
+                  {apiStatus === 'loading' ? "Loading..." : "↻ Retry"}
+                </button>
+              </div>
+              {apiError && (
+                <div style={{ 
+                  fontSize: "0.75rem", 
+                  color: "#ef4444", 
+                  marginTop: "4px",
+                  padding: "4px 8px",
+                  backgroundColor: "#fee2e2",
+                  borderRadius: "4px"
+                }}>
+                  {apiError}
+                </div>
+              )}
+              {apiStatus === 'loading' && (
+                <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
+                  Fetching latest exchange rate...
+                </div>
+              )}
+              {apiStatus === 'success' && !apiError && (
+                <div style={{ fontSize: "0.75rem", color: "#22c55e", marginTop: "2px" }}>
+                  Exchange rate updated successfully
+                </div>
+              )}
             </div>
 
             <div className="form-group" style={{ display: "none" }}>

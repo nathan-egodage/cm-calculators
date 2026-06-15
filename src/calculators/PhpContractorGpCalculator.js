@@ -14,6 +14,7 @@ const PhpContractorGpCalculator = () => {
   // API status tracking
   const [apiStatus, setApiStatus] = useState(null);
   const [isApiLoading, setIsApiLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
   
   // State for input mode
   const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'
@@ -54,33 +55,39 @@ const PhpContractorGpCalculator = () => {
 
   // Fetch exchange rate from API when component mounts
   useEffect(() => {
-    const fetchExchangeRate = async () => {
-      setIsApiLoading(true);
-      try {
-        const response = await fetch('https://api.frankfurter.app/latest?from=AUD&to=PHP');
-        setApiStatus(response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
+    fetchExchangeRate();
+  }, []);
+
+  const fetchExchangeRate = async () => {
+    setIsApiLoading(true);
+    setApiError(null);
+    try {
+      // Try primary API: exchangerate-api.com (free, no key required)
+      const response = await fetch('https://api.exchangerate-api.com/v4/latest/AUD');
+      setApiStatus(response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.rates && data.rates.PHP) {
           // Calculate PHP/AUD rate as 1 / (rate from API)
           const newRate = 1 / data.rates.PHP;
           setPhpRate(parseFloat(newRate.toFixed(5)));
+          setApiError(null);
         } else {
-          // If API call fails, use the default rate
-          console.error('API returned error status:', response.status);
-          // Keep the default rate (0.02800)
+          throw new Error('Invalid response format');
         }
-      } catch (error) {
-        console.error('Error fetching exchange rate:', error);
-        setApiStatus(500);
-        // Keep the default rate (0.02800)
-      } finally {
-        setIsApiLoading(false);
+      } else {
+        throw new Error(`API returned status ${response.status}`);
       }
-    };
-
-    fetchExchangeRate();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      setApiStatus(500);
+      setApiError('Unable to fetch exchange rate. Please update manually or click Retry.');
+      // Keep the default rate (0.02800)
+    } finally {
+      setIsApiLoading(false);
+    }
+  };
 
   // Effect to handle conversion between daily rate and PHP monthly salary
   useEffect(() => {
@@ -282,8 +289,9 @@ const PhpContractorGpCalculator = () => {
   // Get API status indicator to display alongside the exchange rate
   const getApiStatusIndicator = () => {
     if (isApiLoading) return '(Loading...)';
-    if (apiStatus === null) return '';
-    return `(API Status: ${apiStatus})`;
+    if (apiStatus === 200) return '✓ Live Rate';
+    if (apiStatus) return `(Status: ${apiStatus})`;
+    return '';
   };
 
   // Format currency with AUD$ prefix and 2 decimal points
@@ -493,27 +501,78 @@ const PhpContractorGpCalculator = () => {
             <div style={{ marginBottom: "8px" }}>
               <label style={{ fontSize: "0.85rem", marginBottom: "4px", display: "block" }}>
                 PHP/AUD <span style={{ 
-                  color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280")
+                  color: apiStatus === 200 ? "#22c55e" : (apiStatus ? "#ef4444" : "#6b7280"),
+                  fontSize: "0.75rem"
                 }}>{getApiStatusIndicator()}</span>
               </label>
-              <input
-                type="number"
-                step="0.00001"
-                value={phpRate.toFixed(5)}
-                onChange={(e) => handlePhpRateChange(e.target.value)}
-                style={{ 
-                  padding: "6px", 
-                  fontSize: "0.85rem", 
-                  width: "100%", 
-                  border: "1px solid #d1d5db", 
-                  borderRadius: "4px",
-                  backgroundColor: "white",
-                  color: "black"
-                }}
-              />
+              <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  value={phpRate ? phpRate.toFixed(5) : "0.02800"}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      handlePhpRateChange(e.target.value);
+                    } else if (e.target.value === "") {
+                      setPhpRate(0.028);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={(e) => {
+                    if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                      setPhpRate(0.028);
+                    }
+                  }}
+                  placeholder="0.02800"
+                  style={{ 
+                    padding: "6px 8px", 
+                    fontSize: "0.9rem", 
+                    flex: 1,
+                    border: "2px solid #d1d5db", 
+                    borderRadius: "4px",
+                    backgroundColor: "white",
+                    color: "#111",
+                    fontWeight: "500",
+                    fontFamily: "monospace"
+                  }}
+                />
+                <button
+                  onClick={fetchExchangeRate}
+                  disabled={isApiLoading}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "0.75rem",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "4px",
+                    backgroundColor: isApiLoading ? "#f3f4f6" : "#fff",
+                    cursor: isApiLoading ? "not-allowed" : "pointer",
+                    whiteSpace: "nowrap"
+                  }}
+                  title="Refresh exchange rate"
+                >
+                  {isApiLoading ? "Loading..." : "↻ Retry"}
+                </button>
+              </div>
+              {apiError && (
+                <div style={{ 
+                  fontSize: "0.75rem", 
+                  color: "#ef4444", 
+                  marginTop: "4px",
+                  padding: "4px 8px",
+                  backgroundColor: "#fee2e2",
+                  borderRadius: "4px"
+                }}>
+                  {apiError}
+                </div>
+              )}
               {isApiLoading && (
                 <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>
                   Fetching latest exchange rate...
+                </div>
+              )}
+              {apiStatus === 200 && !isApiLoading && (
+                <div style={{ fontSize: "0.75rem", color: "#22c55e", marginTop: "2px" }}>
+                  Exchange rate updated successfully
                 </div>
               )}
             </div>
