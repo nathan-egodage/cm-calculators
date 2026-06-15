@@ -20,8 +20,8 @@ const ConsolidatedGpCalculator = () => {
   const [dailyClientRate, setDailyClientRate] = useState(950);
   
   // PHP specific state with API integration
-  const [phpRate, setPhpRate] = useState(0.02800); // Default rate
-  const [phpRateInput, setPhpRateInput] = useState('0.02800'); // Separate state for input text
+  const [phpRate, setPhpRate] = useState(0.02332); // Default rate
+  const [phpRateInput, setPhpRateInput] = useState('0.02332'); // Separate state for input text
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(150000);
   const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'/'localSalary'
   
@@ -44,7 +44,7 @@ const ConsolidatedGpCalculator = () => {
     VND: 0.000062,
     INR: 0.019000,
     NZD: 0.910000,
-    PHP: 0.02800,
+    PHP: 0.02332,
   };
   
   // API status tracking
@@ -545,7 +545,7 @@ const ConsolidatedGpCalculator = () => {
     } else {
       // Set default fallback based on calculator type and currency
       if (calculatorType.startsWith('php')) {
-        setPhpRate(0.02800);
+        setPhpRate(0.02332);
       } else if (calculatorType === 'offshore') {
         setPhpRate(EXCHANGE_RATES[currency] || 0.01);
       }
@@ -953,12 +953,12 @@ const ConsolidatedGpCalculator = () => {
                           setPhpRate(value);
                           setPhpRateInput(value.toFixed(decimals));
                         } else {
-                          const defaultRate = calculatorType.startsWith('php') ? 0.028 : (EXCHANGE_RATES[currency] || 0.01);
+                          const defaultRate = calculatorType.startsWith('php') ? 0.02332 : (EXCHANGE_RATES[currency] || 0.01);
                           setPhpRate(defaultRate);
                           setPhpRateInput(defaultRate.toFixed(decimals));
                         }
                       }}
-                      placeholder={calculatorType.startsWith('php') ? "0.02800" : EXCHANGE_RATES[currency]?.toString()}
+                      placeholder={calculatorType.startsWith('php') ? "0.02332" : EXCHANGE_RATES[currency]?.toString()}
                       style={{ 
                         padding: "6px 8px", 
                         fontSize: "0.9rem", 

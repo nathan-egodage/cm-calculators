@@ -5,8 +5,7 @@ import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 
 const PhpContractorGpCalculator = () => {
   // State for form inputs and calculated values
-  const [phpRate, setPhpRate] = useState(0.028);
-  const [phpRateInput, setPhpRateInput] = useState('0.02332'); // Separate state for input text
+  const [phpRate, setPhpRate] = useState(0.02332);
   const [dailyRate, setDailyRate] = useState(210);
   const [targetMarginPercent, setTargetMarginPercent] = useState(50);
   const [dailyClientRate, setDailyClientRate] = useState(266.01);
@@ -63,8 +62,8 @@ const PhpContractorGpCalculator = () => {
     setIsApiLoading(true);
     setApiError(null);
     try {
-      // Try primary API: exchangerate-api.com (free, no key required)
-      const response = await fetch('https://api.exchangerate-api.com/v4/latest/AUD');
+      // Try primary API: exchangerate.host (supports PHP)
+      const response = await fetch('https://api.exchangerate.host/latest?base=AUD&symbols=PHP');
       setApiStatus(response.status);
       
       if (response.ok) {
@@ -72,9 +71,7 @@ const PhpContractorGpCalculator = () => {
         if (data && data.rates && data.rates.PHP) {
           // Calculate PHP/AUD rate as 1 / (rate from API)
           const newRate = 1 / data.rates.PHP;
-          const formattedRate = parseFloat(newRate.toFixed(5));
-          setPhpRate(formattedRate);
-          setPhpRateInput(formattedRate.toFixed(5));
+          setPhpRate(parseFloat(newRate.toFixed(5)));
           setApiError(null);
         } else {
           throw new Error('Invalid response format');
@@ -86,7 +83,7 @@ const PhpContractorGpCalculator = () => {
       console.error('Error fetching exchange rate:', error);
       setApiStatus(500);
       setApiError('Unable to fetch exchange rate. Please update manually or click Retry.');
-      // Keep the default rate (0.02800)
+      // Keep the default rate (0.02332)
     } finally {
       setIsApiLoading(false);
     }
@@ -285,7 +282,7 @@ const PhpContractorGpCalculator = () => {
     if (rate > 0) {
       setPhpRate(rate);
     } else {
-      setPhpRate(0.02800); // Default fallback
+      setPhpRate(0.02332); // Default fallback
     }
   };
 
@@ -510,33 +507,20 @@ const PhpContractorGpCalculator = () => {
               </label>
               <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                 <input
-                  type="text"
-                  value={phpRateInput}
-                  onChange={(e) => {
-                    setPhpRateInput(e.target.value);
-                  }}
+                  type="number"
+                  step="0.00001"
+                  value={phpRate.toFixed(5)}
+                  onChange={(e) => handlePhpRateChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value) && value > 0) {
-                      setPhpRate(value);
-                      setPhpRateInput(value.toFixed(5));
-                    } else {
-                      setPhpRate(0.028);
-                      setPhpRateInput('0.02800');
-                    }
-                  }}
-                  placeholder="0.02800"
+                  placeholder="0.02332"
                   style={{ 
-                    padding: "6px 8px", 
-                    fontSize: "0.9rem", 
+                    padding: "6px", 
+                    fontSize: "0.85rem", 
                     flex: 1,
-                    border: "2px solid #d1d5db", 
+                    border: "1px solid #d1d5db", 
                     borderRadius: "4px",
                     backgroundColor: "white",
-                    color: "#111",
-                    fontWeight: "500",
-                    fontFamily: "monospace"
+                    color: "black"
                   }}
                 />
                 <button
