@@ -8,6 +8,7 @@ const GenericOffshoreContractorGpCalculator = () => {
   const [country, setCountry] = useState("India");
   const [currency, setCurrency] = useState("INR");
   const [exchangeRate, setExchangeRate] = useState(0.019);
+  const [exchangeRateInput, setExchangeRateInput] = useState('0.019000'); // Separate state for input text
   
   // State for API status
   const [apiStatus, setApiStatus] = useState(null);
@@ -92,6 +93,7 @@ const GenericOffshoreContractorGpCalculator = () => {
         // Calculate rate as 1/rate since we want CUR/AUD, not AUD/CUR
         const newRate = parseFloat((1 / data.rates[currencyCode]).toFixed(6));
         setExchangeRate(newRate);
+        setExchangeRateInput(newRate.toFixed(6));
         setApiStatus('success');
         setApiError(null);
       } else {
@@ -103,7 +105,9 @@ const GenericOffshoreContractorGpCalculator = () => {
       setApiStatusCode(500);
       setApiError('Unable to fetch exchange rate. Please update manually or click Retry.');
       // Fall back to default exchange rate
-      setExchangeRate(EXCHANGE_RATES[currencyCode]);
+      const fallbackRate = EXCHANGE_RATES[currencyCode];
+      setExchangeRate(fallbackRate);
+      setExchangeRateInput(fallbackRate.toFixed(6));
     }
   };
 
@@ -446,19 +450,20 @@ const GenericOffshoreContractorGpCalculator = () => {
               <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                 <input
                   type="text"
-                  value={exchangeRate ? exchangeRate.toFixed(6) : EXCHANGE_RATES[currency]?.toFixed(6)}
+                  value={exchangeRateInput}
                   onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value) && value > 0) {
-                      setExchangeRate(value);
-                    } else if (e.target.value === "") {
-                      setExchangeRate(EXCHANGE_RATES[currency] || 0.01);
-                    }
+                    setExchangeRateInput(e.target.value);
                   }}
                   onFocus={(e) => e.target.select()}
                   onBlur={(e) => {
-                    if (!e.target.value || parseFloat(e.target.value) <= 0) {
-                      setExchangeRate(EXCHANGE_RATES[currency] || 0.01);
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      setExchangeRate(value);
+                      setExchangeRateInput(value.toFixed(6));
+                    } else {
+                      const fallbackRate = EXCHANGE_RATES[currency] || 0.01;
+                      setExchangeRate(fallbackRate);
+                      setExchangeRateInput(fallbackRate.toFixed(6));
                     }
                   }}
                   placeholder={EXCHANGE_RATES[currency]?.toString()}

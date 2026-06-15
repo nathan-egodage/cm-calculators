@@ -6,6 +6,7 @@ import { APP_VERSION, AUTHORIZED_USERS } from "../config/appConfig";
 const PhpContractorGpCalculator = () => {
   // State for form inputs and calculated values
   const [phpRate, setPhpRate] = useState(0.028);
+  const [phpRateInput, setPhpRateInput] = useState('0.02332'); // Separate state for input text
   const [dailyRate, setDailyRate] = useState(210);
   const [targetMarginPercent, setTargetMarginPercent] = useState(50);
   const [dailyClientRate, setDailyClientRate] = useState(266.01);
@@ -71,7 +72,9 @@ const PhpContractorGpCalculator = () => {
         if (data && data.rates && data.rates.PHP) {
           // Calculate PHP/AUD rate as 1 / (rate from API)
           const newRate = 1 / data.rates.PHP;
-          setPhpRate(parseFloat(newRate.toFixed(5)));
+          const formattedRate = parseFloat(newRate.toFixed(5));
+          setPhpRate(formattedRate);
+          setPhpRateInput(formattedRate.toFixed(5));
           setApiError(null);
         } else {
           throw new Error('Invalid response format');
@@ -508,19 +511,19 @@ const PhpContractorGpCalculator = () => {
               <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                 <input
                   type="text"
-                  value={phpRate ? phpRate.toFixed(5) : "0.02800"}
+                  value={phpRateInput}
                   onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (!isNaN(value) && value > 0) {
-                      handlePhpRateChange(e.target.value);
-                    } else if (e.target.value === "") {
-                      setPhpRate(0.028);
-                    }
+                    setPhpRateInput(e.target.value);
                   }}
                   onFocus={(e) => e.target.select()}
                   onBlur={(e) => {
-                    if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      setPhpRate(value);
+                      setPhpRateInput(value.toFixed(5));
+                    } else {
                       setPhpRate(0.028);
+                      setPhpRateInput('0.02800');
                     }
                   }}
                   placeholder="0.02800"

@@ -21,6 +21,7 @@ const ConsolidatedGpCalculator = () => {
   
   // PHP specific state with API integration
   const [phpRate, setPhpRate] = useState(0.02800); // Default rate
+  const [phpRateInput, setPhpRateInput] = useState('0.02800'); // Separate state for input text
   const [phpMonthlySalary, setPhpMonthlySalary] = useState(150000);
   const [rateInputMode, setRateInputMode] = useState('dailyRate'); // 'dailyRate' or 'phpSalary'/'localSalary'
   
@@ -136,10 +137,14 @@ const ConsolidatedGpCalculator = () => {
           const newRate = 1 / data.rates[currencyCode];
           
           if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
-            setPhpRate(parseFloat(newRate.toFixed(5)));
+            const formattedRate = parseFloat(newRate.toFixed(5));
+            setPhpRate(formattedRate);
+            setPhpRateInput(formattedRate.toFixed(5));
           } else if (calculatorType === 'offshore') {
             // For offshore, we use the common exchange rate variable
-            setPhpRate(parseFloat(newRate.toFixed(6))); // We're reusing the phpRate variable
+            const formattedRate = parseFloat(newRate.toFixed(6));
+            setPhpRate(formattedRate); // We're reusing the phpRate variable
+            setPhpRateInput(formattedRate.toFixed(6));
           }
           setApiError(null);
         } else {
@@ -155,8 +160,11 @@ const ConsolidatedGpCalculator = () => {
       // Use the default fallback rate
       if (calculatorType.startsWith('php') || currencyCode === 'PHP') {
         setPhpRate(EXCHANGE_RATES.PHP);
+        setPhpRateInput(EXCHANGE_RATES.PHP.toFixed(5));
       } else if (calculatorType === 'offshore') {
-        setPhpRate(EXCHANGE_RATES[currencyCode] || 0.01); // Fallback rate
+        const fallbackRate = EXCHANGE_RATES[currencyCode] || 0.01;
+        setPhpRate(fallbackRate); // Fallback rate
+        setPhpRateInput(fallbackRate.toFixed(6));
       }
     } finally {
       setIsApiLoading(false);
@@ -933,21 +941,21 @@ const ConsolidatedGpCalculator = () => {
                   <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                     <input
                       type="text"
-                      value={phpRate ? phpRate.toFixed(calculatorType.startsWith('php') ? 5 : 6) : (calculatorType.startsWith('php') ? "0.02800" : EXCHANGE_RATES[currency]?.toFixed(6))}
+                      value={phpRateInput}
                       onChange={(e) => {
-                        const value = parseFloat(e.target.value);
-                        if (!isNaN(value) && value > 0) {
-                          handleRateChange(e.target.value);
-                        } else if (e.target.value === "") {
-                          const defaultRate = calculatorType.startsWith('php') ? 0.028 : (EXCHANGE_RATES[currency] || 0.01);
-                          setPhpRate(defaultRate);
-                        }
+                        setPhpRateInput(e.target.value);
                       }}
                       onFocus={(e) => e.target.select()}
                       onBlur={(e) => {
-                        if (!e.target.value || parseFloat(e.target.value) <= 0) {
+                        const value = parseFloat(e.target.value);
+                        const decimals = calculatorType.startsWith('php') ? 5 : 6;
+                        if (!isNaN(value) && value > 0) {
+                          setPhpRate(value);
+                          setPhpRateInput(value.toFixed(decimals));
+                        } else {
                           const defaultRate = calculatorType.startsWith('php') ? 0.028 : (EXCHANGE_RATES[currency] || 0.01);
                           setPhpRate(defaultRate);
+                          setPhpRateInput(defaultRate.toFixed(decimals));
                         }
                       }}
                       placeholder={calculatorType.startsWith('php') ? "0.02800" : EXCHANGE_RATES[currency]?.toString()}
