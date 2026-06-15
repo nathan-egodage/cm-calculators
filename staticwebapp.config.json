@@ -20,10 +20,16 @@
           "match": "roles",
           "principals": [
             "nathan@cloudmarc.com.au",
-            "ddallariva@cloudmarc.com.au",
             "rocket@cloudmarc.com.au",
+            "ddallariva@cloudmarc.com.au",
+            "dlessa@cloudmarc.com.au",
+            "dscanlon@cloudmarc.com.au",
+            "jgregory@cloudmarc.com.au",
+            "sbrownbill@cloudmarc.com.au",
             "cnicholls@cloudmarc.com.au",
-            "skalpani@cloudmarc.com.au"
+            "skalpani@cloudmarc.com.au",
+            "stu@cloudmarc.com.au",
+            "rpandith@cloudmarc.com.au"
           ],
           "requireAllRoles": false
         }
